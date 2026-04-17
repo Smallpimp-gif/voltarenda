@@ -18,7 +18,7 @@
 // - Выбор mobile/desktop видео — через <source media>, без matchMedia
 //   и hydration-dance.
 
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion, useInView } from "framer-motion";
 import { APPLE_EASE } from "./motion-config";
 
@@ -32,6 +32,22 @@ const METRICS: [string, string][] = [
 export function BikeSection() {
   const sectionRef = useRef<HTMLElement>(null);
   const inView = useInView(sectionRef, { once: true, amount: 0.3 });
+
+  // Выбор mobile/desktop видео через matchMedia.
+  // Пробовали `<source media="(max-width: 767px)">` — НЕ РАБОТАЕТ:
+  // атрибут media на <source> внутри <video> исключён из HTML5-спеки,
+  // Chrome/Safari всегда берут первый <source> независимо от viewport.
+  // Hydration-safe: SSR отдаёт desktop (isMobile=false), на клиенте
+  // matchMedia-эффект мгновенно свапает к mobile, key пересоздаёт <video>.
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 767px)");
+    const update = () => setIsMobile(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
+  const videoSrc = isMobile ? "/bike-video-mobile.mp4" : "/bike-video-desktop.mp4";
 
   return (
     <section
@@ -49,6 +65,8 @@ export function BikeSection() {
         className="absolute inset-0"
       >
         <video
+          key={videoSrc}
+          src={videoSrc}
           autoPlay
           loop
           muted
@@ -56,11 +74,7 @@ export function BikeSection() {
           preload="metadata"
           poster="/rider.webp"
           className="h-full w-full object-cover object-center"
-        >
-          {/* media-сорсы: браузер сам выбирает mobile/desktop, без JS. */}
-          <source src="/bike-video-mobile.mp4" media="(max-width: 767px)" type="video/mp4" />
-          <source src="/bike-video-desktop.mp4" type="video/mp4" />
-        </video>
+        />
       </motion.div>
 
       {/* Два scrim'а — сверху под eyebrow/title/desc, снизу под метрики */}
