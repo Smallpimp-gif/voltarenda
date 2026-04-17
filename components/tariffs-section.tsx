@@ -134,14 +134,8 @@ export function TariffsSection() {
       ref={sectionRef}
       data-theme="light"
       id="tariffs"
-      className="relative z-10 -mt-[100vh] overflow-hidden text-[var(--text)]"
+      className="relative overflow-hidden bg-[var(--bg)] text-[var(--text)]"
     >
-      {/* Solid bg layer — всегда непрозрачный, чтобы не просвечивало
-          содержимое Bike-секции под -mt-[100vh] overlap зоной. */}
-      <div
-        aria-hidden
-        className="absolute inset-0 bg-[var(--bg)]"
-      />
 
       <div className="relative mx-auto max-w-content px-gutter py-section-y">
         <motion.div
