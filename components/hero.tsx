@@ -39,17 +39,6 @@ const itemVariants = {
   },
 };
 
-// Метрики Hero — экономика, не спека байка.
-// Курьер пришёл узнать «сколько заработаю», а не сколько весит велосипед —
-// спеки (70 км / 25 км/ч / 150 кг) живут в BikeSection где им и место.
-// Цифры дохода и окупаемости выведены из дефолтов калькулятора ниже:
-// 15 доставок × 280 ₽ × 6 дней − 5500 ₽ аренды ≈ 19,7 тыс. ₽/нед чистыми.
-const METRICS: [string, string][] = [
-  ["доход / мес", "150 000 ₽"],
-  ["окупаемость", "2–3 дня"],
-  ["курьеров", "47+"],
-];
-
 export function Hero() {
   const { open, hasPersisted, persistedProgress } = useApply();
   const prefersReduced = useReducedMotion();
@@ -129,28 +118,12 @@ export function Hero() {
           variants={itemVariants}
           className="mt-8 max-w-[52ch] font-sans text-body-lg text-mute"
         >
-          Электровелосипед ВОЛЬТ U2 в аренду для курьеров
-          Санкт&#8209;Петербурга. Выдача за 30 минут.
+          Для курьеров Петербурга. Выдача за 30 минут.
         </motion.p>
 
-        {/* Метрики — ПЕРЕД кнопками, чтобы money-hook был виден ДО CTA.
-            Mobile: compact inline row. Desktop: grid ниже. */}
         <motion.div
           variants={itemVariants}
-          className="mt-8 flex flex-wrap gap-x-4 gap-y-1 pr-16 font-mono text-caption uppercase text-mute sm:hidden"
-        >
-          {METRICS.map(([label, value]) => (
-            <span key={label} className="whitespace-nowrap">
-              <span className="tnum text-[var(--text)]">{value}</span>
-              {" "}
-              <span>{label}</span>
-            </span>
-          ))}
-        </motion.div>
-
-        <motion.div
-          variants={itemVariants}
-          className="mt-6 flex flex-wrap items-center gap-x-8 gap-y-4 sm:mt-10"
+          className="mt-8 flex flex-wrap items-center gap-x-8 gap-y-4 sm:mt-10"
         >
           <button
             type="button"
@@ -180,31 +153,21 @@ export function Hero() {
           Залог 5 000 ₽ · возвращаем при сдаче
         </motion.p>
 
+        {/* Live-trader — единственный источник метрик в hero.
+            Сводит окупаемость + число курьеров + дату данных в одну
+            trust-строку. Цифра дохода живёт в калькуляторе ниже — так
+            пользователь считает свою сумму, а не видит рекламное обещание. */}
         <motion.div
           variants={itemVariants}
-          className="mt-16 hidden max-w-[640px] grid-cols-3 gap-8 border-t border-[var(--line)] pt-6 sm:grid"
+          className="mt-10 flex flex-wrap items-center gap-x-3 gap-y-1"
         >
-          {METRICS.map(([label, value]) => (
-            <div key={label}>
-              <div className="font-mono text-caption uppercase text-mute">
-                {label}
-              </div>
-              <div className="mt-2 whitespace-nowrap font-sans text-h3 tnum">
-                {value}
-              </div>
-            </div>
-          ))}
-        </motion.div>
-
-        {/* Live-trader — статичная trust-строка вместо карусели отзывов.
-            Juridически корректно: точная цифра + источник/период данных. */}
-        <motion.div variants={itemVariants} className="mt-8 hidden sm:flex sm:items-center sm:gap-3">
           <span aria-hidden className="relative flex h-2 w-2 shrink-0">
             <span className="absolute inset-0 animate-ping rounded-full bg-volt opacity-60" />
             <span className="relative inline-block h-2 w-2 rounded-full bg-volt" />
           </span>
           <span className="font-sans text-body text-[var(--text)]">
-            47 курьеров уже работают · окупаемость 2–3 дня
+            47 курьеров уже работают
+            <span className="hidden sm:inline"> · окупаемость 2–3 дня</span>
           </span>
           <span className="font-mono text-[11px] uppercase tracking-[0.08em] text-mute">
             данные за март 2026
