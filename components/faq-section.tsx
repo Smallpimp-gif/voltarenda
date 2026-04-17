@@ -51,6 +51,18 @@ const FAQ: { q: string; a: string }[] = [
     q: "Можно приостановить аренду?",
     a: "Отменяешь за 3 дня до конца текущего периода — и следующий не списывается. Велик возвращаешь на точку. Когда будешь готов — оформляешь заново за 10 минут.",
   },
+  {
+    q: "Сколько километров на одном заряде?",
+    a: "Около 60 км на основной батарее (60 Ач) — подтверждено отзывами наших арендаторов, не маркетинговое обещание. В комплекте вторая запасная батарея (30 Ач) — итого ~120 км на смену. Реальный запас зависит от веса курьера, стиля езды и температуры.",
+  },
+  {
+    q: "Что если обе батареи разрядятся?",
+    a: "~120 км на смену — это с запасом под типичную курьерскую загрузку. Если всё-таки разрядилось — велосипед едет и без мотора как обычный, доедешь до дома или до точки. Но на практике до этого не доходит: вторую батарею курьеры обычно трогают только к вечеру.",
+  },
+  {
+    q: "Где и как заряжать батареи?",
+    a: "От обычной домашней розетки 220V через зарядник из комплекта. Обе батареи заряжаешь дома за ночь — к утру готов на новую смену. Возить их на точку выдачи не нужно.",
+  },
 ];
 
 // FAQ Schema (FAQPage) — JSON-LD для rich snippets в Google SERP.
@@ -130,6 +142,21 @@ export function FaqSection() {
   const b9 = useTransform(scrollYProgress, [0.39, 0.74], [6, 0], { ease: EASE });
   const f9 = useMotionTemplate`blur(${b9}px)`;
 
+  const o10 = useTransform(scrollYProgress, [0.42, 0.77], [0, 1], { ease: EASE });
+  const y10 = useTransform(scrollYProgress, [0.42, 0.77], [24, 0], { ease: EASE });
+  const b10 = useTransform(scrollYProgress, [0.42, 0.77], [6, 0], { ease: EASE });
+  const f10 = useMotionTemplate`blur(${b10}px)`;
+
+  const o11 = useTransform(scrollYProgress, [0.45, 0.80], [0, 1], { ease: EASE });
+  const y11 = useTransform(scrollYProgress, [0.45, 0.80], [24, 0], { ease: EASE });
+  const b11 = useTransform(scrollYProgress, [0.45, 0.80], [6, 0], { ease: EASE });
+  const f11 = useMotionTemplate`blur(${b11}px)`;
+
+  const o12 = useTransform(scrollYProgress, [0.48, 0.83], [0, 1], { ease: EASE });
+  const y12 = useTransform(scrollYProgress, [0.48, 0.83], [24, 0], { ease: EASE });
+  const b12 = useTransform(scrollYProgress, [0.48, 0.83], [6, 0], { ease: EASE });
+  const f12 = useMotionTemplate`blur(${b12}px)`;
+
   const items: {
     opacity: MotionValue<number>;
     y: MotionValue<number>;
@@ -144,6 +171,9 @@ export function FaqSection() {
     { opacity: o7, y: y7, filter: f7 },
     { opacity: o8, y: y8, filter: f8 },
     { opacity: o9, y: y9, filter: f9 },
+    { opacity: o10, y: y10, filter: f10 },
+    { opacity: o11, y: y11, filter: f11 },
+    { opacity: o12, y: y12, filter: f12 },
   ];
 
   return (
