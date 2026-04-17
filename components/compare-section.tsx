@@ -27,6 +27,7 @@ type Row = {
 
 const ROWS: Row[] = [
   { label: "СТАРТОВАЯ ЦЕНА", buy: "150 000 ₽", other: "от 800 ₽/день", us: "от 633 ₽/день" },
+  { label: "ЗАПАС ХОДА", buy: "зависит от модели", other: "1 АКБ, 30–50 км", us: "2 АКБ, ~120 км" },
   { label: "ЗАЛОГ", buy: "—", other: "20–30 тыс.", us: "5 000 ₽ возвратный" },
   { label: "ТО И РЕМОНТ", buy: "сам платишь", other: "за свой счёт", us: "50% на нас" },
   { label: "ЗАМЕНА ПРИ ПОЛОМКЕ", buy: "—", other: "платно", us: "до 14 дней, бесплатно" },
@@ -51,7 +52,7 @@ const COLS: Col[] = [
     accent: true,
   },
   { key: "buy", index: "02", title: "Купить велик", subtitle: "Дорого, но твой" },
-  { key: "other", index: "03", title: "Другой прокат", subtitle: "Пластик для прогулок" },
+  { key: "other", index: "03", title: "Другой прокат", subtitle: "Массовый шеринг для города" },
 ];
 
 export function CompareSection() {
