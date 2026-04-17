@@ -21,10 +21,10 @@ export default function Home() {
       <StickyHeader />
       <main id="main" className="overflow-x-clip">
         <Hero />
+        <CalculatorSection />
         <HowItWorksSection />
         <BikeSection />
         <TariffsSection />
-        <CalculatorSection />
         <CompareSection />
         <LocationSection />
         <FaqSection />

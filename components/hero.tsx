@@ -158,7 +158,7 @@ export function Hero() {
 
         <motion.div
           variants={itemVariants}
-          className="mt-6 flex flex-wrap items-center gap-4 sm:mt-10"
+          className="mt-6 flex flex-wrap items-center gap-x-8 gap-y-4 sm:mt-10"
         >
           <button
             type="button"
@@ -166,7 +166,7 @@ export function Hero() {
               try { (window as any).ym?.(108583356, "reachGoal", "CTA_CLICK", { source: "hero" }); } catch {}
               hasPersisted ? open() : open("week");
             }}
-            className="btn-cta btn-cta-volt rounded-md bg-volt px-6 py-4 font-mono text-caption uppercase text-ink hover:bg-volt-hover"
+            className="btn-cta btn-cta-volt rounded-md bg-volt px-8 py-5 font-mono text-[14px] uppercase tracking-[0.08em] text-ink hover:bg-volt-hover sm:px-10 sm:py-6 sm:text-[16px]"
           >
             {hasPersisted
               ? `Продолжить заявку · ${persistedProgress}/4 →`
@@ -174,11 +174,19 @@ export function Hero() {
           </button>
           <a
             href="#tariffs"
-            className="btn-cta btn-cta-outline rounded-md border border-white/30 bg-white/5 px-6 py-4 font-mono text-caption uppercase backdrop-blur-sm hover:border-volt hover:text-volt"
+            className="font-mono text-caption uppercase text-mute underline decoration-white/20 underline-offset-4 transition-colors hover:text-[var(--text)] hover:decoration-volt"
           >
             Тарифы от 3500 ₽
           </a>
         </motion.div>
+
+        {/* Якорная строка — снимает страх «сколько ещё сверху» */}
+        <motion.p
+          variants={itemVariants}
+          className="mt-4 font-mono text-caption uppercase text-mute"
+        >
+          Залог 5 000 ₽ · возвращаем при сдаче
+        </motion.p>
 
         <motion.div
           variants={itemVariants}
