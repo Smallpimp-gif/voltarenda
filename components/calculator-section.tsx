@@ -227,7 +227,7 @@ export function CalculatorSection() {
               {deliveries} × {avgCheck} ₽ × {daysPerWeek} − {formatRub(WEEKLY_TARIFF)} ₽
               {" = "}
               <span className="text-[var(--text)]">{formatRub(weeklyNet)} ₽</span>
-              {" · "}расчёт оценочный
+              {" · "}расчёт оценочный, без налога самозанятого 6%
             </p>
           </motion.div>
         </div>
@@ -338,7 +338,7 @@ export function CalculatorSection() {
               {deliveries} × {avgCheck} ₽ × {daysPerWeek} − {formatRub(WEEKLY_TARIFF)} ₽
               {" = "}
               <span className="text-[var(--text)]">{formatRub(weeklyNet)} ₽</span>
-              {" · "}расчёт оценочный
+              {" · "}расчёт оценочный, без налога самозанятого 6%
             </p>
           </motion.article>
         </div>
