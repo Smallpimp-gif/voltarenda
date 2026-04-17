@@ -3,9 +3,8 @@
 // Hero-секция лендинга — финальная версия Этапа 3.
 // Фичи: параллакс фото + scroll-indicator + video-ready + zoom-out на загрузке.
 
-import { useEffect, useState } from "react";
 import Image from "next/image";
-import { AnimatePresence, motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
+import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
 import { useApply } from "./apply";
 import { APPLE_EASE } from "./motion-config";
 
@@ -49,13 +48,6 @@ const METRICS: [string, string][] = [
   ["доход / мес", "150 000 ₽"],
   ["окупаемость", "2–3 дня"],
   ["курьеров", "47+"],
-];
-
-// Социальное доказательство — реальные отзывы курьеров
-const SOCIAL_PROOF = [
-  { name: "Женя", platform: "Яндекс.Еда", text: "23 400 ₽ чистыми за первую неделю" },
-  { name: "Артём", platform: "Самокат", text: "Окупил аренду за 2 дня, остальное — в плюс" },
-  { name: "Дима", platform: "Купер", text: "Батареи хватает на всю смену, не думаю о зарядке" },
 ];
 
 export function Hero() {
@@ -204,51 +196,22 @@ export function Hero() {
           ))}
         </motion.div>
 
-        {/* Социальное доказательство — только десктоп (на мобилке выше, перед CTA) */}
-        <motion.div variants={itemVariants} className="mt-8 hidden sm:block">
-          <SocialProofRotator />
+        {/* Live-trader — статичная trust-строка вместо карусели отзывов.
+            Juridически корректно: точная цифра + источник/период данных. */}
+        <motion.div variants={itemVariants} className="mt-8 hidden sm:flex sm:items-center sm:gap-3">
+          <span aria-hidden className="relative flex h-2 w-2 shrink-0">
+            <span className="absolute inset-0 animate-ping rounded-full bg-volt opacity-60" />
+            <span className="relative inline-block h-2 w-2 rounded-full bg-volt" />
+          </span>
+          <span className="font-sans text-body text-[var(--text)]">
+            47 курьеров уже работают · окупаемость 2–3 дня
+          </span>
+          <span className="font-mono text-[11px] uppercase tracking-[0.08em] text-mute">
+            данные за март 2026
+          </span>
         </motion.div>
       </motion.div>
 
     </section>
-  );
-}
-
-// Ротатор социальных доказательств — автоматическая смена каждые 4 сек
-function SocialProofRotator() {
-  const [idx, setIdx] = useState(0);
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setIdx((i) => (i + 1) % SOCIAL_PROOF.length);
-    }, 4000);
-    return () => clearInterval(timer);
-  }, []);
-
-  const item = SOCIAL_PROOF[idx];
-
-  return (
-    <div className="flex items-center gap-3 overflow-hidden">
-      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/10 font-mono text-caption uppercase text-[var(--text)]">
-        {item.name[0]}
-      </div>
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={idx}
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -8 }}
-          transition={{ duration: 0.3, ease: EASE }}
-          className="flex flex-col"
-        >
-          <span className="font-sans text-body text-[var(--text)]">
-            «{item.text}»
-          </span>
-          <span className="font-mono text-[11px] uppercase tracking-[0.08em] text-mute">
-            {item.name} · {item.platform}
-          </span>
-        </motion.div>
-      </AnimatePresence>
-    </div>
   );
 }

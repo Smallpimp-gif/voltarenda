@@ -288,5 +288,13 @@ input[type="checkbox"]:active {
   animation: slide-in-up var(--duration-normal) var(--ease-out-expo) both;
 }
 
+/* Indeterminate progress shuttle — используется на фазе компрессии
+   фото до того как сервер начнёт считать прогресс upload'а. */
+@keyframes progress-indeterminate {
+  0%   { transform: translateX(-100%); }
+  50%  { transform: translateX(120%); }
+  100% { transform: translateX(400%); }
+}
+
 /* next/font автоматически префетчит веса, preload-хак больше не нужен. */
 

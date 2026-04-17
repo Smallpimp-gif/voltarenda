@@ -74,21 +74,21 @@ const EMPTY_FORM: FormData = {
 const STEPS = [
   { key: "tariff", label: "Тариф" },
   { key: "contact", label: "Контакты" },
-  { key: "photos", label: "Документы" },
+  { key: "photos", label: "Верификация" },
   { key: "payment", label: "Оплата" },
 ] as const;
 
 const STEP_TITLES = [
   "Выбери тариф",
   "Как с тобой связаться",
-  "Фото документов",
+  "Верификация · 2 минуты",
   "Проверь и оплати",
 ];
 
 const STEP_SUBTITLES = [
   "В тариф входит ВОЛЬТ U2 + залог 5 000 ₽ (вернём за 3 дня).",
   "Перезвоним после проверки. Без спама.",
-  "Три фото: паспорт с фото, прописка, селфи с паспортом. Оператор проверит данные с фото — вводить вручную не нужно.",
+  "🔒 Три фото: паспорт, прописка, селфи с паспортом. Данные не передаём третьим лицам, оператор проверит вручную — вводить ничего не нужно.",
   "Осталось оплатить. Залог 5 000 ₽ вернём за 3 рабочих дня.",
 ];
 
@@ -1076,10 +1076,14 @@ function PhotoSlot({
 }) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [processing, setProcessing] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [phase, setPhase] = useState<"compress" | "upload" | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
   const handleFile = async (file: File) => {
     setProcessing(true);
+    setProgress(0);
+    setPhase("compress");
     setUploadError(null);
     try {
       // Сжимаем клиентски перед отправкой — экономим трафик на мобиле
@@ -1088,28 +1092,49 @@ function PhotoSlot({
         quality: 0.85,
       });
 
-      // Загружаем на сервер
+      setPhase("upload");
+
+      // Загружаем на сервер через XHR — только он отдаёт upload.onprogress.
       const formData = new FormData();
       formData.append("photo", compressedBlob, `${slot.key}.jpg`);
       formData.append("slot", slot.key);
 
-      const res = await fetch("/api/apply/upload-photo", {
-        method: "POST",
-        body: formData,
+      const data = await new Promise<{ fileId: string }>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open("POST", "/api/apply/upload-photo");
+        xhr.upload.addEventListener("progress", (e) => {
+          if (e.lengthComputable) {
+            setProgress(Math.round((e.loaded / e.total) * 100));
+          }
+        });
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            try {
+              resolve(JSON.parse(xhr.responseText));
+            } catch {
+              reject(new Error("Ошибка ответа сервера"));
+            }
+          } else {
+            let message = "Ошибка загрузки";
+            try {
+              const parsed = JSON.parse(xhr.responseText);
+              if (parsed.message) message = parsed.message;
+            } catch {}
+            reject(new Error(message));
+          }
+        };
+        xhr.onerror = () => reject(new Error("Ошибка сети"));
+        xhr.send(formData);
       });
 
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.message || "Ошибка загрузки");
-      }
-
-      const data = await res.json();
       const previewUrl = URL.createObjectURL(compressedBlob);
       onChange({ fileId: data.fileId, previewUrl });
     } catch (err) {
       setUploadError(err instanceof Error ? err.message : "Не удалось загрузить фото");
     } finally {
       setProcessing(false);
+      setPhase(null);
+      setProgress(0);
     }
   };
 
@@ -1177,12 +1202,33 @@ function PhotoSlot({
           className="flex aspect-[16/9] w-full flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-[var(--line-strong)] text-center transition-colors duration-quick ease-out-soft hover:border-volt hover:text-volt disabled:cursor-wait disabled:opacity-60"
         >
           {processing ? (
-            <>
-              <span className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-volt border-t-transparent" />
-              <div className="font-mono text-caption uppercase text-mute">
-                ЗАГРУЖАЕМ...
+            <div className="flex w-full flex-col items-center gap-3 px-6">
+              <div className="font-mono text-caption uppercase text-mute tnum">
+                {phase === "compress"
+                  ? "Сжимаем фото…"
+                  : phase === "upload"
+                    ? progress < 100
+                      ? `Загружаем · ${progress}%`
+                      : "Готово, сохраняем…"
+                    : "…"}
               </div>
-            </>
+              <div
+                role="progressbar"
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={phase === "upload" ? progress : undefined}
+                className="relative h-1.5 w-full max-w-sm overflow-hidden rounded-full bg-white/10"
+              >
+                {phase === "compress" ? (
+                  <span className="absolute inset-y-0 left-0 w-1/3 animate-[progress-indeterminate_1.2s_ease-in-out_infinite] bg-volt" />
+                ) : (
+                  <span
+                    className="absolute inset-y-0 left-0 bg-volt transition-[width] duration-200 ease-out"
+                    style={{ width: `${progress}%` }}
+                  />
+                )}
+              </div>
+            </div>
           ) : (
             <>
               <div className="font-sans text-h3">＋ Загрузить фото</div>
