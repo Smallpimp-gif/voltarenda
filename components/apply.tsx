@@ -41,7 +41,8 @@ const TARIFFS: {
 // Value-спеки — те же что в tariffs-section.tsx на лендинге.
 const TARIFF_SPECS = [
   { label: "ВЕЛОСИПЕД", value: "ВОЛЬТ U2" },
-  { label: "ДВА АККУМУЛЯТОРА", value: "ЗАПАС 70 КМ" },
+  { label: "ЗАПАС ХОДА", value: "~120 КМ" },
+  { label: "АККУМУЛЯТОРЫ", value: "2 АКБ · 60+30 АЧ" },
   { label: "ЗАРЯДКА + ЗАМОК", value: "В КОМПЛЕКТЕ" },
   { label: "ТО И МЕХАНИК", value: "50% НА НАС" },
 ];
