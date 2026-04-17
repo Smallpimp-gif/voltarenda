@@ -120,7 +120,7 @@ export function Hero() {
           variants={itemVariants}
           className="mt-8 max-w-[52ch] font-sans text-body-lg text-mute"
         >
-          Для курьеров Петербурга. Выдача за 30 минут.
+          Для курьеров СПб. ~120 км на 2 АКБ, от 633 ₽/день. Выдача за 30 минут.
         </motion.p>
 
         <motion.div
@@ -171,8 +171,7 @@ export function Hero() {
             <span className="relative inline-block h-2 w-2 rounded-full bg-volt" />
           </span>
           <span className="font-sans text-body text-[var(--text)]">
-            47 курьеров уже работают
-            <span className="hidden sm:inline"> · окупаемость 2–3 дня</span>
+            47 курьеров · окупаемость 2–3 дня
           </span>
           <span className="hidden font-mono text-[11px] uppercase tracking-[0.08em] text-mute sm:inline">
             данные за март 2026
