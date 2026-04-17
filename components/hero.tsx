@@ -99,9 +99,11 @@ export function Hero() {
         {/* Spacer — толкает весь контент вниз, чтобы фото было видно больше */}
         <div className="flex-1" />
 
+        {/* Брендовая строка — декоративный ритм «инженерного журнала».
+            На мобиле скрыта: экономим одну строку выше h1. */}
         <motion.span
           variants={itemVariants}
-          className="font-mono text-caption uppercase text-mute"
+          className="hidden font-mono text-caption uppercase text-mute sm:inline"
         >
           00 / ВОЛЬТАРЕНДА / СПБ
         </motion.span>
@@ -137,9 +139,12 @@ export function Hero() {
               ? `Продолжить заявку · ${persistedProgress}/4 →`
               : "Начать зарабатывать →"}
           </button>
+          {/* «Тарифы от 3500 ₽» скрыта на мобиле — там экран и так
+              перегружен. На десктопе оставлена как быстрый путь к
+              прайсу для сравнивающих пользователей. */}
           <a
             href="#tariffs"
-            className="font-mono text-caption uppercase text-mute underline decoration-white/20 underline-offset-4 transition-colors hover:text-[var(--text)] hover:decoration-volt"
+            className="hidden font-mono text-caption uppercase text-mute underline decoration-white/20 underline-offset-4 transition-colors hover:text-[var(--text)] hover:decoration-volt sm:inline"
           >
             Тарифы от 3500 ₽
           </a>
@@ -169,7 +174,7 @@ export function Hero() {
             47 курьеров уже работают
             <span className="hidden sm:inline"> · окупаемость 2–3 дня</span>
           </span>
-          <span className="font-mono text-[11px] uppercase tracking-[0.08em] text-mute">
+          <span className="hidden font-mono text-[11px] uppercase tracking-[0.08em] text-mute sm:inline">
             данные за март 2026
           </span>
         </motion.div>
