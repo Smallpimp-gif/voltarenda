@@ -1,0 +1,28 @@
+{
+  "name": "voltarenda",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "eslint-config-next": "^15.5.15",
+    "framer-motion": "^12.38.0",
+    "next": "^15.5.15",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5"
+  },
+  "devDependencies": {
+    "@types/node": "22.19.17",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "autoprefixer": "10.5.0",
+    "postcss": "8.5.9",
+    "puppeteer": "^24.41.0",
+    "tailwindcss": "3.4.19",
+    "typescript": "5.9.3"
+  }
+}

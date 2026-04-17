@@ -1,0 +1,26 @@
+node_modules/
+.next/
+.env
+.env.local
+
+# Пользовательские данные — НЕ коммитить
+uploads/
+data/
+
+# Скриншоты аудита
+audit-animations-before/
+audit-animations-after/
+
+# Puppeteer
+take-screenshots.mjs
+
+# Большие изображения
+hf_*.png
+*.jpg
+desktop.ini
+
+# Планирование и временные файлы
+.planning/
+.tmp/
+.claude/
+tsconfig.tsbuildinfo

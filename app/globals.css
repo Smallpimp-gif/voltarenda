@@ -1,0 +1,292 @@
+/* Design tokens — направление A "Инженерный журнал"
+   Шрифты грузятся через next/font (см. app/fonts.ts → CSS vars --font-sans / --font-mono). */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* CSS-переменные темы. Переключаются через [data-theme="dark"|"light"] на секции.
+   Это даёт section-driven темизацию как на icomat — хедер и фон инвертируются при скролле. */
+
+:root,
+[data-theme="light"] {
+  --bg:     #F4F3F1;  /* светлый с едва тёплым подтоном, как у icomat */
+  --bg-2:   #EDEDEB;  /* карточка вдавленная, того же тёплого семейства */
+  --text:   #000000;  /* чистый чёрный */
+  --mute:   #6B6860;  /* WCAG AA 5.0:1 на #F4F3F1 (было #8D8A82 — 3.1:1) */
+  --line:   rgba(0, 0, 0, 0.10);
+  --line-strong: rgba(0, 0, 0, 0.28);
+
+  /* ═══ Motion Design System ═══
+     Единые токены анимаций — в стиле бургер-меню (мягкий easeOut с инерцией).
+     Все компоненты ссылаются на эти переменные. */
+  --ease-out-expo:  cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-out-back:  cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-out-soft:  cubic-bezier(0.22, 0.61, 0.36, 1);
+  --ease-in-out:    cubic-bezier(0.65, 0, 0.35, 1);
+  --duration-fast:   150ms;
+  --duration-normal: 280ms;
+  --duration-slow:   420ms;
+  --duration-reveal: 640ms;
+}
+
+[data-theme="dark"] {
+  --bg:     #000000;  /* pure black */
+  --bg-2:   #0A0A0A;  /* карточка едва приподнята над pure black */
+  --text:   #F2F1EC;
+  --mute:   #9B9890;  /* WCAG AA 7.3:1 на #000 (было #8D8A82 — 3.5:1) */
+  --line:   rgba(255, 255, 255, 0.08);
+  --line-strong: rgba(255, 255, 255, 0.20);
+}
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    /* Плавный скролл для всех якорных ссылок — Apple-style.
+       Учитываем sticky-header высотой ~64px чтоб не перекрывал цель. */
+    scroll-behavior: smooth;
+    scroll-padding-top: 72px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
+    /* Нули — обычные круглые, без слэша. "zero" 0 выключает slashed-zero в
+       Geist Mono, "ss01/ss02" 0 на всякий случай у General Sans. */
+    font-feature-settings: "zero" 0, "ss01" 0, "ss02" 0;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    /* text-rendering: optimizeLegibility — убрано, вызывает проблемы
+       производительности на мобильных устройствах с кириллицей */
+  }
+
+  ::selection {
+    background: #E5FF00;
+    color: #0A0A0A;
+  }
+
+  /* Глобальный focus-visible — только для keyboard-навигации, не мышкой.
+     Volt-обводка с отступом — видно и красиво. Плавное появление. */
+  :focus-visible {
+    outline: 2px solid #E5FF00;
+    outline-offset: 3px;
+    border-radius: 4px;
+    transition:
+      outline-offset var(--duration-normal) var(--ease-out-expo),
+      outline-color var(--duration-normal) var(--ease-out-expo);
+  }
+  /* Для tariff-card кнопок — нет ring (уже явно выключено ниже) */
+}
+
+@layer utilities {
+  /* Tabular numerals для цен и технических цифр.
+     Форсим General Sans (sans) для цифр — у него обычные круглые нули без
+     слэшей и точек, в отличие от любого технического моно. */
+  .tnum {
+    font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum";
+  }
+
+  /* Скрывает scrollbar у snap-carousel в мобильных тарифах */
+  .carousel-scrollbar-hidden {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .carousel-scrollbar-hidden::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* ============================================================
+     APPLE-STYLE MICRO-INTERACTIONS
+     ============================================================ */
+
+  /* Основной CTA — все кнопки и ссылки, которые действуют как "кнопка".
+     Hover: subtle lift + scale. Press: smooth squish через easeOutCubic —
+     плавный вход в нажатое состояние и такой же плавный отход. Никаких
+     резких снапов. */
+  .btn-cta {
+    transition:
+      transform 420ms cubic-bezier(0.22, 1, 0.36, 1),
+      background-color 280ms cubic-bezier(0.22, 1, 0.36, 1),
+      color 280ms cubic-bezier(0.22, 1, 0.36, 1),
+      border-color 280ms cubic-bezier(0.22, 1, 0.36, 1),
+      box-shadow 420ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  /* Hover-lift только на устройствах с мышью — на тач hover вызывает
+     jitter при первом тапе (hover fires → active fires → двойной transform) */
+  @media (hover: hover) {
+    .btn-cta:hover {
+      transform: translateY(-1px) scale(1.015);
+    }
+    .btn-cta-volt:hover {
+      box-shadow: 0 8px 24px -8px rgba(229, 255, 0, 0.35);
+    }
+    .btn-cta-outline:hover {
+      box-shadow: 0 6px 20px -12px rgba(0, 0, 0, 0.35);
+    }
+  }
+  .btn-cta:active {
+    transform: translateY(0) scale(0.965);
+    transition-duration: 220ms;
+    transition-timing-function: cubic-bezier(0.33, 1, 0.68, 1);
+  }
+}
+
+/* Карточка тарифа — scoped CSS-vars + плавная инверсия цветов на hover.
+   Все дочерние элементы читают --card-bg / --card-text / --card-line,
+   одна точка переключения на :hover. */
+.tariff-card {
+  --card-bg:     var(--bg-2);
+  --card-text:   var(--text);
+  --card-line:   var(--line);
+  --card-stroke: rgba(0, 0, 0, 0.08);  /* субтильная обводка в светлой теме */
+  background-color: var(--card-bg);
+  color: var(--card-text);
+  border: 1px solid var(--card-stroke);
+  transition:
+    background-color 640ms cubic-bezier(0.22, 0.61, 0.36, 1),
+    color 640ms cubic-bezier(0.22, 0.61, 0.36, 1),
+    border-color 640ms cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+[data-theme="dark"] .tariff-card {
+  --card-stroke: rgba(255, 255, 255, 0.10);  /* обводка в тёмной теме */
+}
+
+.tariff-card .tariff-divider,
+.tariff-card .tariff-btn {
+  transition:
+    background-color 640ms cubic-bezier(0.22, 0.61, 0.36, 1),
+    color 640ms cubic-bezier(0.22, 0.61, 0.36, 1),
+    border-color 640ms cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+/* Убираем браузерный focus-ring при клике мышкой на кнопки тарифных карточек.
+   focus-visible (клавиатура) оставляем — WCAG 2.4.7 требует видимый фокус. */
+.tariff-card button:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Инверсия карточки при hover — только на устройствах с мышью.
+   На тач-устройствах hover вызывает вспышку инверсии перед onApply. */
+@media (hover: hover) {
+  [data-theme="light"] .tariff-card:hover {
+    --card-bg:     #000000;
+    --card-text:   #F4F3F1;
+    --card-line:   rgba(255, 255, 255, 0.12);
+    --card-stroke: rgba(255, 255, 255, 0.14);
+  }
+  [data-theme="dark"] .tariff-card:hover {
+    --card-bg:     #F4F3F1;
+    --card-text:   #000000;
+    --card-line:   rgba(0, 0, 0, 0.12);
+    --card-stroke: rgba(0, 0, 0, 0.14);
+  }
+}
+
+/* Внутри модалки Apply выключаем hover-инверсию .tariff-card —
+   там выбор делается через volt-рамку, а цветовой инверт только сбивает. */
+.apply-modal-tariffs .tariff-card:hover {
+  --card-bg: var(--bg-2);
+  --card-text: var(--text);
+  --card-line: var(--line);
+  --card-stroke: rgba(255, 255, 255, 0.10);
+}
+
+/* ============================================================
+   MOTION DESIGN SYSTEM — дополнительные микро-анимации
+   Все обёрнуты в prefers-reduced-motion через глобальный reset выше.
+   ============================================================ */
+
+/* Кастомный чекбокс — плавный scale-bounce при выборе.
+   Нативный accent-volt остаётся, добавляем transform-отклик. */
+input[type="checkbox"] {
+  transition: transform var(--duration-fast) var(--ease-out-back);
+}
+input[type="checkbox"]:active {
+  transform: scale(0.85);
+}
+
+/* Плавная тень у sticky-header при скролле.
+   Класс .header-scrolled добавляется через JS (см. sticky-header.tsx). */
+.header-shadow {
+  box-shadow: 0 1px 0 var(--line), 0 4px 16px -4px rgba(0, 0, 0, 0.08);
+  transition: box-shadow var(--duration-slow) var(--ease-out-soft);
+}
+[data-theme="dark"] .header-shadow {
+  box-shadow: 0 1px 0 var(--line), 0 4px 16px -4px rgba(0, 0, 0, 0.4);
+}
+
+/* Ссылки в footer / nav — smooth underline через background-size.
+   Только GPU: background-position, без width/border changes. */
+@media (hover: hover) {
+  .link-underline {
+    background-image: linear-gradient(currentColor, currentColor);
+    background-size: 0% 1px;
+    background-position: left bottom;
+    background-repeat: no-repeat;
+    transition:
+      background-size var(--duration-normal) var(--ease-out-expo),
+      color var(--duration-fast) var(--ease-out-soft);
+  }
+  .link-underline:hover {
+    background-size: 100% 1px;
+  }
+}
+
+/* Shimmer-скелетон для состояний загрузки */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--line) 25%,
+    var(--line-strong) 50%,
+    var(--line) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.8s var(--ease-in-out) infinite;
+}
+
+/* Success-экран — пульс-кольцо вокруг чекмарка */
+@keyframes success-ring {
+  0% { transform: scale(0.8); opacity: 0.6; }
+  100% { transform: scale(1.6); opacity: 0; }
+}
+.success-pulse-ring {
+  animation: success-ring 1s var(--ease-out-expo) forwards;
+}
+
+/* Slide-in для error/notification banners */
+@keyframes slide-in-up {
+  from { transform: translateY(8px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+.animate-slide-in-up {
+  animation: slide-in-up var(--duration-normal) var(--ease-out-expo) both;
+}
+
+/* next/font автоматически префетчит веса, preload-хак больше не нужен. */
+
