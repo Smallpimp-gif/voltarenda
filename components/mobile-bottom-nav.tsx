@@ -12,6 +12,7 @@ import { useApply } from "./apply";
 export function MobileBottomNav() {
   const { open, hasPersisted, persistedProgress } = useApply();
   const [show, setShow] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     const handler = () => {
@@ -22,13 +23,26 @@ export function MobileBottomNav() {
     return () => window.removeEventListener("scroll", handler);
   }, []);
 
+  // Слушаем voltmenu-событие от sticky-header — когда бургер открыт,
+  // прячем sticky CTA вниз (чтобы не дублировать кнопку внутри меню).
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const custom = e as CustomEvent<{ open: boolean }>;
+      setMenuOpen(Boolean(custom.detail?.open));
+    };
+    window.addEventListener("voltmenu", handler);
+    return () => window.removeEventListener("voltmenu", handler);
+  }, []);
+
+  const visible = show && !menuOpen;
+
   const label = hasPersisted
     ? `Продолжить заявку · ${persistedProgress}/4`
     : "Оформить за 3 500 ₽";
 
   return (
     <AnimatePresence>
-      {show && (
+      {visible && (
         <motion.div
           initial={{ y: 100, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}

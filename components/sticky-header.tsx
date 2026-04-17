@@ -80,13 +80,16 @@ export function StickyHeader() {
     return () => window.removeEventListener("scroll", handler);
   }, []);
 
-  // Блокировка скролла body когда открыто full-screen меню
+  // Блокировка скролла body когда открыто full-screen меню.
+  // Параллельно эмитим voltmenu-событие — MobileBottomNav уезжает вниз
+  // чтобы не конкурировать со своей же CTA-кнопкой внутри меню.
   useEffect(() => {
     if (menuOpen) {
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "";
     }
+    window.dispatchEvent(new CustomEvent("voltmenu", { detail: { open: menuOpen } }));
     return () => {
       document.body.style.overflow = "";
     };
