@@ -67,6 +67,10 @@ const FAQ: { q: string; a: string }[] = [
     q: "Я не гражданин РФ. Можно арендовать?",
     a: "Да. Принимаем паспорт РФ, вид на жительство (ВНЖ), разрешение на временное проживание (РВП) или иностранный паспорт. Главное — чтобы документ был действующим, и банковская карта оформлена на твоё имя. Если работаешь по патенту — тоже подходит.",
   },
+  {
+    q: "А по ПДД можно ехать 65 км/ч? Нужны ли права?",
+    a: "По стоковой прошивке велосипед едет до 25 км/ч — это категория «электровелосипед», без прав, без регистрации, можно по велодорожкам. Технически двигатель U2 способен на большее (до 65 км/ч), но в этом режиме ТС юридически переходит в категорию «мопед»: нужны права категории «М» (или любой другой), движение только по проезжей части, велодорожки запрещены. Что выбрать — твоё решение и твоя ответственность.",
+  },
 ];
 
 // FAQ Schema (FAQPage) — JSON-LD для rich snippets в Google SERP.
@@ -166,6 +170,11 @@ export function FaqSection() {
   const b13 = useTransform(scrollYProgress, [0.51, 0.86], [6, 0], { ease: EASE });
   const f13 = useMotionTemplate`blur(${b13}px)`;
 
+  const o14 = useTransform(scrollYProgress, [0.54, 0.89], [0, 1], { ease: EASE });
+  const y14 = useTransform(scrollYProgress, [0.54, 0.89], [24, 0], { ease: EASE });
+  const b14 = useTransform(scrollYProgress, [0.54, 0.89], [6, 0], { ease: EASE });
+  const f14 = useMotionTemplate`blur(${b14}px)`;
+
   const items: {
     opacity: MotionValue<number>;
     y: MotionValue<number>;
@@ -184,6 +193,7 @@ export function FaqSection() {
     { opacity: o11, y: y11, filter: f11 },
     { opacity: o12, y: y12, filter: f12 },
     { opacity: o13, y: y13, filter: f13 },
+    { opacity: o14, y: y14, filter: f14 },
   ];
 
   return (
