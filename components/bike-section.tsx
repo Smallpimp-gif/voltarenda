@@ -149,8 +149,16 @@ export function BikeSection() {
                 initial={{ opacity: 0, y: 16 }}
                 animate={inView ? { opacity: 1, y: 0 } : {}}
                 transition={{ delay: 0.75 + i * 0.08, duration: 0.55, ease: APPLE_EASE }}
+                // min-w-0: grid-item по умолчанию имеет min-width:auto и
+                // не уменьшается под содержимое — большая метрика растягивает
+                // колонку и обрезается sticky-child overflow-hidden.
+                className="min-w-0"
               >
-                <div className="font-sans text-display-2 tnum text-white">
+                {/* text-display-2 (clamp 32–64px) был широковат — «60 + 30 Ач»
+                    переполнял колонку на 360–414px viewport. Поменяли на
+                    адаптивный clamp 24–48px: на 360px = 24px, на 768px = 42px,
+                    на 1280px+ = 48px. Помещается в любой колонке. */}
+                <div className="font-sans tnum text-[clamp(24px,5.5vw,48px)] leading-none text-white">
                   {value}
                 </div>
                 <div className="mt-2 font-mono text-caption uppercase text-white/60">
