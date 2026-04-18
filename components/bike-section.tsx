@@ -50,27 +50,28 @@ export function BikeSection() {
   }, []);
   const videoSrc = isMobile ? "/bike-video-mobile.mp4" : "/bike-video-desktop.mp4";
 
-  // Scrub видео по скроллу — брендовый момент секции.
-  // Секция h-[180vh] mobile / h-[200vh] desktop. Sticky child h-screen
-  // держится первый экран, оставшиеся 80–100vh скролла прокручивают
-  // currentTime видео. Threshold 0.85 = видео проигрывается за первые
-  // 85% прогресса, последние 15% — hold на финальном кадре перед
-  // уходом в Tariffs.
+  // Scrub видео по скроллу — брендовый момент ТОЛЬКО на десктопе.
+  // На мобилке scrub убран: для scrub нужна секция h-[140–200vh]
+  // (sticky h-screen + 40–100vh скролла), что давало dead-space между
+  // концом видео и блоком BikeSpecs — юзер видел пустой чёрный участок
+  // и отмечал «что-то сломано». На мобилке видео просто autoplay loop,
+  // секция компактна = h-screen, дальше сразу specs.
   //
-  // НЕ оборачивать в useSpring: spring добавляет inertia (~50-100ms
-  // delay), а на decode-bound currentTime seek это ощущается как
-  // «видео отстаёт от пальца». Direct raw progress — мгновенная связь
-  // палец↔видео.
-  //
-  // rAF throttle: scroll fires 100+ events/sec, каждый seek в mp4 это
-  // синхронный decode. Throttle до 1 update за frame через
-  // rafPendingRef.
+  // Desktop scrub сохранён:
+  // - НЕ оборачивать в useSpring: inertia ~50–100ms даёт ощущение
+  //   «видео отстаёт от пальца». Direct raw progress — мгновенная
+  //   связь палец↔видео.
+  // - rAF throttle: scroll fires 100+ events/sec, каждый seek в mp4
+  //   это синхронный decode. Throttle до 1 update за frame.
+  // - Threshold 0.85 = видео проигрывается за первые 85% прогресса,
+  //   последние 15% — hold на финальном кадре перед Tariffs.
   const { scrollYProgress } = useScroll({
     target: sectionRef,
     offset: ["start start", "end end"],
   });
   const rafPendingRef = useRef(false);
   useMotionValueEvent(scrollYProgress, "change", (progress) => {
+    if (isMobile) return; // mobile uses autoplay, no scrub
     if (rafPendingRef.current) return;
     rafPendingRef.current = true;
     requestAnimationFrame(() => {
@@ -88,13 +89,16 @@ export function BikeSection() {
       ref={sectionRef}
       data-theme="dark"
       id="bike"
+      // Mobile — h-screen (без dead-space до BikeSpecs).
+      // Desktop — h-[200vh] для scrub-scroll space (sticky child h-screen
+      // + 100vh scrollspace прокручивают currentTime видео).
       // ВАЖНО: НЕ добавлять overflow-hidden на section — это ломает
       // position: sticky дочернего элемента (sticky requires nearest
       // scrolling ancestor; overflow-hidden создаёт scroll context).
-      // Видео clip'ится внутри sticky-child'a, который имеет overflow-hidden.
-      className="relative h-[140vh] text-white md:h-[200vh]"
+      // Видео clip'ится внутри child'a, который имеет overflow-hidden.
+      className="relative h-screen text-white md:h-[200vh]"
     >
-      <div className="sticky top-0 h-screen overflow-hidden">
+      <div className="relative h-full overflow-hidden md:sticky md:top-0 md:h-screen">
         {/* Видео — currentTime управляется scroll-scrub'ом, без autoplay */}
         <motion.div
           aria-hidden
@@ -121,6 +125,10 @@ export function BikeSection() {
             muted
             playsInline
             preload="auto"
+            // Mobile — autoplay loop (scrub выключен, см. выше).
+            // Desktop — без autoplay: scroll-scrub управляет currentTime.
+            autoPlay={isMobile}
+            loop={isMobile}
             className="h-full w-full object-cover object-center"
           />
         </motion.div>
