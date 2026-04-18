@@ -69,15 +69,15 @@ export default function GlobalError({
               margin: "0 0 32px",
             }}
           >
-            Мы уже чиним. Попробуй обновить страницу через минуту или напиши в
-            WhatsApp:{" "}
+            Мы уже чиним. Попробуй обновить страницу через минуту или напиши
+            во ВКонтакте:{" "}
             <a
-              href="https://wa.me/79013000319"
+              href="https://vk.com/voltarenda"
               target="_blank"
               rel="noopener noreferrer"
               style={{ color: "#E5FF00" }}
             >
-              wa.me/79013000319
+              vk.com/voltarenda
             </a>
             .
           </p>

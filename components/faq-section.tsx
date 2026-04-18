@@ -13,7 +13,7 @@ import {
   MotionValue,
 } from "framer-motion";
 import { EASE, SMOOTH_SCROLL } from "./motion-config";
-import { TELEGRAM_URL, WHATSAPP_URL_WITH_INTENT } from "@/lib/contacts";
+import { TELEGRAM_URL, VK_URL } from "@/lib/contacts";
 
 const FAQ: { q: string; a: string }[] = [
   {
@@ -233,12 +233,12 @@ export function FaqSection() {
             <p className="mt-2 max-w-[36ch] font-sans text-body text-mute">
               Не нашёл ответ? Напиши в{" "}
               <a
-                href={WHATSAPP_URL_WITH_INTENT}
+                href={VK_URL}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-block py-1 text-[var(--text)] underline underline-offset-4 transition-colors duration-quick ease-out-soft hover:text-volt"
               >
-                WhatsApp
+                ВКонтакте
               </a>
               {" "}или{" "}
               <a

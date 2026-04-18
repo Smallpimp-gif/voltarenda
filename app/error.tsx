@@ -11,7 +11,7 @@ import {
   PHONE_DISPLAY,
   PHONE_TEL,
   TELEGRAM_URL,
-  WHATSAPP_URL_WITH_INTENT,
+  VK_URL,
 } from "@/lib/contacts";
 
 export default function Error({
@@ -56,8 +56,8 @@ export default function Error({
             Что-то сломалось на нашей стороне.
           </h1>
           <p className="max-w-[52ch] font-sans text-body-lg text-mute">
-            Попробуй перезагрузить страницу. Если не помогло — напиши нам в
-            WhatsApp или Telegram, мы подскажем что делать (и поправим причину).
+            Попробуй перезагрузить страницу. Если не помогло — напиши нам во
+            ВКонтакте или Telegram, мы подскажем что делать (и поправим причину).
           </p>
           <div className="flex flex-wrap items-center gap-4">
             <button
@@ -77,12 +77,12 @@ export default function Error({
 
           <div className="flex flex-wrap items-center gap-6 pt-4 font-mono text-caption uppercase text-mute">
             <a
-              href={WHATSAPP_URL_WITH_INTENT}
+              href={VK_URL}
               target="_blank"
               rel="noopener noreferrer"
               className="transition-colors duration-quick ease-out-soft hover:text-volt"
             >
-              WhatsApp →
+              ВКонтакте →
             </a>
             <a
               href={TELEGRAM_URL}

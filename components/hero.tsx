@@ -118,30 +118,32 @@ export function Hero() {
           variants={itemVariants}
           className="font-mono text-caption uppercase tracking-[0.08em] text-mute"
         >
-          Аренда · Санкт-Петербург · Выдача в тот же день
+          Аренда · Санкт-Петербург · Выдача в день обращения
         </motion.span>
 
-        {/* H1 — категорийное позиционирование в 3 слова (Product для
-            кого). Research median H1 на аналогах = 5 слов, у нас короче
-            = сильнее удар. «Электробайк» вместо «электровелосипед»:
-            визуально продукт — не педальный велик, а скутер-формат,
-            «байк» не создаёт обманчивого ожидания. */}
+        {/* H1 — SEO-оптимизированное позиционирование. «Электровелосипед»
+            (legal-термин, не «электробайк» — важно для search) + модель
+            U2 + формат услуги + гео. Размер уменьшен ~20% от text-display-1
+            (clamp 36–72px вместо 44–88px) — 5 слов длинновато для пиковых
+            размеров display-1, начинает доминировать над сценой. */}
         <motion.h1
           variants={itemVariants}
-          className="mt-4 font-sans text-display-1"
+          className="mt-4 font-sans font-bold leading-[0.95] tracking-[-0.03em] text-[clamp(36px,5vw,72px)]"
         >
-          Электробайк<br />для курьера
+          Электровелосипед U2<br />в аренду в&nbsp;СПб
         </motion.h1>
 
-        {/* Subtitle — 3 факта в одну mono-строку: АКБ / запас / цена.
-            Цена впервые появляется в hero (раньше её не было до 3-го
-            экрана). Разделитель «·» держит ритм и намёком говорит что
-            это спека, а не маркетинговый слоган. */}
+        {/* Subtitle — полная спецификация + ценовой якорь. «от 633 ₽/день»
+            выделен volt-цветом (brand accent), чтобы цена считывалась
+            сразу, до того как пользователь прочитает всё предложение. */}
         <motion.p
           variants={itemVariants}
-          className="mt-8 max-w-[48ch] font-sans text-body-lg text-mute"
+          className="mt-6 max-w-[52ch] font-sans text-body-lg text-mute"
         >
-          2 АКБ · ~120 км на смену · от 633 ₽/день
+          Топовая модель для курьеров. 65 км/ч, 2 аккумулятора LiFePO4, до 120
+          км на смену.{" "}
+          <span className="font-semibold text-volt">От 633 ₽/день</span> — ниже,
+          чем у других прокатов СПб.
         </motion.p>
 
         <motion.div
@@ -173,18 +175,21 @@ export function Hero() {
           </a>
         </motion.div>
 
-        {/* Trust-row — 3 коротких факта под CTA. Пришёл из паттерна
-            конкурентов (ситидрайв: «10 лет / 17 000 авто / 24/7»), но
-            адаптирован под нас: гео-точка + комплектация + канал выдачи. */}
+        {/* Trust-row — 4 коротких факта под CTA. Паттерн ситидрайв/юрент:
+            гео + комплектация + канал выдачи + поддержка. «Техподдержка
+            24/7» — сигнал надёжности для курьера, который выходит на
+            смену в 6 утра и не может ждать рабочих часов. */}
         <motion.div
           variants={itemVariants}
           className="mt-8 flex flex-wrap items-center gap-x-4 gap-y-2 font-mono text-[11px] uppercase tracking-[0.08em] text-mute sm:gap-x-6"
         >
-          <span>СПб · Парголово</span>
+          <span>Парголово</span>
           <span aria-hidden className="text-mute/40">·</span>
           <span>2 АКБ в комплекте</span>
           <span aria-hidden className="text-mute/40">·</span>
-          <span>Выдача ~2 часа</span>
+          <span>Выдача за ~2 часа</span>
+          <span aria-hidden className="text-mute/40">·</span>
+          <span>Техподдержка 24/7</span>
         </motion.div>
       </motion.div>
 

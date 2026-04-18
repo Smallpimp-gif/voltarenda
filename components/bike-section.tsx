@@ -22,11 +22,11 @@ import {
 } from "framer-motion";
 import { APPLE_EASE } from "./motion-config";
 
-const METRICS: [string, string][] = [
-  ["~120 км", "запас на 2 АКБ"],
-  ["60 + 30 Ач", "два аккумулятора"],
-  ["150 кг", "грузоподъёмность"],
-  ["до 65 км/ч", "макс. скорость"],
+const METRICS: { value: string; label: string }[] = [
+  { value: "до 120 км", label: "пробег на смену" },
+  { value: "60 + 30 Ач", label: "LiFePO4 · 2 АКБ" },
+  { value: "150 кг", label: "грузоподъёмность" },
+  { value: "до 65 км/ч", label: "макс. скорость" },
 ];
 
 export function BikeSection() {
@@ -136,14 +136,11 @@ export function BikeSection() {
           className="absolute inset-x-0 bottom-0 h-[50%] bg-gradient-to-t from-black via-black/85 to-transparent md:h-[45%] md:via-black/50"
         />
 
-        {/* Контент-контейнер */}
-        {/* pb-56 на мобиле — Telegram-кнопка fixed bottom-20 right-4
-            (h-14, занимает зону viewport bottom 80–136px) перекрывала
-            нижнюю метрику «до 65 км/ч». Sticky-CTA внизу добавляет
-            ещё ~76px. Эмпирически 14rem = 224px чисто отбивает оба
-            фиксированных элемента + safe-area. Десктоп остаётся pb-20. */}
-        <div className="relative mx-auto flex h-full max-w-content flex-col justify-between px-8 pb-56 pt-24 md:px-12 md:pb-20 md:pt-28">
-          {/* Top — eyebrow + title + desc */}
+        {/* Контент-контейнер — теперь содержит только верхний текст.
+            Метрики вынесены в отдельную секцию BikeSpecs ниже (чёрный
+            фон, apple-style грид), чтобы фото/видео продукта оставалось
+            чистым без наложенных UI-плашек. */}
+        <div className="relative mx-auto flex h-full max-w-content flex-col px-8 pt-24 md:px-12 md:pt-28">
           <div className="max-w-[640px]">
             <motion.span
               initial={{ opacity: 0, y: 12 }}
@@ -171,35 +168,69 @@ export function BikeSection() {
               ~60 км на каждом, ~120 км на смену без тревоги о зарядке.
             </motion.p>
           </div>
-
-          {/* Bottom — метрики */}
-          <div className="grid grid-cols-2 gap-x-4 gap-y-6 border-t border-white/15 pt-8 sm:gap-x-8 sm:gap-y-8 md:grid-cols-4">
-            {METRICS.map(([value, label], i) => (
-              <motion.div
-                key={label}
-                initial={{ opacity: 0, y: 16 }}
-                animate={inView ? { opacity: 1, y: 0 } : {}}
-                transition={{ delay: 0.75 + i * 0.08, duration: 0.55, ease: APPLE_EASE }}
-                // min-w-0: grid-item по умолчанию имеет min-width:auto и
-                // не уменьшается под содержимое — большая метрика растягивает
-                // колонку и обрезается sticky-child overflow-hidden.
-                className="min-w-0"
-              >
-                {/* text-display-2 (clamp 32–64px) был широковат — «60 + 30 Ач»
-                    переполнял колонку на 360–414px viewport. Поменяли на
-                    адаптивный clamp 24–48px: на 360px = 24px, на 768px = 42px,
-                    на 1280px+ = 48px. Помещается в любой колонке. */}
-                <div className="font-sans tnum text-[clamp(24px,5.5vw,48px)] leading-none text-white">
-                  {value}
-                </div>
-                <div className="mt-2 font-mono text-caption uppercase text-white/60">
-                  {label}
-                </div>
-              </motion.div>
-            ))}
-          </div>
         </div>
       </div>
     </section>
   );
 }
+
+// ============================================================
+// BikeSpecs — apple-style таблица характеристик.
+// Отдельная секция под bike-section: чистый чёрный фон, крупные
+// volt-цифры, белые подписи-капсы, короткая volt-линия-разделитель.
+// Раньше метрики были наложены glass-плашкой поверх видео — выглядело
+// как заглушка и «ломало premium-ощущение» (цитата юзера). Вынесено
+// отдельно, чтобы фото продукта дышало.
+// ============================================================
+function BikeSpecs() {
+  const ref = useRef<HTMLElement>(null);
+  const inView = useInView(ref, { once: true, amount: 0.3 });
+
+  return (
+    <section
+      ref={ref}
+      data-theme="dark"
+      className="bg-[#0A0A0A] text-white"
+    >
+      <div className="mx-auto max-w-content px-gutter py-20 md:py-28">
+        {/* Сетка: 2×2 на мобилке, 1×4 на десктопе. gap — минимум 48px
+            горизонтальный на десктопе для воздуха (apple-style). */}
+        <div className="grid grid-cols-2 gap-x-6 gap-y-12 md:grid-cols-4 md:gap-x-12">
+          {METRICS.map((m, i) => (
+            <motion.div
+              key={m.label}
+              initial={{ opacity: 0, y: 20 }}
+              animate={inView ? { opacity: 1, y: 0 } : {}}
+              transition={{ delay: 0.1 + i * 0.08, duration: 0.6, ease: APPLE_EASE }}
+              className="min-w-0"
+            >
+              {/* Цифра — volt, крупная, nowrap чтобы «60 + 30 Ач» и
+                  «до 65 км/ч» не ломались внутри значения. На 360px
+                  clamp уходит в 32px — 4-символьное «150 кг» помещается
+                  без переноса, самое длинное «60 + 30 Ач» занимает
+                  ~158px при 32px шрифте, в колонке (360-gutter-gap)/2
+                  ≈ 145–155px — едва влезает. */}
+              <div className="whitespace-nowrap font-sans font-bold leading-none text-volt text-[clamp(32px,4.2vw,56px)] tracking-[-0.02em]">
+                {m.value}
+              </div>
+              {/* Короткая volt-линия между цифрой и подписью — акцент. */}
+              <div
+                aria-hidden
+                className="mt-5 h-[2px] w-6 bg-volt"
+              />
+              <div className="mt-3 font-mono text-[12px] uppercase tracking-[0.08em] text-white/60 md:text-[13px]">
+                {m.label}
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// Оба компонента выносятся как один default-export-like bundle: page.tsx
+// использует <BikeSection />, а BikeSpecs автоматически рендерится
+// следом. Это держит page.tsx неизменным и группирует связанную логику
+// «Вольт U2 показ + спецификация» в одном файле.
+export { BikeSpecs };

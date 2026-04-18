@@ -22,7 +22,8 @@ import {
   PHONE_TEL,
   TELEGRAM_HANDLE,
   TELEGRAM_URL,
-  WHATSAPP_URL_WITH_INTENT,
+  VK_HANDLE,
+  VK_URL,
 } from "@/lib/contacts";
 
 const FOOTER_SECTIONS: { href: string; label: string }[] = [
@@ -42,7 +43,7 @@ const FOOTER_DOCS: { href: string; label: string }[] = [
 
 const FOOTER_CONTACTS: { href: string; label: string; external?: boolean }[] = [
   { href: PHONE_TEL, label: PHONE_DISPLAY },
-  { href: WHATSAPP_URL_WITH_INTENT, label: "WhatsApp", external: true },
+  { href: VK_URL, label: VK_HANDLE, external: true },
   { href: TELEGRAM_URL, label: TELEGRAM_HANDLE, external: true },
   { href: EMAIL_MAILTO, label: EMAIL },
 ];

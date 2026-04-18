@@ -6,7 +6,7 @@ import {
   PHONE_DISPLAY,
   PHONE_TEL,
   TELEGRAM_URL,
-  WHATSAPP_URL_WITH_INTENT,
+  VK_URL,
 } from "@/lib/contacts";
 
 export const metadata: Metadata = {
@@ -63,12 +63,12 @@ export default function NotFound() {
           <div className="flex flex-wrap items-center gap-6 pt-2 font-mono text-caption uppercase text-mute">
             <span>Или напиши нам:</span>
             <a
-              href={WHATSAPP_URL_WITH_INTENT}
+              href={VK_URL}
               target="_blank"
               rel="noopener noreferrer"
               className="transition-colors duration-quick ease-out-soft hover:text-volt"
             >
-              WhatsApp →
+              ВКонтакте →
             </a>
             <a
               href={TELEGRAM_URL}

@@ -17,7 +17,7 @@ import {
 import { AnimatePresence, motion } from "framer-motion";
 import { TariffCard } from "./tariff-card";
 import { APPLE_EASE, EASE, MODAL_SPRING } from "./motion-config";
-import { PHONE_TEL, WHATSAPP_URL_WITH_INTENT } from "@/lib/contacts";
+import { PHONE_TEL, VK_URL } from "@/lib/contacts";
 
 // ============================================================
 // Типы и константы
@@ -1438,7 +1438,7 @@ function SuccessScreen({
           </div>
         </div>
 
-        {/* Быстрые действия — звонок, WhatsApp, маршрут */}
+        {/* Быстрые действия — звонок, ВК, маршрут */}
         <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
           <a
             href={PHONE_TEL}
@@ -1447,12 +1447,12 @@ function SuccessScreen({
             Позвонить
           </a>
           <a
-            href={WHATSAPP_URL_WITH_INTENT}
+            href={VK_URL}
             target="_blank"
             rel="noopener noreferrer"
             className="btn-cta btn-cta-outline flex items-center justify-center gap-2 rounded-md border border-[var(--line-strong)] px-4 py-4 font-mono text-caption uppercase hover:border-volt hover:text-volt"
           >
-            WhatsApp
+            ВКонтакте
           </a>
           <a
             href="https://yandex.ru/maps/?rtext=~60.081695,30.311619&rtt=auto"
