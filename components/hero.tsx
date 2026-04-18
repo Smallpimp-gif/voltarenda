@@ -52,13 +52,17 @@ export function Hero() {
       id="hero"
       className="relative z-20 min-h-screen overflow-hidden bg-[var(--bg)] text-[var(--text)]"
     >
-      {/* Фон — параллакс + zoom-out при загрузке. Video если HERO_VIDEO задан. */}
+      {/* Фон — параллакс + zoom-out при загрузке. Video если HERO_VIDEO задан.
+          ВАЖНО: НЕ ставить opacity:0 в initial — Lighthouse не считает
+          элемент LCP-кандидатом пока он opacity 0. Hero image priority +
+          opacity:0 → LCP=undefined → Performance score = 0. Анимируем
+          только scale (zoom-out), картинка сразу opacity:1 = валидный LCP. */}
       <motion.div
         aria-hidden
         style={{ y: imageY }}
-        initial={prefersReduced ? { opacity: 0 } : { scale: 1.15, opacity: 0 }}
-        animate={prefersReduced ? { opacity: 1 } : { scale: 1, opacity: 1 }}
-        transition={{ duration: prefersReduced ? 0.4 : 1.8, ease: EASE }}
+        initial={prefersReduced ? {} : { scale: 1.15 }}
+        animate={prefersReduced ? {} : { scale: 1 }}
+        transition={{ duration: prefersReduced ? 0 : 1.8, ease: EASE }}
         className="absolute inset-0"
       >
         {HERO_VIDEO ? (
