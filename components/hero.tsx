@@ -83,10 +83,19 @@ export function Hero() {
         )}
       </motion.div>
 
-      {/* Dark gradient overlay для читаемости текста */}
+      {/* Базовый диагональный градиент — лёгкая «инженерная» затемняшка.
+          Сам по себе слаб — текст в нижней половине просвечивал картинку
+          сквозь буквы. Поэтому ниже добавлен прицельный bottom-scrim. */}
       <div
         aria-hidden
         className="absolute inset-0 bg-gradient-to-tr from-black via-black/75 to-black/30"
+      />
+      {/* Bottom-scrim — гарантирует чёрный фон под textblock'ом
+          (subtitle, CTA, trust). Картинку закрывает только в нижней
+          половине, верхняя половина с фото остаётся читаемой. */}
+      <div
+        aria-hidden
+        className="absolute inset-x-0 bottom-0 h-[55%] bg-gradient-to-t from-black via-black/80 to-transparent"
       />
 
       {/* Контент — staggered fade-in снизу-вверх */}
@@ -99,28 +108,24 @@ export function Hero() {
         {/* Spacer — толкает весь контент вниз, чтобы фото было видно больше */}
         <div className="flex-1" />
 
-        {/* Брендовая строка — декоративный ритм «инженерного журнала».
-            На мобиле скрыта: экономим одну строку выше h1. */}
-        <motion.span
-          variants={itemVariants}
-          className="hidden font-mono text-caption uppercase text-mute sm:inline"
-        >
-          00 / ВОЛЬТАРЕНДА / СПБ
-        </motion.span>
-
-        {/* H1 — единый fade-in как остальные элементы */}
+        {/* H1 — единый fade-in как остальные элементы.
+            Eyebrow «00 / ВОЛЬТАРЕНДА / СПБ» был дублем sticky-header'а
+            (то же имя бренда сверху), снят. */}
         <motion.h1
           variants={itemVariants}
-          className="mt-6 font-sans text-display-1"
+          className="font-sans text-display-1"
         >
           Бери<br />и зарабатывай
         </motion.h1>
 
+        {/* Subtitle — один факт-крючок про главное УТП (2 АКБ, ~120 км).
+            Цена/город/время — спущены в trust-строки ниже, чтобы здесь
+            не нагромождать 4 факта в 2 строки. */}
         <motion.p
           variants={itemVariants}
-          className="mt-8 max-w-[52ch] font-sans text-body-lg text-mute"
+          className="mt-8 max-w-[44ch] font-sans text-body-lg text-mute"
         >
-          Для курьеров СПб. ~120 км на 2 АКБ, от 633 ₽/день. Выдача за 30 минут.
+          Два АКБ, ~120 км на смену — без тревоги о зарядке.
         </motion.p>
 
         <motion.div
@@ -139,23 +144,18 @@ export function Hero() {
               ? `Продолжить заявку · ${persistedProgress}/4 →`
               : "Начать зарабатывать →"}
           </button>
-          {/* «Тарифы от 3500 ₽» скрыта на мобиле — там экран и так
-              перегружен. На десктопе оставлена как быстрый путь к
-              прайсу для сравнивающих пользователей. */}
-          <a
-            href="#tariffs"
-            className="hidden font-mono text-caption uppercase text-mute underline decoration-white/20 underline-offset-4 transition-colors hover:text-[var(--text)] hover:decoration-volt sm:inline"
-          >
-            Тарифы от 3500 ₽
-          </a>
+          {/* «Тарифы от 3500 ₽» снят: дублировал «от 633 ₽/день» из
+              subtitle и при этом давал ДРУГУЮ цену (3-дневный тариф vs
+              месячный за день). Цена-конфликт на одном экране. */}
         </motion.div>
 
-        {/* Якорная строка — снимает страх «сколько ещё сверху» */}
+        {/* Trust-строка #1 — коммерческие условия одной строкой.
+            Включает цену (раньше была отдельной ссылкой), залог. */}
         <motion.p
           variants={itemVariants}
           className="mt-4 font-mono text-caption uppercase text-mute"
         >
-          Залог 5 000 ₽ · возвращаем при сдаче
+          От 633 ₽/день · залог 5 000 ₽
         </motion.p>
 
         {/* Live-trader — единственный источник метрик в hero.
@@ -171,11 +171,11 @@ export function Hero() {
             <span className="relative inline-block h-2 w-2 rounded-full bg-volt" />
           </span>
           <span className="font-sans text-body text-[var(--text)]">
-            47 курьеров · окупаемость 2–3 дня
+            47 курьеров в СПб · окупаемость 2–3 дня
           </span>
-          <span className="hidden font-mono text-[11px] uppercase tracking-[0.08em] text-mute sm:inline">
-            данные за март 2026
-          </span>
+          {/* «данные за март 2026» снято: 18 апреля — данные двухнедельной
+              давности. Когда обновим когорту, вернём в формате evergreen
+              («данные за последние 30 дней») или текущим месяцем. */}
         </motion.div>
       </motion.div>
 
