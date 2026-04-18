@@ -17,7 +17,7 @@ import { EASE, SMOOTH_SCROLL } from "./motion-config";
 const FAQ: { q: string; a: string }[] = [
   {
     q: "Что нужно для оформления?",
-    a: "Паспорт гражданина РФ, селфи для верификации и банковская карта на твоё имя. Весь процесс занимает ~10 минут с телефона.",
+    a: "Паспорт (РФ, ВНЖ или иностранный — мы работаем не только с гражданами РФ), селфи для верификации и банковская карта на твоё имя. Весь процесс занимает ~10 минут с телефона.",
   },
   {
     q: "Как происходит оплата?",
@@ -62,6 +62,10 @@ const FAQ: { q: string; a: string }[] = [
   {
     q: "Где и как заряжать батареи?",
     a: "От обычной домашней розетки 220V через зарядник из комплекта. Обе батареи заряжаешь дома за ночь — к утру готов на новую смену. Возить их на точку выдачи не нужно.",
+  },
+  {
+    q: "Я не гражданин РФ. Можно арендовать?",
+    a: "Да. Принимаем паспорт РФ, вид на жительство (ВНЖ), разрешение на временное проживание (РВП) или иностранный паспорт. Главное — чтобы документ был действующим, и банковская карта оформлена на твоё имя. Если работаешь по патенту — тоже подходит.",
   },
 ];
 
@@ -157,6 +161,11 @@ export function FaqSection() {
   const b12 = useTransform(scrollYProgress, [0.48, 0.83], [6, 0], { ease: EASE });
   const f12 = useMotionTemplate`blur(${b12}px)`;
 
+  const o13 = useTransform(scrollYProgress, [0.51, 0.86], [0, 1], { ease: EASE });
+  const y13 = useTransform(scrollYProgress, [0.51, 0.86], [24, 0], { ease: EASE });
+  const b13 = useTransform(scrollYProgress, [0.51, 0.86], [6, 0], { ease: EASE });
+  const f13 = useMotionTemplate`blur(${b13}px)`;
+
   const items: {
     opacity: MotionValue<number>;
     y: MotionValue<number>;
@@ -174,6 +183,7 @@ export function FaqSection() {
     { opacity: o10, y: y10, filter: f10 },
     { opacity: o11, y: y11, filter: f11 },
     { opacity: o12, y: y12, filter: f12 },
+    { opacity: o13, y: y13, filter: f13 },
   ];
 
   return (
