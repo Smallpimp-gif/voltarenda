@@ -111,7 +111,12 @@ export function BikeSection() {
         />
 
         {/* Контент-контейнер */}
-        <div className="relative mx-auto flex h-full max-w-content flex-col justify-between px-8 pb-16 pt-24 md:px-12 md:pb-20 md:pt-28">
+        {/* pb-56 на мобиле — Telegram-кнопка fixed bottom-20 right-4
+            (h-14, занимает зону viewport bottom 80–136px) перекрывала
+            нижнюю метрику «до 65 км/ч». Sticky-CTA внизу добавляет
+            ещё ~76px. Эмпирически 14rem = 224px чисто отбивает оба
+            фиксированных элемента + safe-area. Десктоп остаётся pb-20. */}
+        <div className="relative mx-auto flex h-full max-w-content flex-col justify-between px-8 pb-56 pt-24 md:px-12 md:pb-20 md:pt-28">
           {/* Top — eyebrow + title + desc */}
           <div className="max-w-[640px]">
             <motion.span

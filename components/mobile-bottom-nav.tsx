@@ -36,9 +36,12 @@ export function MobileBottomNav() {
 
   const visible = show && !menuOpen;
 
+  // Без цены: «3 500 ₽» (3-дневный тариф) конфликтовал с «От 633 ₽/день»
+  // в Hero subtitle — два разных числа на расстоянии одного скролла,
+  // курьер думает «обманули». Цены живут в Tariffs (секция 03).
   const label = hasPersisted
     ? `Продолжить заявку · ${persistedProgress}/4`
-    : "Оформить за 3 500 ₽";
+    : "Оформить заявку";
 
   return (
     <AnimatePresence>
