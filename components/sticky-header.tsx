@@ -141,7 +141,9 @@ export function StickyHeader() {
               alt="Вольтаренда"
               width={160}
               height={15}
-              className="h-4 w-auto transition-[filter] duration-base ease-out-soft"
+              // На мобилке 12px (-25% от десктопа) — забирал слишком много
+              // хедера на 360–414 px, конкурировал с бургер-иконкой.
+              className="h-3 w-auto transition-[filter] duration-base ease-out-soft md:h-4"
               // dark — родной цвет SVG (жёлтый #EAFF02, brand accent).
               // light — brightness(0) делает лого чёрным для контраста
               // на бежевом фоне (жёлтый #EAFF02 на #F4F3F1 не читается).

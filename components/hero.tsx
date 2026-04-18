@@ -3,6 +3,7 @@
 // Hero-секция лендинга — финальная версия Этапа 3.
 // Фичи: параллакс фото + scroll-indicator + video-ready + zoom-out на загрузке.
 
+import type { ReactNode } from "react";
 import Image from "next/image";
 import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
 import { useApply } from "./apply";
@@ -86,19 +87,24 @@ export function Hero() {
         )}
       </motion.div>
 
-      {/* Верхний scrim — лёгкий, чтобы байк оставался виден как продукт.
-          Раньше тут был диагональный градиент `from-black via-black/75
-          to-black/30`, убивавший фото. Research по яндекс.драйв / юрент /
-          whoosh показал: product-forward hero держит скрим минимальным. */}
+      {/* Mobile scrim — длинный мягкий градиент в чистый чёрный.
+          Задача: фото курьера видно сверху, начиная ~40% высоты экран
+          уходит в солидный #000, и весь текст hero стоит уже на чистом
+          чёрном — не на фото. Раньше текст с фото сливался, читалось
+          плохо. Теперь есть чёткая граница photo/text без UI-плашек. */}
       <div
         aria-hidden
-        className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-transparent"
+        className="absolute inset-0 bg-gradient-to-b from-transparent via-black to-black md:hidden"
       />
-      {/* Нижний scrim — плотный снизу, гарантирует читаемость eyebrow /
-          H1 / subtitle / CTA / trust-row поверх любого кадра. */}
+      {/* Desktop scrim — product-forward (байк виден), только лёгкое
+          затемнение под eyebrow/CTA/trust-row. */}
       <div
         aria-hidden
-        className="absolute inset-x-0 bottom-0 h-[65%] bg-gradient-to-t from-black via-black/85 to-transparent"
+        className="absolute inset-0 hidden bg-gradient-to-b from-black/40 via-transparent to-transparent md:block"
+      />
+      <div
+        aria-hidden
+        className="absolute inset-x-0 bottom-0 hidden h-[65%] bg-gradient-to-t from-black via-black/85 to-transparent md:block"
       />
 
       {/* Контент — staggered fade-in снизу-вверх */}
@@ -111,26 +117,31 @@ export function Hero() {
         {/* Spacer — толкает весь контент вниз, чтобы фото было видно больше */}
         <div className="flex-1" />
 
-        {/* Eyebrow — гео + формат услуги. Даёт контекст до H1 (что это
-            за сайт / где / для кого), экономит когнитивную нагрузку
-            первого взгляда. */}
+        {/* Eyebrow — гео + формат услуги. На мобилке укорочен («Аренда ·
+            Санкт-Петербург · Выдача в день обращения» — 6 слов — уходил
+            в 2 строки и читался как подпись). На десктопе полная версия.
+            «ЭЛЕКТРОВЕЛОСИПЕД» в mobile eyebrow — SEO-keyword перекочевал
+            сюда из H1, Яндекс индексирует uppercase eyebrow'ы. */}
         <motion.span
           variants={itemVariants}
-          className="font-mono text-caption uppercase tracking-[0.08em] text-mute"
+          className="font-mono text-caption uppercase tracking-[0.08em] text-white/75"
         >
-          Аренда · Санкт-Петербург · Выдача в день обращения
+          <span className="md:hidden">Электровелосипед · СПб · Выдача сегодня</span>
+          <span className="hidden md:inline">Аренда · Санкт-Петербург · Выдача в день обращения</span>
         </motion.span>
 
-        {/* H1 — SEO-оптимизированное позиционирование. «Электровелосипед»
-            (legal-термин, не «электробайк» — важно для search) + модель
-            U2 + формат услуги + гео. Размер уменьшен ~20% от text-display-1
-            (clamp 36–72px вместо 44–88px) — 5 слов длинновато для пиковых
-            размеров display-1, начинает доминировать над сценой. */}
+        {/* H1 — на мобилке короткий «Вольт U2 в аренду» (3 слова, 1–2
+            строки). На десктопе полная SEO-версия с ключом «Электро-
+            велосипед». Ключевое слово живёт в eyebrow на мобилке, индекс
+            не теряется. */}
         <motion.h1
           variants={itemVariants}
           className="mt-4 font-sans font-bold leading-[0.95] tracking-[-0.03em] text-[clamp(36px,5vw,72px)]"
         >
-          Электровелосипед U2<br />в аренду в&nbsp;СПб
+          <span className="md:hidden">Вольт U2<br />в аренду</span>
+          <span className="hidden md:inline">
+            Электровелосипед U2<br />в аренду в&nbsp;СПб
+          </span>
         </motion.h1>
 
         {/* Subtitle — полная спецификация + ценовой якорь. «от 633 ₽/день»
@@ -175,24 +186,90 @@ export function Hero() {
           </a>
         </motion.div>
 
-        {/* Trust-row — 4 коротких факта под CTA. Паттерн ситидрайв/юрент:
-            гео + комплектация + канал выдачи + поддержка. «Техподдержка
-            24/7» — сигнал надёжности для курьера, который выходит на
-            смену в 6 утра и не может ждать рабочих часов. */}
+        {/* Trust-row — 4 факта. На мобилке сетка 2×2 с линейными иконками
+            (Lucide-style, volt-цвет) слева от каждого пункта — раньше
+            ribbon в одну строку мелким mono уходил в 2 строки и читался
+            как подпись, потерянно. Сейчас структурированный grid. На
+            десктопе — одна строка как было (там хватает ширины). */}
         <motion.div
           variants={itemVariants}
-          className="mt-8 flex flex-wrap items-center gap-x-4 gap-y-2 font-mono text-[11px] uppercase tracking-[0.08em] text-mute sm:gap-x-6"
+          className="mt-8 grid grid-cols-2 gap-x-4 gap-y-3 font-mono text-[11px] uppercase tracking-[0.08em] text-white/70 md:flex md:flex-wrap md:items-center md:gap-x-6 md:gap-y-2"
         >
-          <span>Парголово</span>
-          <span aria-hidden className="text-mute/40">·</span>
-          <span>2 АКБ в комплекте</span>
-          <span aria-hidden className="text-mute/40">·</span>
-          <span>Выдача за ~2 часа</span>
-          <span aria-hidden className="text-mute/40">·</span>
-          <span>Техподдержка 24/7</span>
+          <TrustItem icon={<MapPinIcon />}>Парголово</TrustItem>
+          <TrustItem icon={<BatteryIcon />}>2 АКБ в комплекте</TrustItem>
+          <TrustItem icon={<ZapIcon />}>Выдача за ~2 часа</TrustItem>
+          <TrustItem icon={<WrenchIcon />}>Техподдержка 24/7</TrustItem>
         </motion.div>
       </motion.div>
 
     </section>
+  );
+}
+
+// ============================================================
+// Trust-row — item + иконки (Lucide-style stroke 1.5, currentColor).
+// Inline SVG, чтобы не тянуть lucide-react ради 4 иконок.
+// ============================================================
+
+function TrustItem({
+  icon,
+  children,
+}: {
+  icon: ReactNode;
+  children: ReactNode;
+}) {
+  return (
+    <span className="inline-flex items-center gap-2">
+      <span aria-hidden className="inline-flex h-4 w-4 shrink-0 items-center justify-center text-volt">
+        {icon}
+      </span>
+      <span>{children}</span>
+    </span>
+  );
+}
+
+const iconProps = {
+  viewBox: "0 0 24 24",
+  fill: "none",
+  stroke: "currentColor",
+  strokeWidth: 1.8,
+  strokeLinecap: "round" as const,
+  strokeLinejoin: "round" as const,
+  className: "h-full w-full",
+};
+
+function MapPinIcon() {
+  return (
+    <svg {...iconProps}>
+      <path d="M20 10c0 7-8 13-8 13s-8-6-8-13a8 8 0 0 1 16 0Z" />
+      <circle cx="12" cy="10" r="3" />
+    </svg>
+  );
+}
+
+function BatteryIcon() {
+  return (
+    <svg {...iconProps}>
+      <rect width="16" height="10" x="2" y="7" rx="2" />
+      <line x1="22" x2="22" y1="11" y2="13" />
+      <line x1="6" x2="6" y1="11" y2="13" />
+      <line x1="10" x2="10" y1="11" y2="13" />
+    </svg>
+  );
+}
+
+function ZapIcon() {
+  return (
+    <svg {...iconProps}>
+      <path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z" />
+    </svg>
+  );
+}
+
+function WrenchIcon() {
+  return (
+    <svg {...iconProps}>
+      <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
+    </svg>
   );
 }
