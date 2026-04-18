@@ -92,7 +92,7 @@ export function BikeSection() {
       // position: sticky дочернего элемента (sticky requires nearest
       // scrolling ancestor; overflow-hidden создаёт scroll context).
       // Видео clip'ится внутри sticky-child'a, который имеет overflow-hidden.
-      className="relative h-[180vh] text-white md:h-[200vh]"
+      className="relative h-[140vh] text-white md:h-[200vh]"
     >
       <div className="sticky top-0 h-screen overflow-hidden">
         {/* Видео — currentTime управляется scroll-scrub'ом, без autoplay */}
@@ -121,14 +121,19 @@ export function BikeSection() {
           />
         </motion.div>
 
-        {/* Два scrim'а — сверху под eyebrow/title/desc, снизу под метрики */}
+        {/* Два scrim'а — сверху под eyebrow/title/desc, снизу под метрики.
+            Нижний усилен (from-black via-black/85 to-black/30) — на мобилке
+            байк имеет яркие блики на колесе/раме, метрики «60 + 30 Ач» и
+            «до 65 км/ч» читались поверх светлых точек и терялись.
+            Усиление только снизу — верхняя часть по-прежнему полупрозрачна,
+            чтобы байк оставался виден как продукт. */}
         <div
           aria-hidden
           className="absolute inset-x-0 top-0 h-[55%] bg-gradient-to-b from-black/85 via-black/45 to-transparent"
         />
         <div
           aria-hidden
-          className="absolute inset-x-0 bottom-0 h-[45%] bg-gradient-to-t from-black/90 via-black/50 to-transparent"
+          className="absolute inset-x-0 bottom-0 h-[50%] bg-gradient-to-t from-black via-black/85 to-transparent md:h-[45%] md:via-black/50"
         />
 
         {/* Контент-контейнер */}

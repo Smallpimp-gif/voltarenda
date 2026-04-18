@@ -15,6 +15,15 @@ import {
 } from "framer-motion";
 import { useApply } from "./apply";
 import { EASE, SMOOTH_SCROLL } from "./motion-config";
+import {
+  EMAIL,
+  EMAIL_MAILTO,
+  PHONE_DISPLAY,
+  PHONE_TEL,
+  TELEGRAM_HANDLE,
+  TELEGRAM_URL,
+  WHATSAPP_URL_WITH_INTENT,
+} from "@/lib/contacts";
 
 const FOOTER_SECTIONS: { href: string; label: string }[] = [
   { href: "#how", label: "Как работает" },
@@ -31,10 +40,11 @@ const FOOTER_DOCS: { href: string; label: string }[] = [
   { href: "/legal/cookies", label: "Использование cookies" },
 ];
 
-const FOOTER_CONTACTS: { href: string; label: string }[] = [
-  { href: "tel:+79013000319", label: "+7 (901) 300-03-19" },
-  { href: "mailto:hi@voltarenda.ru", label: "hi@voltarenda.ru" },
-  { href: "https://t.me/Voltarenda", label: "@Voltarenda" },
+const FOOTER_CONTACTS: { href: string; label: string; external?: boolean }[] = [
+  { href: PHONE_TEL, label: PHONE_DISPLAY },
+  { href: WHATSAPP_URL_WITH_INTENT, label: "WhatsApp", external: true },
+  { href: TELEGRAM_URL, label: TELEGRAM_HANDLE, external: true },
+  { href: EMAIL_MAILTO, label: EMAIL },
 ];
 
 export function FooterSection() {
@@ -119,7 +129,7 @@ export function FooterSection() {
               </span>
             </button>
             <a
-              href="tel:+79013000319"
+              href={PHONE_TEL}
               className="btn-cta btn-cta-outline rounded-md border border-[var(--line-strong)] px-6 py-5 font-mono text-caption uppercase hover:border-volt hover:text-volt"
             >
               Позвонить
@@ -137,19 +147,22 @@ export function FooterSection() {
           {/* Левая колонка — бренд + описание + контакты */}
           <div>
             <div className="flex items-center gap-3">
+              {/* Родной цвет SVG — #EAFF02 (volt), читается на dark footer
+                  без CSS-фильтров. Раньше был brightness-0 invert (белый) —
+                  убрал ради brand-accent жёлтого в firma logo. */}
               <Image
                 src="/symbol.svg"
                 alt=""
                 width={28}
                 height={28}
-                className="h-7 w-7 brightness-0 invert"
+                className="h-7 w-7"
               />
               <Image
                 src="/logo.svg"
                 alt="Вольтаренда"
                 width={140}
                 height={13}
-                className="h-3.5 w-auto brightness-0 invert"
+                className="h-3.5 w-auto"
               />
             </div>
             <p className="mt-4 max-w-[32ch] font-sans text-body text-mute">
@@ -160,6 +173,8 @@ export function FooterSection() {
                 <a
                   key={l.label}
                   href={l.href}
+                  target={l.external ? "_blank" : undefined}
+                  rel={l.external ? "noopener noreferrer" : undefined}
                   className="link-underline w-fit font-mono text-body tnum text-[var(--text)] transition-colors duration-quick ease-out-soft hover:text-volt"
                 >
                   {l.label}

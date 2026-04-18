@@ -17,6 +17,7 @@ import {
 import { AnimatePresence, motion } from "framer-motion";
 import { TariffCard } from "./tariff-card";
 import { APPLE_EASE, EASE, MODAL_SPRING } from "./motion-config";
+import { PHONE_TEL, WHATSAPP_URL_WITH_INTENT } from "@/lib/contacts";
 
 // ============================================================
 // Типы и константы
@@ -1437,21 +1438,29 @@ function SuccessScreen({
           </div>
         </div>
 
-        {/* Быстрые действия */}
-        <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+        {/* Быстрые действия — звонок, WhatsApp, маршрут */}
+        <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
           <a
-            href="tel:+79013000319"
-            className="btn-cta btn-cta-outline flex flex-1 items-center justify-center gap-2 rounded-md border border-[var(--line-strong)] px-4 py-4 font-mono text-caption uppercase hover:border-volt hover:text-volt"
+            href={PHONE_TEL}
+            className="btn-cta btn-cta-outline flex items-center justify-center gap-2 rounded-md border border-[var(--line-strong)] px-4 py-4 font-mono text-caption uppercase hover:border-volt hover:text-volt"
           >
-            Позвонить оператору
+            Позвонить
+          </a>
+          <a
+            href={WHATSAPP_URL_WITH_INTENT}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn-cta btn-cta-outline flex items-center justify-center gap-2 rounded-md border border-[var(--line-strong)] px-4 py-4 font-mono text-caption uppercase hover:border-volt hover:text-volt"
+          >
+            WhatsApp
           </a>
           <a
             href="https://yandex.ru/maps/?rtext=~60.081695,30.311619&rtt=auto"
             target="_blank"
             rel="noopener noreferrer"
-            className="btn-cta btn-cta-outline flex flex-1 items-center justify-center gap-2 rounded-md border border-[var(--line-strong)] px-4 py-4 font-mono text-caption uppercase hover:border-volt hover:text-volt"
+            className="btn-cta btn-cta-outline flex items-center justify-center gap-2 rounded-md border border-[var(--line-strong)] px-4 py-4 font-mono text-caption uppercase hover:border-volt hover:text-volt"
           >
-            Маршрут до точки
+            Маршрут
           </a>
         </div>
 

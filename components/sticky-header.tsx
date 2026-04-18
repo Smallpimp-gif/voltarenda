@@ -38,30 +38,46 @@ export function StickyHeader() {
     ? `Продолжить заявку · ${persistedProgress}/4`
     : "Начать зарабатывать";
 
+  // Theme-switching: раньше использовался IntersectionObserver с
+  // thresholds + ratio-sorting. Ломалось на больших секциях — bike-section
+  // это h-[200vh]=2504px, а observer-root после rootMargin всего ~186px,
+  // ratio = 186/2504 = 0.07 < threshold 0.1 → callback не стреляет при
+  // переходе. Header залипал в светлой теме на тёмном bike и наоборот.
+  //
+  // Новый подход — probe-line: под самым header'ом (y=80px) смотрим,
+  // какая секция именно там. Её data-theme и есть тема header'а. Это
+  // надёжно для секций любой высоты и стабильно при программном скролле.
   useEffect(() => {
-    const sections = document.querySelectorAll<HTMLElement>(
-      "section[data-theme], footer[data-theme]"
-    );
-    if (sections.length === 0) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const visible = entries
-          .filter((e) => e.isIntersecting)
-          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
-        if (visible) {
-          const t = visible.target.getAttribute("data-theme") as Theme | null;
+    const PROBE_Y = 80;
+    let ticking = false;
+    const update = () => {
+      const sections = document.querySelectorAll<HTMLElement>(
+        "section[data-theme], footer[data-theme]"
+      );
+      for (const s of sections) {
+        const r = s.getBoundingClientRect();
+        if (r.top <= PROBE_Y && r.bottom > PROBE_Y) {
+          const t = s.getAttribute("data-theme") as Theme | null;
           if (t) setTheme(t);
+          return;
         }
-      },
-      {
-        rootMargin: "-64px 0px -80% 0px",
-        threshold: [0, 0.1, 0.25, 0.5, 0.75, 1],
       }
-    );
-
-    sections.forEach((s) => observer.observe(s));
-    return () => observer.disconnect();
+    };
+    const handler = () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        ticking = false;
+        update();
+      });
+    };
+    update();
+    window.addEventListener("scroll", handler, { passive: true });
+    window.addEventListener("resize", handler);
+    return () => {
+      window.removeEventListener("scroll", handler);
+      window.removeEventListener("resize", handler);
+    };
   }, []);
 
   // Отслеживание скролла для тени хедера
@@ -114,15 +130,23 @@ export function StickyHeader() {
         className={`fixed left-0 right-0 top-0 z-[60] border-b border-[var(--line)] bg-[var(--bg)] text-[var(--text)] transition-[color,background-color,border-color,box-shadow] duration-base ease-out-soft ${scrolled ? "header-shadow" : ""}`}
       >
         <div className="mx-auto flex h-16 max-w-content items-center justify-between px-gutter">
-          <a href="#hero" className="block" onClick={closeMenu}>
+          <a
+            href="#hero"
+            onClick={closeMenu}
+            className="inline-flex min-h-[44px] items-center"
+            aria-label="На главную"
+          >
             <Image
               src="/logo.svg"
               alt="Вольтаренда"
               width={160}
               height={15}
               className="h-4 w-auto transition-[filter] duration-base ease-out-soft"
+              // dark — родной цвет SVG (жёлтый #EAFF02, brand accent).
+              // light — brightness(0) делает лого чёрным для контраста
+              // на бежевом фоне (жёлтый #EAFF02 на #F4F3F1 не читается).
               style={{
-                filter: theme === "dark" ? "brightness(0) invert(1)" : "brightness(0)",
+                filter: theme === "dark" ? "none" : "brightness(0)",
               }}
               priority
             />

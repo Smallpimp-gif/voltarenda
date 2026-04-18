@@ -89,9 +89,9 @@ export function LocationSection() {
           <span className="font-mono text-caption uppercase text-mute">
             06 / ПУНКТ ВЫДАЧИ
           </span>
-          <h2 className="mt-2 font-sans text-h2">Забирай на Парнасе</h2>
+          <h2 className="mt-2 font-sans text-h2">Забирай в Парголове</h2>
           <p className="mt-4 max-w-[52ch] font-sans text-body text-mute">
-            Приезжай на точку, забирай велик, инструктаж — и в путь. Всё за 15 минут.
+            Посёлок Парголово, рядом с метро Парнас (~15 минут пешком или 1 остановка на автобусе). Приезжай, забирай велик, инструктаж — и в путь. Всё за 15 минут.
           </p>
         </motion.div>
 

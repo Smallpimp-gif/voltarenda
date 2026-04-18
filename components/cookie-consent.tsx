@@ -41,7 +41,7 @@ export function CookieConsent() {
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 100, opacity: 0 }}
           transition={{ duration: 0.4, ease: [0.22, 0.61, 0.36, 1] }}
-          className="fixed inset-x-0 bottom-[72px] z-[70] p-4 sm:bottom-6 sm:left-auto sm:right-6 sm:max-w-[420px] md:bottom-6"
+          className="fixed inset-x-0 bottom-[calc(72px+env(safe-area-inset-bottom))] z-[70] p-4 sm:bottom-[calc(24px+env(safe-area-inset-bottom))] sm:left-auto sm:right-6 sm:max-w-[420px]"
         >
           <div className="rounded-lg border border-[var(--line)] bg-[var(--bg)] p-5 shadow-xl"
             data-theme="dark"

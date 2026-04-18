@@ -108,7 +108,7 @@ export function TariffCard({
             : "bg-[var(--card-text)] text-[var(--card-bg)]",
         ].join(" ")}
       >
-        <span>Оформить</span>
+        <span>Начать</span>
         <span
           aria-hidden
           className="font-sans text-base transition-transform duration-base ease-out-soft group-hover/cta:translate-x-1"

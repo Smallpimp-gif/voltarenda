@@ -13,11 +13,16 @@ import {
   MotionValue,
 } from "framer-motion";
 import { EASE, SMOOTH_SCROLL } from "./motion-config";
+import { TELEGRAM_URL, WHATSAPP_URL_WITH_INTENT } from "@/lib/contacts";
 
 const FAQ: { q: string; a: string }[] = [
   {
     q: "Что нужно для оформления?",
     a: "Паспорт гражданина РФ, селфи для верификации и банковская карта на твоё имя. Весь процесс занимает ~10 минут с телефона.",
+  },
+  {
+    q: "Сколько залог и когда вернут?",
+    a: "5 000 ₽ замораживаются на твоей карте при оформлении — это не оплата, деньги остаются у тебя, просто заблокированы. Когда возвращаешь велик без повреждений — залог размораживается автоматически за 1–3 рабочих дня (зависит от банка). Если есть повреждения по твоей вине — удерживаем из залога по фактической стоимости ремонта, остаток возвращаем.",
   },
   {
     q: "Как происходит оплата?",
@@ -175,6 +180,11 @@ export function FaqSection() {
   const b14 = useTransform(scrollYProgress, [0.54, 0.89], [6, 0], { ease: EASE });
   const f14 = useMotionTemplate`blur(${b14}px)`;
 
+  const o15 = useTransform(scrollYProgress, [0.57, 0.92], [0, 1], { ease: EASE });
+  const y15 = useTransform(scrollYProgress, [0.57, 0.92], [24, 0], { ease: EASE });
+  const b15 = useTransform(scrollYProgress, [0.57, 0.92], [6, 0], { ease: EASE });
+  const f15 = useMotionTemplate`blur(${b15}px)`;
+
   const items: {
     opacity: MotionValue<number>;
     y: MotionValue<number>;
@@ -194,6 +204,7 @@ export function FaqSection() {
     { opacity: o12, y: y12, filter: f12 },
     { opacity: o13, y: y13, filter: f13 },
     { opacity: o14, y: y14, filter: f14 },
+    { opacity: o15, y: y15, filter: f15 },
   ];
 
   return (
@@ -219,13 +230,24 @@ export function FaqSection() {
               07 / FAQ
             </span>
             <h2 className="font-sans text-h2">Частые вопросы</h2>
-            <p className="mt-2 max-w-[32ch] font-sans text-body text-mute">
-              Не нашёл ответ?{" "}
+            <p className="mt-2 max-w-[36ch] font-sans text-body text-mute">
+              Не нашёл ответ? Напиши в{" "}
               <a
-                href="https://t.me/Voltarenda"
+                href={WHATSAPP_URL_WITH_INTENT}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="inline-block py-1 text-[var(--text)] underline underline-offset-4 transition-colors duration-quick ease-out-soft hover:text-volt"
               >
-                Напиши нам в Telegram
+                WhatsApp
+              </a>
+              {" "}или{" "}
+              <a
+                href={TELEGRAM_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-block py-1 text-[var(--text)] underline underline-offset-4 transition-colors duration-quick ease-out-soft hover:text-volt"
+              >
+                Telegram
               </a>
               {" "}— ответим за 10 минут.
             </p>
@@ -265,7 +287,6 @@ export function FaqSection() {
                     {isOpen && (
                       <motion.div
                         id={`faq-answer-${i}`}
-                        role="region"
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: "auto", opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}

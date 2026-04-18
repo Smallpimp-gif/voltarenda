@@ -6,8 +6,7 @@
 
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-
-const TELEGRAM_URL = "https://t.me/Voltarenda";
+import { TELEGRAM_URL } from "@/lib/contacts";
 
 export function TelegramButton() {
   const [visible, setVisible] = useState(false);

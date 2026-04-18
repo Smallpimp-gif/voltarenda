@@ -198,7 +198,7 @@ export function CalculatorSection() {
                         setAvgCheck(p.avgCheck);
                         setDaysPerWeek(p.daysPerWeek);
                       }}
-                      className={`rounded-md border px-3 py-2 font-mono text-[11px] uppercase tracking-[0.08em] transition-colors duration-quick ease-out-soft ${
+                      className={`inline-flex min-h-[44px] items-center justify-center rounded-md border px-4 py-2.5 font-mono text-[11px] uppercase tracking-[0.08em] transition-colors duration-quick ease-out-soft ${
                         active
                           ? "border-volt bg-volt/10 text-volt"
                           : "border-white/30 bg-white/5 text-[var(--text)] hover:border-volt hover:text-volt"

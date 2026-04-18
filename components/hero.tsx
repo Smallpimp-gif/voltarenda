@@ -86,19 +86,19 @@ export function Hero() {
         )}
       </motion.div>
 
-      {/* Базовый диагональный градиент — лёгкая «инженерная» затемняшка.
-          Сам по себе слаб — текст в нижней половине просвечивал картинку
-          сквозь буквы. Поэтому ниже добавлен прицельный bottom-scrim. */}
+      {/* Верхний scrim — лёгкий, чтобы байк оставался виден как продукт.
+          Раньше тут был диагональный градиент `from-black via-black/75
+          to-black/30`, убивавший фото. Research по яндекс.драйв / юрент /
+          whoosh показал: product-forward hero держит скрим минимальным. */}
       <div
         aria-hidden
-        className="absolute inset-0 bg-gradient-to-tr from-black via-black/75 to-black/30"
+        className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-transparent"
       />
-      {/* Bottom-scrim — гарантирует чёрный фон под textblock'ом
-          (subtitle, CTA, trust). Картинку закрывает только в нижней
-          половине, верхняя половина с фото остаётся читаемой. */}
+      {/* Нижний scrim — плотный снизу, гарантирует читаемость eyebrow /
+          H1 / subtitle / CTA / trust-row поверх любого кадра. */}
       <div
         aria-hidden
-        className="absolute inset-x-0 bottom-0 h-[55%] bg-gradient-to-t from-black via-black/80 to-transparent"
+        className="absolute inset-x-0 bottom-0 h-[65%] bg-gradient-to-t from-black via-black/85 to-transparent"
       />
 
       {/* Контент — staggered fade-in снизу-вверх */}
@@ -111,29 +111,42 @@ export function Hero() {
         {/* Spacer — толкает весь контент вниз, чтобы фото было видно больше */}
         <div className="flex-1" />
 
-        {/* H1 — единый fade-in как остальные элементы.
-            Eyebrow «00 / ВОЛЬТАРЕНДА / СПБ» был дублем sticky-header'а
-            (то же имя бренда сверху), снят. */}
+        {/* Eyebrow — гео + формат услуги. Даёт контекст до H1 (что это
+            за сайт / где / для кого), экономит когнитивную нагрузку
+            первого взгляда. */}
+        <motion.span
+          variants={itemVariants}
+          className="font-mono text-caption uppercase tracking-[0.08em] text-mute"
+        >
+          Аренда · Санкт-Петербург · Выдача в тот же день
+        </motion.span>
+
+        {/* H1 — категорийное позиционирование в 3 слова (Product для
+            кого). Research median H1 на аналогах = 5 слов, у нас короче
+            = сильнее удар. «Электробайк» вместо «электровелосипед»:
+            визуально продукт — не педальный велик, а скутер-формат,
+            «байк» не создаёт обманчивого ожидания. */}
         <motion.h1
           variants={itemVariants}
-          className="font-sans text-display-1"
+          className="mt-4 font-sans text-display-1"
         >
-          Бери<br />и зарабатывай
+          Электробайк<br />для курьера
         </motion.h1>
 
-        {/* Subtitle — один факт-крючок про главное УТП (2 АКБ, ~120 км).
-            Цена/город/время — спущены в trust-строки ниже, чтобы здесь
-            не нагромождать 4 факта в 2 строки. */}
+        {/* Subtitle — 3 факта в одну mono-строку: АКБ / запас / цена.
+            Цена впервые появляется в hero (раньше её не было до 3-го
+            экрана). Разделитель «·» держит ритм и намёком говорит что
+            это спека, а не маркетинговый слоган. */}
         <motion.p
           variants={itemVariants}
-          className="mt-8 max-w-[44ch] font-sans text-body-lg text-mute"
+          className="mt-8 max-w-[48ch] font-sans text-body-lg text-mute"
         >
-          Два АКБ, ~120 км на смену — без тревоги о зарядке.
+          2 АКБ · ~120 км на смену · от 633 ₽/день
         </motion.p>
 
         <motion.div
           variants={itemVariants}
-          className="mt-8 flex flex-wrap items-center gap-x-8 gap-y-4 sm:mt-10"
+          className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-4 sm:mt-10"
         >
           <button
             type="button"
@@ -147,15 +160,32 @@ export function Hero() {
               ? `Продолжить заявку · ${persistedProgress}/4 →`
               : "Начать зарабатывать →"}
           </button>
-          {/* «Тарифы от 3500 ₽» снят: дублировал «от 633 ₽/день» из
-              subtitle и при этом давал ДРУГУЮ цену (3-дневный тариф vs
-              месячный за день). Цена-конфликт на одном экране. */}
+          {/* Secondary — текстовый линк на калькулятор. Путь для «ещё
+              думаю»: даёт быстро прикинуть заработок, не открывая форму. */}
+          <a
+            href="#calc"
+            onClick={() => {
+              try { (window as any).ym?.(108583356, "reachGoal", "HERO_CALC_CLICK"); } catch {}
+            }}
+            className="inline-flex min-h-[44px] items-center px-2 py-3 font-mono text-[14px] uppercase tracking-[0.08em] text-mute underline-offset-4 hover:text-[var(--text)] hover:underline sm:text-[16px]"
+          >
+            Рассчитать заработок ↓
+          </a>
         </motion.div>
 
-        {/* Обе trust-строки сняты — Stripe-style: H1, один факт-крючок,
-            CTA. Цена живёт в Tariffs (секция 03), социальные метрики —
-            в трастовой полосе TrustBar (секция 08) и в калькуляторе.
-            Hero отвечает на «что и зачем», подробности — скроллом. */}
+        {/* Trust-row — 3 коротких факта под CTA. Пришёл из паттерна
+            конкурентов (ситидрайв: «10 лет / 17 000 авто / 24/7»), но
+            адаптирован под нас: гео-точка + комплектация + канал выдачи. */}
+        <motion.div
+          variants={itemVariants}
+          className="mt-8 flex flex-wrap items-center gap-x-4 gap-y-2 font-mono text-[11px] uppercase tracking-[0.08em] text-mute sm:gap-x-6"
+        >
+          <span>СПб · Парголово</span>
+          <span aria-hidden className="text-mute/40">·</span>
+          <span>2 АКБ в комплекте</span>
+          <span aria-hidden className="text-mute/40">·</span>
+          <span>Выдача ~2 часа</span>
+        </motion.div>
       </motion.div>
 
     </section>

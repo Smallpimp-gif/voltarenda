@@ -204,7 +204,7 @@ export function CompareSection() {
             onClick={() => openApply()}
             className="btn-cta btn-cta-volt rounded-md bg-volt px-8 py-4 font-mono text-caption uppercase text-ink hover:bg-volt-hover"
           >
-            Оформить заявку →
+            Начать зарабатывать →
           </button>
         </div>
       </div>
