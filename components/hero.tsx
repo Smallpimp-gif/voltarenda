@@ -149,34 +149,10 @@ export function Hero() {
               месячный за день). Цена-конфликт на одном экране. */}
         </motion.div>
 
-        {/* Trust-строка #1 — коммерческие условия одной строкой.
-            Включает цену (раньше была отдельной ссылкой), залог. */}
-        <motion.p
-          variants={itemVariants}
-          className="mt-4 font-mono text-caption uppercase text-mute"
-        >
-          От 633 ₽/день · залог 5 000 ₽
-        </motion.p>
-
-        {/* Live-trader — единственный источник метрик в hero.
-            Сводит окупаемость + число курьеров + дату данных в одну
-            trust-строку. Цифра дохода живёт в калькуляторе ниже — так
-            пользователь считает свою сумму, а не видит рекламное обещание. */}
-        <motion.div
-          variants={itemVariants}
-          className="mt-10 flex flex-wrap items-center gap-x-3 gap-y-1"
-        >
-          <span aria-hidden className="relative flex h-2 w-2 shrink-0">
-            <span className="absolute inset-0 animate-ping rounded-full bg-volt opacity-60" />
-            <span className="relative inline-block h-2 w-2 rounded-full bg-volt" />
-          </span>
-          <span className="font-sans text-body text-[var(--text)]">
-            47 курьеров в СПб · окупаемость 2–3 дня
-          </span>
-          {/* «данные за март 2026» снято: 18 апреля — данные двухнедельной
-              давности. Когда обновим когорту, вернём в формате evergreen
-              («данные за последние 30 дней») или текущим месяцем. */}
-        </motion.div>
+        {/* Обе trust-строки сняты — Stripe-style: H1, один факт-крючок,
+            CTA. Цена живёт в Tariffs (секция 03), социальные метрики —
+            в трастовой полосе TrustBar (секция 08) и в калькуляторе.
+            Hero отвечает на «что и зачем», подробности — скроллом. */}
       </motion.div>
 
     </section>
