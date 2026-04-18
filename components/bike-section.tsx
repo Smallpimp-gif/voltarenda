@@ -19,9 +19,8 @@ import {
   useInView,
   useMotionValueEvent,
   useScroll,
-  useSpring,
 } from "framer-motion";
-import { APPLE_EASE, SMOOTH_SCROLL } from "./motion-config";
+import { APPLE_EASE } from "./motion-config";
 
 const METRICS: [string, string][] = [
   ["~120 км", "запас на 2 АКБ"],
@@ -58,17 +57,18 @@ export function BikeSection() {
   // 85% прогресса, последние 15% — hold на финальном кадре перед
   // уходом в Tariffs.
   //
-  // Анти-лаг для scrub:
-  // 1. raw scrollYProgress оборачиваем в useSpring → плавный «масляный»
-  //    scrub вместо рывков (юзер видит лаг от частых seek'ов на mp4).
-  // 2. throttle через requestAnimationFrame — обновляем currentTime не
-  //    чаще одного раза за frame. Иначе scroll fires 100+ events/sec и
-  //    каждый seek в mp4 = синхронный decode = jank.
-  const { scrollYProgress: rawProgress } = useScroll({
+  // НЕ оборачивать в useSpring: spring добавляет inertia (~50-100ms
+  // delay), а на decode-bound currentTime seek это ощущается как
+  // «видео отстаёт от пальца». Direct raw progress — мгновенная связь
+  // палец↔видео.
+  //
+  // rAF throttle: scroll fires 100+ events/sec, каждый seek в mp4 это
+  // синхронный decode. Throttle до 1 update за frame через
+  // rafPendingRef.
+  const { scrollYProgress } = useScroll({
     target: sectionRef,
     offset: ["start start", "end end"],
   });
-  const scrollYProgress = useSpring(rawProgress, SMOOTH_SCROLL);
   const rafPendingRef = useRef(false);
   useMotionValueEvent(scrollYProgress, "change", (progress) => {
     if (rafPendingRef.current) return;
