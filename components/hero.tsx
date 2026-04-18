@@ -117,17 +117,15 @@ export function Hero() {
         {/* Spacer — толкает весь контент вниз, чтобы фото было видно больше */}
         <div className="flex-1" />
 
-        {/* Eyebrow — гео + формат услуги. На мобилке укорочен («Аренда ·
-            Санкт-Петербург · Выдача в день обращения» — 6 слов — уходил
-            в 2 строки и читался как подпись). На десктопе полная версия.
-            «ЭЛЕКТРОВЕЛОСИПЕД» в mobile eyebrow — SEO-keyword перекочевал
-            сюда из H1, Яндекс индексирует uppercase eyebrow'ы. */}
+        {/* Eyebrow — только на десктопе. На мобилке убрали: на 360 px
+            занимал строку и конкурировал с H1 за внимание, смотрелся
+            как подпись. SEO-keyword «электровелосипед» остаётся в
+            title/description/layout.tsx schema — индексация не страдает. */}
         <motion.span
           variants={itemVariants}
-          className="font-mono text-caption uppercase tracking-[0.08em] text-white/75"
+          className="hidden font-mono text-caption uppercase tracking-[0.08em] text-white/75 md:block"
         >
-          <span className="md:hidden">Электровелосипед · СПб · Выдача сегодня</span>
-          <span className="hidden md:inline">Аренда · Санкт-Петербург · Выдача в день обращения</span>
+          Аренда · Санкт-Петербург · Выдача в день обращения
         </motion.span>
 
         {/* H1 — на мобилке короткий «Вольт U2 в аренду» (3 слова, 1–2
@@ -175,12 +173,15 @@ export function Hero() {
           </button>
           {/* Secondary — текстовый линк на калькулятор. Путь для «ещё
               думаю»: даёт быстро прикинуть заработок, не открывая форму. */}
+          {/* Secondary — только на десктопе. На мобилке убран: калькулятор
+              достижим через mobile-bottom-nav «Оформить» и nav-бургер;
+              текстовый линк под CTA забивал экран. */}
           <a
             href="#calc"
             onClick={() => {
               try { (window as any).ym?.(108583356, "reachGoal", "HERO_CALC_CLICK"); } catch {}
             }}
-            className="inline-flex min-h-[44px] items-center px-2 py-3 font-mono text-[14px] uppercase tracking-[0.08em] text-mute underline-offset-4 hover:text-[var(--text)] hover:underline sm:text-[16px]"
+            className="hidden min-h-[44px] items-center px-2 py-3 font-mono text-[14px] uppercase tracking-[0.08em] text-mute underline-offset-4 hover:text-[var(--text)] hover:underline sm:text-[16px] md:inline-flex"
           >
             Рассчитать заработок ↓
           </a>
