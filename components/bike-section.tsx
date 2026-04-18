@@ -209,12 +209,12 @@ function BikeSpecs() {
               className="min-w-0"
             >
               {/* Цифра — volt, крупная, nowrap чтобы «60 + 30 Ач» и
-                  «до 65 км/ч» не ломались внутри значения. На 360px
-                  clamp уходит в 32px — 4-символьное «150 кг» помещается
-                  без переноса, самое длинное «60 + 30 Ач» занимает
-                  ~158px при 32px шрифте, в колонке (360-gutter-gap)/2
-                  ≈ 145–155px — едва влезает. */}
-              <div className="whitespace-nowrap font-sans font-bold leading-none text-volt text-[clamp(32px,4.2vw,56px)] tracking-[-0.02em]">
+                  «до 65 км/ч» не ломались внутри значения. 360px = 28px:
+                  «до 65 км/ч» имеет scrollWidth 166px при 32px, колонка
+                  =152px → overflow +14px. При 28px scrollWidth 145px,
+                  укладывается с небольшим запасом. 56px на широких
+                  экранах — не меняем. */}
+              <div className="whitespace-nowrap font-sans font-bold leading-none text-volt text-[clamp(28px,4.2vw,56px)] tracking-[-0.02em]">
                 {m.value}
               </div>
               {/* Короткая volt-линия между цифрой и подписью — акцент. */}
