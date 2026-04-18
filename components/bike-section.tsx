@@ -108,7 +108,12 @@ export function BikeSection() {
               keyframes тянулись через range-requests при scroll = лаг).
               Цена: +4MB mobile / +5.5MB desktop к initial transfer, но
               юзер уже коммитнулся к чтению — bike секция #2 после hero.
-              poster /rider.webp пока видео грузится. */}
+
+              Poster СНЯТ: раньше был /rider.webp — то же фото курьера что
+              в hero. На мобилке юзер скроллил от hero (курьер) → bike
+              (poster=тот же курьер) → создавало дежавю, будто hero
+              повторяется. Без poster — до загрузки видео показывается
+              чёрный фон section, что ок для dark-секции. */}
           <video
             ref={videoRef}
             key={videoSrc}
@@ -116,7 +121,6 @@ export function BikeSection() {
             muted
             playsInline
             preload="auto"
-            poster="/rider.webp"
             className="h-full w-full object-cover object-center"
           />
         </motion.div>
