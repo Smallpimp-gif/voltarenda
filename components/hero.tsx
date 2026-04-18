@@ -52,17 +52,16 @@ export function Hero() {
       id="hero"
       className="relative z-20 min-h-screen overflow-hidden bg-[var(--bg)] text-[var(--text)]"
     >
-      {/* Фон — параллакс + zoom-out при загрузке. Video если HERO_VIDEO задан.
-          ВАЖНО: НЕ ставить opacity:0 в initial — Lighthouse не считает
-          элемент LCP-кандидатом пока он opacity 0. Hero image priority +
-          opacity:0 → LCP=undefined → Performance score = 0. Анимируем
-          только scale (zoom-out), картинка сразу opacity:1 = валидный LCP. */}
+      {/* Фон — параллакс по скроллу (y), без entry-анимации.
+          ВАЖНО: НЕ навешивать на priority Image никаких mount-transition'ов
+          (opacity, scale, blur). Lighthouse / web-vitals API исключают
+          элементы с активной transform/opacity transition из LCP-кандидатов
+          пока анимация не завершилась — это давало LCP=undefined и
+          Performance=0. Параллакс через scroll-driven `y` это не ломает,
+          т.к. transform начинается только после первого scroll. */}
       <motion.div
         aria-hidden
         style={{ y: imageY }}
-        initial={prefersReduced ? {} : { scale: 1.15 }}
-        animate={prefersReduced ? {} : { scale: 1 }}
-        transition={{ duration: prefersReduced ? 0 : 1.8, ease: EASE }}
         className="absolute inset-0"
       >
         {HERO_VIDEO ? (
