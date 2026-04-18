@@ -61,7 +61,11 @@ export function TelegramButton() {
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.8, opacity: 0 }}
           transition={{ duration: 0.3, type: "spring", stiffness: 300, damping: 25 }}
-          className="fixed bottom-20 right-4 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-[#2AABEE] shadow-lg shadow-[#2AABEE]/30 transition-transform duration-200 ease-out hover:scale-110 active:scale-95 sm:bottom-6 sm:right-6"
+          // hidden md:flex — на мобиле TG-путь живёт в sticky bottom bar
+          // (components/mobile-bottom-nav.tsx), плавающая кнопка была
+          // дублем. На md+ sticky bottom скрыт (md:hidden) → плавающая
+          // становится единственным TG-путём на десктопе.
+          className="fixed bottom-20 right-4 z-50 hidden h-14 w-14 items-center justify-center rounded-full bg-[#2AABEE] shadow-lg shadow-[#2AABEE]/30 transition-transform duration-200 ease-out hover:scale-110 active:scale-95 md:flex sm:bottom-6 sm:right-6"
         >
           <svg viewBox="0 0 24 24" fill="none" className="h-7 w-7">
             <path
