@@ -19,6 +19,7 @@ import {
   useInView,
   useMotionValueEvent,
   useScroll,
+  useSpring,
 } from "framer-motion";
 import { APPLE_EASE } from "./motion-config";
 
@@ -50,28 +51,28 @@ export function BikeSection() {
   }, []);
   const videoSrc = isMobile ? "/bike-video-mobile.mp4" : "/bike-video-desktop.mp4";
 
-  // Scrub видео по скроллу — брендовый момент ТОЛЬКО на десктопе.
-  // На мобилке scrub убран: для scrub нужна секция h-[140–200vh]
-  // (sticky h-screen + 40–100vh скролла), что давало dead-space между
-  // концом видео и блоком BikeSpecs — юзер видел пустой чёрный участок
-  // и отмечал «что-то сломано». На мобилке видео просто autoplay loop,
-  // секция компактна = h-screen, дальше сразу specs.
+  // Scrub видео по скроллу — брендовый apple-style момент на обеих
+  // платформах. Раньше mobile-scrub убирали ради dead-space / decode
+  // lag; возвращён по запросу «сделай плавный скроллинг как у apple».
   //
-  // Desktop scrub сохранён:
-  // - НЕ оборачивать в useSpring: inertia ~50–100ms даёт ощущение
-  //   «видео отстаёт от пальца». Direct raw progress — мгновенная
-  //   связь палец↔видео.
+  // - useSpring на progress: мягкая инерция (~60ms) даёт «кисельный»
+  //   apple-feel. На decode-bound currentTime видео может слегка
+  //   отставать от пальца, но спокойный damping это скрывает.
   // - rAF throttle: scroll fires 100+ events/sec, каждый seek в mp4
   //   это синхронный decode. Throttle до 1 update за frame.
   // - Threshold 0.85 = видео проигрывается за первые 85% прогресса,
   //   последние 15% — hold на финальном кадре перед Tariffs.
-  const { scrollYProgress } = useScroll({
+  const { scrollYProgress: rawProgress } = useScroll({
     target: sectionRef,
     offset: ["start start", "end end"],
   });
+  const scrollYProgress = useSpring(rawProgress, {
+    stiffness: 120,
+    damping: 28,
+    mass: 0.35,
+  });
   const rafPendingRef = useRef(false);
   useMotionValueEvent(scrollYProgress, "change", (progress) => {
-    if (isMobile) return; // mobile uses autoplay, no scrub
     if (rafPendingRef.current) return;
     rafPendingRef.current = true;
     requestAnimationFrame(() => {
@@ -89,16 +90,17 @@ export function BikeSection() {
       ref={sectionRef}
       data-theme="dark"
       id="bike"
-      // Mobile — h-screen (без dead-space до BikeSpecs).
-      // Desktop — h-[200vh] для scrub-scroll space (sticky child h-screen
-      // + 100vh scrollspace прокручивают currentTime видео).
+      // Scrub-scroll space для обоих платформ: sticky child h-screen +
+      // 30–100vh доп. скролла через который spring прокручивает video
+      // currentTime. Mobile h-[130vh] = 30vh scrub-space (apple-style
+      // «кисельный» скролл); desktop h-[200vh] = 100vh (брендовый момент).
       // ВАЖНО: НЕ добавлять overflow-hidden на section — это ломает
       // position: sticky дочернего элемента (sticky requires nearest
       // scrolling ancestor; overflow-hidden создаёт scroll context).
-      // Видео clip'ится внутри child'a, который имеет overflow-hidden.
-      className="relative h-screen text-white md:h-[200vh]"
+      // Видео clip'ится внутри sticky-child'a.
+      className="relative h-[130vh] text-white md:h-[200vh]"
     >
-      <div className="relative h-full overflow-hidden md:sticky md:top-0 md:h-screen">
+      <div className="sticky top-0 h-screen overflow-hidden">
         {/* Видео — currentTime управляется scroll-scrub'ом, без autoplay */}
         <motion.div
           aria-hidden
@@ -125,10 +127,7 @@ export function BikeSection() {
             muted
             playsInline
             preload="auto"
-            // Mobile — autoplay loop (scrub выключен, см. выше).
-            // Desktop — без autoplay: scroll-scrub управляет currentTime.
-            autoPlay={isMobile}
-            loop={isMobile}
+            // Scrub управляет currentTime через scroll — no autoplay.
             className="h-full w-full object-cover object-center"
           />
         </motion.div>
