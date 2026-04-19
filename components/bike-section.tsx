@@ -143,9 +143,12 @@ export function BikeSection() {
           aria-hidden
           className="absolute inset-x-0 top-0 h-[55%] bg-gradient-to-b from-black/85 via-black/45 to-transparent"
         />
+        {/* Нижний scrim — только на десктопе, лёгкий. На мобилке метрики
+            ушли в отдельную BikeSpecs, плотный scrim тут создавал «пустую»
+            чёрную половину viewport и читался как gap до specs. */}
         <div
           aria-hidden
-          className="absolute inset-x-0 bottom-0 h-[50%] bg-gradient-to-t from-black via-black/85 to-transparent md:h-[45%] md:via-black/50"
+          className="absolute inset-x-0 bottom-0 hidden h-[45%] bg-gradient-to-t from-black via-black/50 to-transparent md:block"
         />
 
         {/* Контент-контейнер — теперь содержит только верхний текст.
