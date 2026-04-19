@@ -199,8 +199,9 @@ export function CompareSection() {
           </div>
         </div>
 
-        {/* CTA — сразу под карточкой на мобилке (mt-6), воздух md+ */}
-        <div className="mt-6 flex justify-center md:mt-12">
+        {/* CTA — только на десктопе. На мобилке дубль sticky bottom-nav'а,
+            который и так постоянно висит с «Начать зарабатывать». */}
+        <div className="hidden md:mt-12 md:flex md:justify-center">
           <button
             type="button"
             onClick={() => openApply()}
