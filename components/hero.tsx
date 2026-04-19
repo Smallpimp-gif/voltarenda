@@ -149,7 +149,7 @@ export function Hero() {
           variants={itemVariants}
           className="mt-6 max-w-[52ch] font-sans text-body-lg text-mute"
         >
-          Топовая модель для курьеров. <span className="whitespace-nowrap">65 км/ч</span>, 2 аккумулятора LiFePO4, до <span className="whitespace-nowrap">120 км</span> на смену.{" "}
+          Топовая модель для курьеров. <span className="whitespace-nowrap">65 км/ч</span>, 2 аккумулятора LiFePO4, <span className="whitespace-nowrap">до 120 км</span> на смену.{" "}
           <span className="font-semibold text-volt">От 633 ₽/день</span> — ниже,
           чем у других прокатов СПб.
         </motion.p>
