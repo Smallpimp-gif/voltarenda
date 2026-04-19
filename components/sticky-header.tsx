@@ -219,7 +219,25 @@ export function StickyHeader() {
                   <motion.a
                     key={n.href}
                     href={n.href}
-                    onClick={closeMenu}
+                    onClick={(e) => {
+                      // Клик по пункту меню: делаем scroll programmatically
+                      // после закрытия overlay. Нативный anchor jump стрелял
+                      // пока body { overflow: hidden } ещё применён оверлеем,
+                      // и scroll просто не происходил. rAF x2 даёт React
+                      // коммитнуть menuOpen=false, useEffect снять overflow,
+                      // после чего smooth scroll отрабатывает чисто.
+                      e.preventDefault();
+                      closeMenu();
+                      const href = n.href;
+                      requestAnimationFrame(() => {
+                        requestAnimationFrame(() => {
+                          const el = document.querySelector(href);
+                          el?.scrollIntoView({ behavior: "smooth", block: "start" });
+                          // Обновим URL-хэш без прыжка
+                          history.replaceState(null, "", href);
+                        });
+                      });
+                    }}
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{
