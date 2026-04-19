@@ -190,12 +190,12 @@ export function BikeSection() {
 }
 
 // ============================================================
-// BikeSpecs — apple-style таблица характеристик.
-// Отдельная секция под bike-section: чистый чёрный фон, крупные
-// volt-цифры, белые подписи-капсы, короткая volt-линия-разделитель.
-// Раньше метрики были наложены glass-плашкой поверх видео — выглядело
-// как заглушка и «ломало premium-ощущение» (цитата юзера). Вынесено
-// отдельно, чтобы фото продукта дышало.
+// BikeSpecs — apple tech-specs грид.
+// Mobile: один столбец с горизонтальными строками, каждая — hairline
+// сверху, label слева mono uppercase, volt-значение справа.
+// Desktop: 4 колонки, hairline сверху каждой колонки, label над
+// значением, и eyebrow «ТЕХНИЧЕСКИЕ ХАРАКТЕРИСТИКИ» над гридом
+// (apple-style category header).
 // ============================================================
 function BikeSpecs() {
   const ref = useRef<HTMLElement>(null);
@@ -207,35 +207,44 @@ function BikeSpecs() {
       data-theme="dark"
       className="bg-[#0A0A0A] text-white"
     >
-      <div className="mx-auto max-w-content px-gutter py-10 md:py-28">
-        {/* Сетка: 2×2 на мобилке, 1×4 на десктопе. gap — минимум 48px
-            горизонтальный на десктопе для воздуха (apple-style). */}
-        <div className="grid grid-cols-2 gap-x-6 gap-y-12 md:grid-cols-4 md:gap-x-12">
+      <div className="mx-auto max-w-content px-gutter py-16 md:py-28">
+        {/* Eyebrow-заголовок раздела — apple-style «на что ты смотришь» */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={inView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.6, ease: APPLE_EASE }}
+          className="mb-10 flex items-baseline justify-between border-b border-white/10 pb-6 md:mb-16"
+        >
+          <span className="font-mono text-[11px] uppercase tracking-[0.12em] text-white/50 md:text-[12px]">
+            Технические характеристики
+          </span>
+          <span className="font-mono text-[11px] uppercase tracking-[0.12em] text-white/30 md:text-[12px]">
+            ВОЛЬТ U2
+          </span>
+        </motion.div>
+
+        {/* Mobile: список (1 col), каждая строка — label слева, значение
+            справа, с hairline сверху. Desktop: 4 columns, в каждой колонке
+            label сверху, значение снизу. */}
+        <div className="flex flex-col md:grid md:grid-cols-4 md:gap-x-10">
           {METRICS.map((m, i) => (
             <motion.div
               key={m.label}
               initial={{ opacity: 0, y: 20 }}
               animate={inView ? { opacity: 1, y: 0 } : {}}
-              transition={{ delay: 0.1 + i * 0.08, duration: 0.6, ease: APPLE_EASE }}
-              className="min-w-0"
+              transition={{ delay: 0.15 + i * 0.08, duration: 0.6, ease: APPLE_EASE }}
+              className="
+                flex items-baseline justify-between gap-4 border-t border-white/10 py-6
+                last:border-b last:border-white/10
+                md:flex-col md:items-start md:justify-start md:border-b-0 md:py-8 md:last:border-b-0
+              "
             >
-              {/* Цифра — volt, крупная, nowrap чтобы «60 + 30 Ач» и
-                  «до 65 км/ч» не ломались внутри значения. 360px = 28px:
-                  «до 65 км/ч» имеет scrollWidth 166px при 32px, колонка
-                  =152px → overflow +14px. При 28px scrollWidth 145px,
-                  укладывается с небольшим запасом. 56px на широких
-                  экранах — не меняем. */}
-              <div className="whitespace-nowrap font-sans font-bold leading-none text-volt text-[clamp(28px,4.2vw,56px)] tracking-[-0.02em]">
-                {m.value}
-              </div>
-              {/* Короткая volt-линия между цифрой и подписью — акцент. */}
-              <div
-                aria-hidden
-                className="mt-5 h-[2px] w-6 bg-volt"
-              />
-              <div className="mt-3 font-mono text-[12px] uppercase tracking-[0.08em] text-white/60 md:text-[13px]">
+              <span className="font-mono text-[11px] uppercase tracking-[0.1em] text-white/50 md:text-[12px]">
                 {m.label}
-              </div>
+              </span>
+              <span className="whitespace-nowrap font-sans font-bold leading-none text-volt text-[clamp(28px,4.2vw,56px)] tracking-[-0.02em] md:mt-5">
+                {m.value}
+              </span>
             </motion.div>
           ))}
         </div>
