@@ -143,19 +143,19 @@ export function BikeSection() {
           aria-hidden
           className="absolute inset-x-0 top-0 h-[55%] bg-gradient-to-b from-black/85 via-black/45 to-transparent"
         />
-        {/* Нижний scrim — только на десктопе, лёгкий. На мобилке метрики
-            ушли в отдельную BikeSpecs, плотный scrim тут создавал «пустую»
-            чёрную половину viewport и читался как gap до specs. */}
+        {/* Нижний scrim — обеспечивает читаемость метрик поверх видео.
+            Плотность максимума снизу, плавно уходит в прозрачность к
+            середине viewport (чтобы средняя часть байка оставалась видна). */}
         <div
           aria-hidden
-          className="absolute inset-x-0 bottom-0 hidden h-[45%] bg-gradient-to-t from-black via-black/50 to-transparent md:block"
+          className="absolute inset-x-0 bottom-0 h-[55%] bg-gradient-to-t from-black via-black/80 to-transparent md:h-[50%]"
         />
 
-        {/* Контент-контейнер — теперь содержит только верхний текст.
-            Метрики вынесены в отдельную секцию BikeSpecs ниже (чёрный
-            фон, apple-style грид), чтобы фото/видео продукта оставалось
-            чистым без наложенных UI-плашек. */}
-        <div className="relative mx-auto flex h-full max-w-content flex-col px-8 pt-24 md:px-12 md:pt-28">
+        {/* Контент-контейнер — верхний текст + нижние метрики.
+            Всё внутри sticky-child поверх видео: eyebrow/H2/desc сверху,
+            apple-style hairline specs снизу, видео виден в середине
+            (сам продукт). */}
+        <div className="relative mx-auto flex h-full max-w-content flex-col justify-between px-8 pb-28 pt-24 md:px-12 md:pb-14 md:pt-28">
           <div className="max-w-[640px]">
             <motion.span
               initial={{ opacity: 0, y: 12 }}
@@ -183,78 +183,35 @@ export function BikeSection() {
               ~60 км на каждом, ~120 км на смену без тревоги о зарядке.
             </motion.p>
           </div>
+
+          {/* Apple tech-specs grid — снизу поверх scrim.
+              Mobile: 2×2 с hairline сверху каждой ячейки (label mono, value volt).
+              Desktop: 4 колонки, всё на одной строке. */}
+          <div className="grid grid-cols-2 gap-x-4 gap-y-0 md:grid-cols-4 md:gap-x-8">
+            {METRICS.map((m, i) => (
+              <motion.div
+                key={m.label}
+                initial={{ opacity: 0, y: 16 }}
+                animate={inView ? { opacity: 1, y: 0 } : {}}
+                transition={{ delay: 0.75 + i * 0.08, duration: 0.55, ease: APPLE_EASE }}
+                className="min-w-0 border-t border-white/20 py-4 md:py-5"
+              >
+                <div className="font-mono text-[10px] uppercase tracking-[0.1em] text-white/60 md:text-[11px]">
+                  {m.label}
+                </div>
+                <div className="mt-2 whitespace-nowrap font-sans font-bold leading-none text-volt text-[clamp(22px,3.4vw,40px)] tracking-[-0.02em] md:mt-3">
+                  {m.value}
+                </div>
+              </motion.div>
+            ))}
+          </div>
         </div>
       </div>
     </section>
   );
 }
 
-// ============================================================
-// BikeSpecs — apple tech-specs грид.
-// Mobile: один столбец с горизонтальными строками, каждая — hairline
-// сверху, label слева mono uppercase, volt-значение справа.
-// Desktop: 4 колонки, hairline сверху каждой колонки, label над
-// значением, и eyebrow «ТЕХНИЧЕСКИЕ ХАРАКТЕРИСТИКИ» над гридом
-// (apple-style category header).
-// ============================================================
-function BikeSpecs() {
-  const ref = useRef<HTMLElement>(null);
-  const inView = useInView(ref, { once: true, amount: 0.3 });
-
-  return (
-    <section
-      ref={ref}
-      data-theme="dark"
-      className="bg-[#0A0A0A] text-white"
-    >
-      <div className="mx-auto max-w-content px-gutter py-16 md:py-28">
-        {/* Eyebrow-заголовок раздела — apple-style «на что ты смотришь» */}
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={inView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.6, ease: APPLE_EASE }}
-          className="mb-10 flex items-baseline justify-between border-b border-white/10 pb-6 md:mb-16"
-        >
-          <span className="font-mono text-[11px] uppercase tracking-[0.12em] text-white/50 md:text-[12px]">
-            Технические характеристики
-          </span>
-          <span className="font-mono text-[11px] uppercase tracking-[0.12em] text-white/30 md:text-[12px]">
-            ВОЛЬТ U2
-          </span>
-        </motion.div>
-
-        {/* Mobile: список (1 col), каждая строка — label слева, значение
-            справа, с hairline сверху. Desktop: 4 columns, в каждой колонке
-            label сверху, значение снизу. */}
-        <div className="flex flex-col md:grid md:grid-cols-4 md:gap-x-10">
-          {METRICS.map((m, i) => (
-            <motion.div
-              key={m.label}
-              initial={{ opacity: 0, y: 20 }}
-              animate={inView ? { opacity: 1, y: 0 } : {}}
-              transition={{ delay: 0.15 + i * 0.08, duration: 0.6, ease: APPLE_EASE }}
-              className="
-                flex items-baseline justify-between gap-4 border-t border-white/10 py-6
-                last:border-b last:border-white/10
-                md:flex-col md:items-start md:justify-start md:border-b-0 md:py-8 md:last:border-b-0
-              "
-            >
-              <span className="font-mono text-[11px] uppercase tracking-[0.1em] text-white/50 md:text-[12px]">
-                {m.label}
-              </span>
-              <span className="whitespace-nowrap font-sans font-bold leading-none text-volt text-[clamp(28px,4.2vw,56px)] tracking-[-0.02em] md:mt-5">
-                {m.value}
-              </span>
-            </motion.div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-// Оба компонента выносятся как один default-export-like bundle: page.tsx
-// использует <BikeSection />, а BikeSpecs автоматически рендерится
-// следом. Это держит page.tsx неизменным и группирует связанную логику
-// «Вольт U2 показ + спецификация» в одном файле.
-export { BikeSpecs };
+// BikeSpecs удалён — метрики вернулись overlay'ем поверх видео внутри
+// bike-section (юзер: «вся информация должна быть на видео»). Перенос
+// в отдельную плоскую секцию читался как placeholder, хотя apple-style
+// tech-specs. Возврат к overlay с hairline-оформлением.

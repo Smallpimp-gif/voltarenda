@@ -3,7 +3,7 @@
 import { StickyHeader } from "@/components/sticky-header";
 import { Hero } from "@/components/hero";
 import { HowItWorksSection } from "@/components/how-it-works-section";
-import { BikeSection, BikeSpecs } from "@/components/bike-section";
+import { BikeSection } from "@/components/bike-section";
 import { TariffsSection } from "@/components/tariffs-section";
 import { CalculatorSection } from "@/components/calculator-section";
 import { CompareSection } from "@/components/compare-section";
@@ -23,7 +23,6 @@ export default function Home() {
         <Hero />
         <HowItWorksSection />
         <BikeSection />
-        <BikeSpecs />
         <TariffsSection />
         <CalculatorSection />
         <CompareSection />
