@@ -149,8 +149,7 @@ export function Hero() {
           variants={itemVariants}
           className="mt-6 max-w-[52ch] font-sans text-body-lg text-mute"
         >
-          Топовая модель для курьеров. 65 км/ч, 2 аккумулятора LiFePO4, до 120
-          км на смену.{" "}
+          Топовая модель для курьеров. <span className="whitespace-nowrap">65 км/ч</span>, 2 аккумулятора LiFePO4, до <span className="whitespace-nowrap">120 км</span> на смену.{" "}
           <span className="font-semibold text-volt">От 633 ₽/день</span> — ниже,
           чем у других прокатов СПб.
         </motion.p>
@@ -198,7 +197,7 @@ export function Hero() {
         >
           <TrustItem icon={<MapPinIcon />}>Парголово</TrustItem>
           <TrustItem icon={<BatteryIcon />}>2 АКБ в комплекте</TrustItem>
-          <TrustItem icon={<ZapIcon />}>Выдача за ~2 часа</TrustItem>
+          <TrustItem icon={<ZapIcon />}>Выдача за 2 часа</TrustItem>
           <TrustItem icon={<WrenchIcon />}>Техподдержка 24/7</TrustItem>
         </motion.div>
       </motion.div>
