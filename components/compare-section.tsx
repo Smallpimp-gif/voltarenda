@@ -199,8 +199,8 @@ export function CompareSection() {
           </div>
         </div>
 
-        {/* CTA — после сравнения */}
-        <div className="mt-12 flex justify-center">
+        {/* CTA — сразу под карточкой на мобилке (mt-6), воздух md+ */}
+        <div className="mt-6 flex justify-center md:mt-12">
           <button
             type="button"
             onClick={() => openApply()}
