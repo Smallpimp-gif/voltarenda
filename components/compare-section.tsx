@@ -25,14 +25,16 @@ type Row = {
   us: string;
 };
 
+// Было 7 строк — карточка уходила ниже viewport на мобилке. Оставил
+// top-5 решающих для конверсии: цена, запас, залог, замена при поломке,
+// ТО. Снятые («подходит для курьера», «возврат денег») дублировали
+// оставшиеся по смыслу.
 const ROWS: Row[] = [
   { label: "СТАРТОВАЯ ЦЕНА", buy: "150 000 ₽", other: "от 800 ₽/день", us: "от 633 ₽/день" },
   { label: "ЗАПАС ХОДА", buy: "зависит от модели", other: "1 АКБ, 30–50 км", us: "2 АКБ, ~120 км" },
   { label: "ЗАЛОГ", buy: "—", other: "20–30 тыс.", us: "5 000 ₽ возвратный" },
-  { label: "ТО И РЕМОНТ", buy: "сам платишь", other: "за свой счёт", us: "50% на нас" },
   { label: "ЗАМЕНА ПРИ ПОЛОМКЕ", buy: "—", other: "платно", us: "до 14 дней, бесплатно" },
-  { label: "ПОДХОДИТ ДЛЯ КУРЬЕРА", buy: "да", other: "не всегда", us: "собран под работу" },
-  { label: "ВОЗВРАТ ДЕНЕГ", buy: "продажа через авито", other: "невозвратно", us: "залог за 3 дня" },
+  { label: "ТО И РЕМОНТ", buy: "сам платишь", other: "за свой счёт", us: "50% на нас" },
 ];
 
 type Col = {
@@ -247,18 +249,18 @@ function CompareCard({
         )}
       </header>
 
-      <div className="mt-10">
+      <div className="mt-6 md:mt-10">
         <h3 className="font-sans text-h3">{col.title}</h3>
         <p className={`mt-2 font-mono text-caption uppercase ${col.accent ? "text-white/50" : "text-mute"}`}>
           {col.subtitle}
         </p>
       </div>
 
-      <dl className="mt-10 flex flex-col gap-4">
+      <dl className="mt-6 flex flex-col gap-2.5 md:mt-10 md:gap-4">
         {rows.map((row) => (
           <div
             key={row.label}
-            className={`flex flex-col gap-1 border-b pb-3 last:border-0 ${
+            className={`flex flex-col gap-0.5 border-b pb-2 last:border-0 md:gap-1 md:pb-3 ${
               col.accent ? "border-white/10" : "border-[var(--line)]"
             }`}
           >
