@@ -204,7 +204,7 @@ function BikeSpecs() {
       data-theme="dark"
       className="bg-[#0A0A0A] text-white"
     >
-      <div className="mx-auto max-w-content px-gutter py-20 md:py-28">
+      <div className="mx-auto max-w-content px-gutter py-10 md:py-28">
         {/* Сетка: 2×2 на мобилке, 1×4 на десктопе. gap — минимум 48px
             горизонтальный на десктопе для воздуха (apple-style). */}
         <div className="grid grid-cols-2 gap-x-6 gap-y-12 md:grid-cols-4 md:gap-x-12">
