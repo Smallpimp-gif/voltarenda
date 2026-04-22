@@ -9,6 +9,11 @@ import { NextResponse } from "next/server";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 import crypto from "crypto";
+import {
+  formatApplicationNotification,
+  notifyOperator,
+} from "@/lib/notify";
+import { isAllowedOrigin } from "@/lib/api-origin";
 
 export const runtime = "nodejs";
 
@@ -26,19 +31,21 @@ type SubmitBody = {
 
 const DATA_DIR = path.join(process.cwd(), "data", "applications");
 
-const ALLOWED_ORIGINS = [
-  "https://voltarenda.ru",
-  ...(process.env.NODE_ENV !== "production"
-    ? ["http://localhost:3000", "http://localhost:3099"]
-    : []),
-];
-
 const VALID_TARIFFS = ["three-day", "week", "month", "buyout"];
+
+// Серверный источник истины для human-read имён + цен.
+// Клиентский body не доверяем (подмена через DevTools).
+const TARIFF_META: Record<string, { name: string; price: number }> = {
+  "three-day": { name: "3 дня", price: 3500 },
+  week: { name: "Неделя", price: 5500 },
+  month: { name: "Месяц", price: 19000 },
+  buyout: { name: "Выкуп · Неделя × 26", price: 6500 },
+};
 
 export async function POST(req: Request) {
   // CSRF
   const origin = req.headers.get("origin");
-  if (!origin || !ALLOWED_ORIGINS.includes(origin)) {
+  if (!isAllowedOrigin(origin)) {
     return NextResponse.json({ error: "forbidden" }, { status: 403 });
   }
 
@@ -95,6 +102,25 @@ export async function POST(req: Request) {
 
     const filepath = path.join(DATA_DIR, `${applicationId}.json`);
     await writeFile(filepath, JSON.stringify(application, null, 2), "utf-8");
+
+    // Fire-and-forget уведомление оператору в Telegram. Если бот не
+    // настроен (нет env) или сеть упала — submit всё равно считается
+    // успешным, заявка лежит на диске. Await тут чтобы лог ошибок
+    // попал в тот же request, но оператор получит мгновенно.
+    const tariffMeta = TARIFF_META[body.tariff];
+    await notifyOperator(
+      formatApplicationNotification({
+        id: applicationId,
+        tariff: body.tariff,
+        tariffName: tariffMeta.name,
+        tariffPrice: tariffMeta.price,
+        firstName: application.customer.firstName,
+        lastName: application.customer.lastName,
+        phone: application.customer.phone,
+        email: application.customer.email,
+        photoCount: 3,
+      }),
+    );
 
     return NextResponse.json({
       id: applicationId,

@@ -13,6 +13,7 @@ import { NextResponse } from "next/server";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 import crypto from "crypto";
+import { isAllowedOrigin } from "@/lib/api-origin";
 
 export const runtime = "nodejs";
 
@@ -20,17 +21,10 @@ const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const ALLOWED_MIME = ["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"];
 const UPLOADS_DIR = path.join(process.cwd(), "uploads");
 
-const ALLOWED_ORIGINS = [
-  "https://voltarenda.ru",
-  ...(process.env.NODE_ENV !== "production"
-    ? ["http://localhost:3000", "http://localhost:3099"]
-    : []),
-];
-
 export async function POST(req: Request) {
-  // CSRF
+  // CSRF — см. lib/api-origin.ts
   const origin = req.headers.get("origin");
-  if (!origin || !ALLOWED_ORIGINS.includes(origin)) {
+  if (!isAllowedOrigin(origin)) {
     return NextResponse.json(
       { error: "forbidden" },
       { status: 403 },

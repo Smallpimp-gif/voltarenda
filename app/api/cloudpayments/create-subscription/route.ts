@@ -11,6 +11,7 @@
 //   CLOUDPAYMENTS_API_SECRET — API Secret из ЛК CloudPayments
 
 import { NextResponse } from "next/server";
+import { isAllowedOrigin } from "@/lib/api-origin";
 
 export const runtime = "nodejs";
 
@@ -55,18 +56,11 @@ const TARIFF_RECURRENCE: Record<
   buyout: { interval: "Week", period: 1, maxPeriods: 26 },
 };
 
-// Allowed origins for CSRF protection
-const ALLOWED_ORIGINS = [
-  "https://voltarenda.ru",
-  ...(process.env.NODE_ENV !== "production" ? ["http://localhost:3000", "http://localhost:3099"] : []),
-];
-
 export async function POST(req: Request) {
   // CSRF: проверяем Origin header — только наш домен может вызывать API.
-  // Запросы БЕЗ Origin тоже отклоняем — некоторые прокси/браузеры не
-  // отправляют его, но для fetch POST из нашего SPA он всегда есть.
+  // См. lib/api-origin.ts: prod = https://voltarenda.ru, dev = любой localhost:*.
   const origin = req.headers.get("origin");
-  if (!origin || !ALLOWED_ORIGINS.includes(origin)) {
+  if (!isAllowedOrigin(origin)) {
     return NextResponse.json(
       { error: "forbidden", message: "Недопустимый источник запроса" },
       { status: 403 },
