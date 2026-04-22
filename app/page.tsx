@@ -7,6 +7,7 @@ import { BikeSection } from "@/components/bike-section";
 import { TariffsSection } from "@/components/tariffs-section";
 import { CalculatorSection } from "@/components/calculator-section";
 import { CompareSection } from "@/components/compare-section";
+import { TestimonialsSection } from "@/components/testimonials-section";
 import { LocationSection } from "@/components/location-section";
 import { FaqSection } from "@/components/faq-section";
 import { TrustBar } from "@/components/trust-bar";
@@ -26,6 +27,7 @@ export default function Home() {
         <TariffsSection />
         <CalculatorSection />
         <CompareSection />
+        <TestimonialsSection />
         <LocationSection />
         <FaqSection />
         <TrustBar />
