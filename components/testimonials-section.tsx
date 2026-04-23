@@ -191,18 +191,9 @@ function TestimonialCard({
       }}
       className="flex h-full flex-col rounded-lg border border-[var(--line)] bg-[var(--bg-2)] p-6 sm:p-8"
     >
-      {/* Quote mark — крупная volt кавычка как brand-accent.
-          Использую SVG path, а не символ «»: лучше контроль positioning. */}
-      <svg
-        aria-hidden
-        viewBox="0 0 24 24"
-        className="h-8 w-8 text-volt"
-        fill="currentColor"
-      >
-        <path d="M7 7h4v4H8c0 2 1 3 3 3v2c-3 0-5-2-5-5V7zm8 0h4v4h-3c0 2 1 3 3 3v2c-3 0-5-2-5-5V7z" />
-      </svg>
-
-      <p className="mt-6 font-sans text-body-lg leading-[1.55] text-[var(--text)]">
+      {/* Раньше тут была volt-SVG-кавычка как brand-accent. Снята —
+          юзер счёл её визуальным мусором, цитата читается и без. */}
+      <p className="font-sans text-body-lg leading-[1.55] text-[var(--text)]">
         {testimonial.quote}
       </p>
 

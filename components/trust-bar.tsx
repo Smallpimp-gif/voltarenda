@@ -15,26 +15,34 @@ import {
 } from "framer-motion";
 import { EASE, SMOOTH_SCROLL } from "./motion-config";
 
+// Типографика (правила русского набора, см. Мильчин / Ководство):
+// — неразрывные пробелы (\u00A0) между цифрой и единицей («5\u00A0000 ₽»,
+//   «2\u00A0недели», «3\u00A0рабочих дня», «152-ФЗ»);
+// — nbsp между односложными предлогами и следующим словом («по\u00A0152-ФЗ»,
+//   «на\u00A0карту», «за\u00A03»), чтобы не висели в конце строки;
+// — title разделён на 2 строки явно (\n + whitespace-pre-line) — все четыре
+//   плитки получают одинаковый визуальный ритм 2×строки, включая
+//   «ЗАЛОГ / ВЕРНЁМ», которая на десктопе съезжала в одну.
 const ITEMS: { index: string; title: string; desc: string }[] = [
   {
     index: "01",
-    title: "ДАННЫЕ В БЕЗОПАСНОСТИ",
-    desc: "Защитим твои данные по 152-ФЗ, никому не передадим",
+    title: "ДАННЫЕ\nВ\u00A0БЕЗОПАСНОСТИ",
+    desc: "Защитим твои данные по\u00A0152-ФЗ, никому не\u00A0передадим",
   },
   {
     index: "02",
-    title: "ПЛАТИШЬ БЕЗОПАСНО",
-    desc: "SSL + 3D Secure через CloudPayments",
+    title: "ПЛАТИШЬ\nБЕЗОПАСНО",
+    desc: "SSL + 3D\u00A0Secure через CloudPayments",
   },
   {
     index: "03",
-    title: "ВЕЛИК ИСПРАВЕН",
-    desc: "Механик проверяет каждые 2 недели перед передачей",
+    title: "ВЕЛИК\nИСПРАВЕН",
+    desc: "Механик проверяет каждые 2\u00A0недели перед передачей",
   },
   {
     index: "04",
-    title: "ЗАЛОГ ВЕРНЁМ",
-    desc: "5 000 ₽ обратно на карту за 3 рабочих дня",
+    title: "ЗАЛОГ\nВЕРНЁМ",
+    desc: "5\u00A0000 ₽ обратно на\u00A0карту за\n3\u00A0рабочих дня",
   },
 ];
 
@@ -140,8 +148,10 @@ export function TrustBar() {
                 {it.index}
               </span>
               <div>
-                <h3 className="font-sans text-h3">{it.title}</h3>
-                <p className="mt-3 font-sans text-body leading-[1.55] text-mute">
+                <h3 className="whitespace-pre-line font-sans text-h3">
+                  {it.title}
+                </h3>
+                <p className="mt-3 whitespace-pre-line font-sans text-body leading-[1.55] text-mute">
                   {it.desc}
                 </p>
               </div>
