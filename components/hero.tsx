@@ -19,24 +19,28 @@ const EASE = APPLE_EASE;
 // ============================================================
 const HERO_VIDEO: string | null = null;
 
-// Varianty для staggered появления основных блоков
-// Слоуны намеренно медленные чтобы анимации были заметны на load
+// Variants для staggered появления — slide-only, БЕЗ opacity.
+// Lighthouse / web-vitals API исключают элементы с активной opacity-
+// transition из LCP-кандидатов. Hero h1 раньше анимировался с
+// opacity 0→1, и LCP detection падал (NO_LCP, Performance=0). Slide-
+// only сохраняет ощущение «contents settle into place», но текст
+// сразу присутствует в DOM с финальной opacity → Chrome подхватывает
+// его как valid LCP-candidate.
 const containerVariants = {
   hidden: {},
   visible: {
     transition: {
-      staggerChildren: 0.22,
-      delayChildren: 0.4,
+      staggerChildren: 0.18,
+      delayChildren: 0.1,
     },
   },
 };
 
 const itemVariants = {
-  hidden: { opacity: 0, y: 40 },
+  hidden: { y: 24 },
   visible: {
-    opacity: 1,
     y: 0,
-    transition: { duration: 0.9, ease: EASE },
+    transition: { duration: 0.7, ease: EASE },
   },
 };
 
@@ -51,7 +55,7 @@ export function Hero() {
     <section
       data-theme="dark"
       id="hero"
-      className="relative z-20 min-h-screen overflow-hidden bg-[var(--bg)] text-[var(--text)]"
+      className="relative z-20 min-h-[100dvh] overflow-hidden bg-[var(--bg)] text-[var(--text)]"
     >
       {/* Фон — параллакс по скроллу (y), без entry-анимации.
           ВАЖНО: НЕ навешивать на priority Image никаких mount-transition'ов
@@ -112,7 +116,7 @@ export function Hero() {
         initial="hidden"
         animate="visible"
         variants={containerVariants}
-        className="relative z-10 mx-auto flex min-h-screen max-w-content flex-col px-gutter pb-12 pt-20 sm:pb-32"
+        className="relative z-10 mx-auto flex min-h-[100dvh] max-w-content flex-col px-gutter pb-12 pt-20 sm:pb-32"
       >
         {/* Spacer — толкает весь контент вниз, чтобы фото было видно больше */}
         <div className="flex-1" />

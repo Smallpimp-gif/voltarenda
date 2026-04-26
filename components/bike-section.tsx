@@ -100,7 +100,7 @@ export function BikeSection() {
       // Видео clip'ится внутри sticky-child'a.
       className="relative h-[130vh] text-white md:h-[200vh]"
     >
-      <div className="sticky top-0 h-screen overflow-hidden">
+      <div className="sticky top-0 h-[100dvh] overflow-hidden">
         {/* Видео — currentTime управляется scroll-scrub'ом, без autoplay */}
         <motion.div
           aria-hidden

@@ -7,7 +7,7 @@ export default function LegalLayout({ children }: { children: ReactNode }) {
   return (
     <main
       data-theme="dark"
-      className="min-h-screen bg-[var(--bg)] text-[var(--text)]"
+      className="min-h-[100dvh] bg-[var(--bg)] text-[var(--text)]"
     >
       <header className="sticky top-0 z-40 border-b border-[var(--line)] bg-[var(--bg)]/95 backdrop-blur-md">
         <div className="mx-auto flex h-16 max-w-content items-center justify-between px-gutter">

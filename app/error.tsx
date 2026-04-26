@@ -36,7 +36,7 @@ export default function Error({
   return (
     <main
       data-theme="dark"
-      className="flex min-h-screen flex-col bg-[var(--bg)] text-[var(--text)]"
+      className="flex min-h-[100dvh] flex-col bg-[var(--bg)] text-[var(--text)]"
     >
       <div className="mx-auto flex w-full max-w-content flex-1 flex-col justify-between px-gutter py-16 md:py-24">
         <header className="flex items-baseline justify-between border-b border-[var(--line)] pb-6">
