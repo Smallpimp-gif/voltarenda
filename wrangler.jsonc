@@ -1,0 +1,21 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "voltarenda",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2025-03-25",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  // KV-хранилище данных (пользователи, сессии, арендаторы, платежи,
+  // настройки, заявки). Создать: `npx wrangler kv namespace create DATA`,
+  // затем вставить выданный id ниже. В дашборде Cloudflare этот биндинг
+  // подтянется автоматически из этого файла.
+  "kv_namespaces": [
+    {
+      "binding": "DATA",
+      "id": "REPLACE_WITH_KV_NAMESPACE_ID"
+    }
+  ]
+}

@@ -3,9 +3,18 @@ node_modules/
 .env
 .env.local
 
+# Cloudflare / OpenNext build output и локальное состояние
+.open-next/
+.wrangler/
+.dev.vars
+
 # Пользовательские данные — НЕ коммитить
 uploads/
 data/
+
+# PDF-экспорты и превью (большие бинарники, генерируются скриптами)
+/voltarenda-*.pdf
+/pdf-preview/
 
 # Скриншоты аудита
 audit-animations-before/

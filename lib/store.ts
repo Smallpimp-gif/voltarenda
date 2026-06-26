@@ -1,21 +1,28 @@
-// Единое JSON-хранилище. На Vercel (serverless, эфемерный диск) — Vercel KV
-// (persistent, Upstash Redis под капотом). Локально — файлы data/<key>.json,
-// как раньше. Режим определяется по env: есть KV_REST_API_URL → KV.
+// Единое JSON-хранилище. На Cloudflare Workers — Cloudflare KV (binding
+// DATA, persistent). Локально (next dev) — файлы data/<key>.json.
+// Режим определяется наличием Cloudflare-контекста.
 //
 // Ключ = путь без расширения: "auth/users", "auth/sessions",
 // "site/settings", "bot/payments", "bot/tenants", "applications/<id>".
-//
-// Всё асинхронно (KV — сетевой вызов). Поэтому модули хранилища и их
-// вызовы — async.
 
 import { promises as fs } from "node:fs";
 import path from "node:path";
 
-const useKV = Boolean(process.env.KV_REST_API_URL);
+// Минимальный структурный тип KV-биндинга (без @cloudflare/workers-types).
+type KV = {
+  get<T>(key: string, type: "json"): Promise<T | null>;
+  put(key: string, value: string): Promise<void>;
+};
 
-async function kvClient() {
-  const mod = await import("@vercel/kv");
-  return mod.kv;
+async function cfKv(): Promise<KV | null> {
+  try {
+    const { getCloudflareContext } = await import("@opennextjs/cloudflare");
+    const ctx = getCloudflareContext();
+    const kv = (ctx?.env as Record<string, unknown> | undefined)?.DATA;
+    return (kv as KV) ?? null;
+  } catch {
+    return null; // не в Cloudflare (локальный next dev) → файлы
+  }
 }
 
 function filePath(key: string): string {
@@ -23,9 +30,9 @@ function filePath(key: string): string {
 }
 
 export async function readJSON<T>(key: string, fallback: T): Promise<T> {
-  if (useKV) {
-    const kv = await kvClient();
-    const v = await kv.get<T>(key);
+  const kv = await cfKv();
+  if (kv) {
+    const v = await kv.get<T>(key, "json");
     return v ?? fallback;
   }
   try {
@@ -36,14 +43,14 @@ export async function readJSON<T>(key: string, fallback: T): Promise<T> {
 }
 
 export async function writeJSON(key: string, value: unknown): Promise<void> {
-  if (useKV) {
-    const kv = await kvClient();
-    await kv.set(key, value);
+  const kv = await cfKv();
+  if (kv) {
+    await kv.put(key, JSON.stringify(value));
     return;
   }
   const p = filePath(key);
   await fs.mkdir(path.dirname(p), { recursive: true });
   const tmp = `${p}.tmp`;
   await fs.writeFile(tmp, JSON.stringify(value, null, 2), "utf-8");
-  await fs.rename(tmp, p); // атомарно на той же ФС
+  await fs.rename(tmp, p);
 }

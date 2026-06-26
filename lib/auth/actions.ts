@@ -150,9 +150,14 @@ export async function loginAction(
   const user = await findUserByEmail(email);
   // Проверяем пароль даже при отсутствии юзера — чтобы не палить по времени
   // ответа, есть ли такой email (user enumeration).
+  // Фиктивный хэш в реальном формате (pbkdf2, те же итерации) — чтобы
+  // verifyPassword действительно прогонял PBKDF2 и время ответа не выдавало
+  // отсутствие email (user enumeration).
+  const DUMMY_HASH =
+    "pbkdf2$100000$00000000000000000000000000000000$0000000000000000000000000000000000000000000000000000000000000000";
   const ok = user
     ? await verifyPassword(password, user.passwordHash)
-    : await verifyPassword(password, "scrypt$00$00");
+    : await verifyPassword(password, DUMMY_HASH);
 
   if (!user || !ok) {
     return { error: "Неверный email или пароль." };
