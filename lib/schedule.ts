@@ -16,7 +16,14 @@ export type Tenant = {
   startDate: string; // YYYY-MM-DD
   buyoutWeeks: number | null;
   telegramUsername?: string;
+  // Пауза выкупа: пока на паузе, график заморожен (выкупная сумма не идёт),
+  // вместо недельных — фикс. плата за паузу (PAUSE_FEE_MONTHLY), отдельно.
+  pausedSince?: string | null; // ISO YYYY-MM-DD — дата постановки на паузу
+  pausedDays?: number; // накоплено дней паузы из завершённых периодов
 };
+
+// Плата за паузу выкупа — фикс., в месяц, отдельно от выкупной суммы.
+export const PAUSE_FEE_MONTHLY = 11000;
 
 export function mskDayNum(date = new Date()): number {
   const fmt = new Intl.DateTimeFormat("en-CA", {
@@ -41,14 +48,37 @@ export function formatDay(dayNum: number): string {
   return `${d}.${m}.${dt.getUTCFullYear()}`;
 }
 
+export function dayNumToIso(dayNum: number): string {
+  const dt = new Date(dayNum * 86400000);
+  const m = String(dt.getUTCMonth() + 1).padStart(2, "0");
+  const d = String(dt.getUTCDate()).padStart(2, "0");
+  return `${dt.getUTCFullYear()}-${m}-${d}`;
+}
+
+// «Эффективная» дата начала для накопления платежей: сдвинута вперёд на все
+// дни паузы (завершённые + текущий незакрытый период). Пока на паузе, сдвиг
+// растёт ровно с todayNum, поэтому число «созревших» платежей замирает —
+// график выкупа стоит, выкупная сумма не уменьшается.
+export function accrualStartNum(
+  tenant: Pick<Tenant, "startDate" | "pausedSince" | "pausedDays">,
+  todayNum: number,
+): number {
+  const startNum = isoToDayNum(tenant.startDate);
+  const done = tenant.pausedDays ?? 0;
+  const ongoing = tenant.pausedSince
+    ? Math.max(0, todayNum - isoToDayNum(tenant.pausedSince))
+    : 0;
+  return startNum + done + ongoing;
+}
+
 // Ближайшая дата платежа (>= сегодня). Платежи каждые 7 дней от заезда.
 // paymentNumber — порядковый номер платежа (1-based). completed=true,
 // если выкуп уже выплачен полностью.
 export function nextDue(
-  tenant: Pick<Tenant, "startDate" | "buyoutWeeks">,
+  tenant: Pick<Tenant, "startDate" | "buyoutWeeks" | "pausedSince" | "pausedDays">,
   todayNum: number,
 ): { dueNum: number; paymentNumber: number; completed: boolean } {
-  const startNum = isoToDayNum(tenant.startDate);
+  const startNum = accrualStartNum(tenant, todayNum);
   const delta = todayNum - startNum;
   const dueNum = delta <= 0 ? startNum : startNum + Math.ceil(delta / 7) * 7;
   const paymentNumber = Math.round((dueNum - startNum) / 7) + 1;
@@ -90,6 +120,9 @@ export type CabinetView = {
   remainingWeeks: number | null;
   remainingAmount: number | null;
   progressPct: number | null;
+  // пауза выкупа
+  paused: boolean;
+  pauseFee: number | null;
 };
 
 export function buildCabinetView(tenant: Tenant, todayNum = mskDayNum()): CabinetView {
@@ -131,6 +164,8 @@ export function buildCabinetView(tenant: Tenant, todayNum = mskDayNum()): Cabine
       isBuyout && tenant.buyoutWeeks
         ? Math.round((paidCount / (tenant.buyoutWeeks as number)) * 100)
         : null,
+    paused: Boolean(tenant.pausedSince),
+    pauseFee: isBuyout ? PAUSE_FEE_MONTHLY : null,
   };
 }
 
@@ -194,7 +229,7 @@ export function buildSchedule(
   todayNum = mskDayNum(),
   upcomingWindow = 8,
 ): ScheduleRow[] {
-  const startNum = isoToDayNum(tenant.startDate);
+  const startNum = accrualStartNum(tenant, todayNum);
   const { dueNum: nextNum } = nextDue(tenant, todayNum);
   const nextNumber = Math.round((nextNum - startNum) / 7) + 1;
 
@@ -239,6 +274,8 @@ export type PaymentState = {
   nextDaysUntil: number | null;
   amount: number; // недельный платёж
   kind: PayKind;
+  paused: boolean; // выкуп на паузе (график заморожен)
+  pauseFee: number; // плата за паузу в месяц (PAUSE_FEE_MONTHLY)
 };
 
 export function paymentState(
@@ -246,7 +283,7 @@ export function paymentState(
   paidThrough: number,
   todayNum = mskDayNum(),
 ): PaymentState {
-  const startNum = isoToDayNum(tenant.startDate);
+  const startNum = accrualStartNum(tenant, todayNum);
   const total = tenant.buyoutWeeks ?? Infinity;
 
   // Платежи со сроком СТРОГО до сегодня (платёж «на сегодня» ещё не просрочен).
@@ -288,5 +325,7 @@ export function paymentState(
     nextDaysUntil,
     amount: tenant.weekly,
     kind,
+    paused: Boolean(tenant.pausedSince),
+    pauseFee: PAUSE_FEE_MONTHLY,
   };
 }

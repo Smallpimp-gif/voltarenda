@@ -83,16 +83,22 @@ export default async function CabinetPage() {
         <SectionHeader
           num="01"
           eyebrow="Платёж"
-          title={v.completed ? "Выкуп завершён" : "Следующий платёж"}
+          title={v.paused ? "Выкуп на паузе" : v.completed ? "Выкуп завершён" : "Следующий платёж"}
         >
-          {due && (
-            <span
-              className={`shrink-0 rounded-pill px-4 py-2 font-mono text-caption uppercase ${
-                due.danger ? "bg-danger/10 text-danger" : "bg-volt text-ink"
-              }`}
-            >
-              {due.text}
+          {v.paused ? (
+            <span className="shrink-0 rounded-pill border border-dashed border-[var(--line-strong)] px-4 py-2 font-mono text-caption uppercase text-mute">
+              на паузе
             </span>
+          ) : (
+            due && (
+              <span
+                className={`shrink-0 rounded-pill px-4 py-2 font-mono text-caption uppercase ${
+                  due.danger ? "bg-danger/10 text-danger" : "bg-volt text-ink"
+                }`}
+              >
+                {due.text}
+              </span>
+            )
           )}
         </SectionHeader>
 
@@ -103,7 +109,21 @@ export default async function CabinetPage() {
               v.isBuyout ? "" : "lg:col-span-2"
             }`}
           >
-            {v.completed ? (
+            {v.paused ? (
+              <>
+                <span className="font-mono text-caption uppercase text-mute">Пауза выкупа</span>
+                <div>
+                  <p className="font-sans text-display-1 leading-none tracking-tight tabular-nums text-[var(--text)]">
+                    {money(v.pauseFee ?? 0)}
+                    <span className="text-mute"> / мес</span>
+                  </p>
+                  <p className="mt-4 text-body-lg text-mute">
+                    Оплачивается отдельно. Выкупная сумма на паузе не уменьшается —
+                    график продолжится после снятия паузы.
+                  </p>
+                </div>
+              </>
+            ) : v.completed ? (
               <>
                 <span className="font-mono text-caption uppercase text-mute">Статус</span>
                 <p className="font-sans text-h2 text-[var(--text)]">Выкуп выплачен полностью</p>

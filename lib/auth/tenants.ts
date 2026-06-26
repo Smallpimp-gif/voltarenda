@@ -124,6 +124,19 @@ export async function updateTenant(id: string, input: TenantInput): Promise<Tena
   return updated;
 }
 
+// Частичное обновление записи (пауза и т.п.) без валидации формы.
+export async function patchTenant(
+  id: string,
+  patch: Partial<Tenant>,
+): Promise<Tenant | null> {
+  const tenants = await loadTenants();
+  const idx = tenants.findIndex((t) => t.id === id);
+  if (idx === -1) return null;
+  tenants[idx] = { ...tenants[idx], ...patch };
+  await saveTenants(tenants);
+  return tenants[idx];
+}
+
 export async function deleteTenant(id: string): Promise<boolean> {
   const tenants = await loadTenants();
   const next = tenants.filter((t) => t.id !== id);

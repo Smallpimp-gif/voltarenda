@@ -7,7 +7,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { markPaidAction } from "@/lib/auth/owner-actions";
+import { markPaidAction, togglePauseAction } from "@/lib/auth/owner-actions";
 import { DeleteTenantButton } from "./delete-button";
 
 const rub = new Intl.NumberFormat("ru-RU");
@@ -30,6 +30,8 @@ export type TenantRow = {
   nextWeekday: string | null;
   nextDaysUntil: number | null;
   kind: PayKind;
+  paused: boolean;
+  pauseFee: number;
 };
 
 type Filter = "all" | "overdue" | "today" | "buyout" | "rent";
@@ -44,6 +46,8 @@ const FILTERS: { key: Filter; label: string }[] = [
 ];
 
 function statusText(r: TenantRow): { label: string; cls: string } {
+  if (r.paused)
+    return { label: "На паузе", cls: "border border-dashed border-[var(--line-strong)] text-mute" };
   switch (r.kind) {
     case "done":
       return { label: "Оплачено", cls: "border border-[var(--line-strong)] text-mute" };
@@ -63,6 +67,14 @@ function statusText(r: TenantRow): { label: string; cls: string } {
 
 // Кнопка «Оплатил» / «Отменить» — server action, без перезагрузки.
 function PaidControls({ row }: { row: TenantRow }) {
+  // На паузе недельные платежи не идут — показываем плату за паузу.
+  if (row.paused) {
+    return (
+      <span className="font-mono text-caption uppercase text-mute">
+        Пауза · {money(row.pauseFee)}/мес
+      </span>
+    );
+  }
   if (row.kind === "done") {
     return (
       <form action={markPaidAction}>
@@ -108,9 +120,29 @@ function PaidControls({ row }: { row: TenantRow }) {
   );
 }
 
+// Пауза/снятие паузы — только для выкупа (есть totalWeeks).
+function PauseControl({ row }: { row: TenantRow }) {
+  if (row.totalWeeks == null) return null;
+  return (
+    <form action={togglePauseAction}>
+      <input type="hidden" name="id" value={row.id} />
+      <button
+        type="submit"
+        className={`transition-colors duration-quick hover:text-[var(--text)] ${
+          row.paused ? "text-[var(--text)]" : ""
+        }`}
+        title={row.paused ? "Возобновить выкуп" : "Поставить выкуп на паузу"}
+      >
+        {row.paused ? "Снять паузу" : "Пауза"}
+      </button>
+    </form>
+  );
+}
+
 function RowActions({ row }: { row: TenantRow }) {
   return (
     <div className="flex items-center gap-3 font-mono text-caption uppercase text-mute">
+      <PauseControl row={row} />
       {row.telegramUsername && (
         <a
           href={`https://t.me/${row.telegramUsername}`}
@@ -133,6 +165,7 @@ function RowActions({ row }: { row: TenantRow }) {
 }
 
 function urgency(r: TenantRow): number {
+  if (r.paused) return 5e8; // на паузе — внизу, но выше завершённых
   if (r.kind === "overdue") return -1000 - r.overdueCount;
   if (r.kind === "done") return 1e9;
   return r.nextDaysUntil ?? 0;
@@ -231,9 +264,11 @@ export function TenantsTable({ rows }: { rows: TenantRow[] }) {
         )}
         {view.map((row) => {
           const st = statusText(row);
-          const paidInfo = row.totalWeeks
-            ? `оплачено ${row.paidThrough}/${row.totalWeeks}`
-            : `оплачено ${row.paidThrough}`;
+          const paidInfo = row.paused
+            ? `на паузе · ${money(row.pauseFee)}/мес`
+            : row.totalWeeks
+              ? `оплачено ${row.paidThrough}/${row.totalWeeks}`
+              : `оплачено ${row.paidThrough}`;
           return (
             <div key={row.id} className="border-b border-[var(--line)]">
               {/* Мобильная карточка */}
@@ -265,7 +300,7 @@ export function TenantsTable({ rows }: { rows: TenantRow[] }) {
                 </div>
                 <div className="min-w-0">
                   <span className="text-body text-[var(--text)]">{money(row.weekly)}</span>
-                  {row.nextDate && (
+                  {row.nextDate && !row.paused && (
                     <span className="ml-2 font-mono text-caption text-mute">след. {row.nextDate}</span>
                   )}
                 </div>

@@ -115,13 +115,17 @@ export default async function OwnerPage({
       nextWeekday: ps.nextWeekday,
       nextDaysUntil: ps.nextDaysUntil,
       kind: ps.kind,
+      paused: ps.paused,
+      pauseFee: ps.pauseFee,
     };
   });
 
   // Сводка.
   const buyoutCount = tenants.filter((t) => t.buyoutWeeks).length;
   const rentCount = tenants.length - buyoutCount;
-  const activeRows = rows.filter((r) => r.kind !== "done");
+  // Недельный доход — с активных, кроме завершённых и тех, кто на паузе
+  // (на паузе платят фикс. за паузу, а не недельные).
+  const activeRows = rows.filter((r) => r.kind !== "done" && !r.paused);
   const weeklyIncome = activeRows.reduce((s, r) => s + r.weekly, 0);
   const overdueRows = rows.filter((r) => r.kind === "overdue");
   const overdueCount = overdueRows.length;

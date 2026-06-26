@@ -33,7 +33,7 @@ export function OwnerMobile({
 }) {
   const [tab, setTab] = useState<Tab>("tenants");
 
-  const active = rows.filter((r) => r.kind !== "done");
+  const active = rows.filter((r) => r.kind !== "done" && !r.paused);
   const weeklyIncome = active.reduce((s, r) => s + r.weekly, 0);
   const overdueRows = rows.filter((r) => r.kind === "overdue");
   const overdueSum = overdueRows.reduce((s, r) => s + r.overdueCount * r.weekly, 0);

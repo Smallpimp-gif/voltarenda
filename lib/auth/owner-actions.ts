@@ -12,11 +12,12 @@ import {
   updateTenant,
   deleteTenant,
   getTenantById,
+  patchTenant,
   type TenantInput,
 } from "@/lib/auth/tenants";
 import { setAvailableBikes } from "@/lib/settings";
 import { getPaidThrough, setPaidThrough } from "@/lib/payments";
-import { paymentState } from "@/lib/schedule";
+import { paymentState, mskDayNum, isoToDayNum, dayNumToIso } from "@/lib/schedule";
 
 export type ActionState = { error: string | null; ok?: boolean };
 
@@ -43,6 +44,29 @@ export async function markPaidAction(formData: FormData): Promise<void> {
     await setPaidThrough(id, dir === "dec" ? cur - 1 : cur + 1);
   }
   revalidatePath("/cabinet/owner");
+}
+
+// Пауза/снятие паузы выкупа. На паузе график заморожен (выкупная сумма не
+// уменьшается), вместо недельных — фикс. плата за паузу отдельно. При снятии
+// накапливаем длительность паузы в pausedDays, чтобы сдвинуть график вперёд.
+export async function togglePauseAction(formData: FormData): Promise<void> {
+  await requireOwner();
+  const id = String(formData.get("id") ?? "");
+  if (!id) return;
+  const t = await getTenantById(id);
+  if (!t || t.type !== "выкуп") return; // пауза — только для выкупа
+  const today = mskDayNum();
+  if (t.pausedSince) {
+    const days = Math.max(0, today - isoToDayNum(t.pausedSince));
+    await patchTenant(id, {
+      pausedSince: null,
+      pausedDays: (t.pausedDays ?? 0) + days,
+    });
+  } else {
+    await patchTenant(id, { pausedSince: dayNumToIso(today) });
+  }
+  revalidatePath("/cabinet/owner");
+  revalidatePath("/cabinet");
 }
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
