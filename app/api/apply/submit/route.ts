@@ -6,14 +6,13 @@
 // В production: заменить на БД (PostgreSQL/Supabase) + шифрование ПДн.
 
 import { NextResponse } from "next/server";
-import { writeFile, mkdir } from "fs/promises";
-import path from "path";
 import crypto from "crypto";
 import {
   formatApplicationNotification,
   notifyOperator,
 } from "@/lib/notify";
 import { isAllowedOrigin } from "@/lib/api-origin";
+import { writeJSON } from "@/lib/store";
 
 export const runtime = "nodejs";
 
@@ -44,8 +43,6 @@ type SubmitBody = {
   photoRegistrationId: string;
   photoSelfieId: string;
 };
-
-const DATA_DIR = path.join(process.cwd(), "data", "applications");
 
 const VALID_TARIFFS = ["three-day", "week", "month", "buyout"];
 
@@ -95,8 +92,6 @@ export async function POST(req: Request) {
   }
 
   try {
-    await mkdir(DATA_DIR, { recursive: true });
-
     const applicationId = crypto.randomUUID();
     const application = {
       id: applicationId,
@@ -124,8 +119,7 @@ export async function POST(req: Request) {
       },
     };
 
-    const filepath = path.join(DATA_DIR, `${applicationId}.json`);
-    await writeFile(filepath, JSON.stringify(application, null, 2), "utf-8");
+    await writeJSON(`applications/${applicationId}`, application);
 
     // Fire-and-forget уведомление оператору в Telegram. Если бот не
     // настроен (нет env) или сеть упала — submit всё равно считается

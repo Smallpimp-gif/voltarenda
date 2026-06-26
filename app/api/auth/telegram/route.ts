@@ -37,7 +37,7 @@ export async function POST(req: Request) {
 
   // Владелец по telegram-id или юзернейму — создаём/обновляем аккаунт.
   if (isOwnerTelegramId(tid) || isOwnerTelegramUsername(tg.username)) {
-    const existing = findUserByTelegramId(tid);
+    const existing = await findUserByTelegramId(tid);
     const user: User = {
       id: existing?.id ?? randomUUID(),
       email: existing?.email ?? `tg${tid}@telegram.local`,
@@ -48,15 +48,15 @@ export async function POST(req: Request) {
       createdAt: existing?.createdAt ?? new Date().toISOString(),
       lastLoginAt: new Date().toISOString(),
     };
-    putUser(user);
+    await putUser(user);
     await createSession(user.id);
     return NextResponse.json({ status: "owner", redirect: "/cabinet/owner" });
   }
 
   // Существующий пользователь по telegram-id.
-  const user = findUserByTelegramId(tid);
+  const user = await findUserByTelegramId(tid);
   if (user) {
-    putUser({ ...user, lastLoginAt: new Date().toISOString() });
+    await putUser({ ...user, lastLoginAt: new Date().toISOString() });
     await createSession(user.id);
     return NextResponse.json({
       status: user.tenantId ? "tenant" : "user",

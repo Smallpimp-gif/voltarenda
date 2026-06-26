@@ -1,49 +1,29 @@
-// Арендаторы — data/bot/tenants.json. Это источник истины бота
-// напоминаний (bot/index.mjs). Кабинет арендатора читает файл; кабинет
-// владельца — читает И пишет (CRUD).
+// Арендаторы — через lib/store (ключ "bot/tenants"). Источник истины бота
+// напоминаний. Кабинет арендатора читает; кабинет владельца — CRUD.
 //
-// ВНИМАНИЕ про сосуществование с Excel-импортом: bot/import-tenants.py
-// ПОЛНОСТЬЮ перезаписывает этот файл из Excel (сохраняя только
-// telegramUsername по совпадающим id). Поэтому арендаторы, добавленные
-// через админку и отсутствующие в Excel, при повторном импорте пропадут.
-// Решение: после старта админки считать её источником истины и не
-// запускать import-tenants.py (или потом сделать импорт дополняющим).
+// ВНИМАНИЕ: на Vercel данные в KV, а bot/import-tenants.py и сам бот
+// (отдельный процесс) работают с файлом data/bot/tenants.json. На Vercel
+// они рассинхронизированы — бота нужно перевести на тот же KV (next).
+// Локально (файловый режим) — единый файл, всё совместимо.
 
-import {
-  readFileSync,
-  writeFileSync,
-  renameSync,
-  mkdirSync,
-  existsSync,
-} from "node:fs";
-import path from "node:path";
+import { readJSON, writeJSON } from "@/lib/store";
 import type { Tenant } from "@/lib/schedule";
 
-const DIR = path.join(process.cwd(), "data", "bot");
-const FILE = path.join(DIR, "tenants.json");
+const KEY = "bot/tenants";
 
-export function loadTenants(): Tenant[] {
-  if (!existsSync(FILE)) return [];
-  try {
-    return JSON.parse(readFileSync(FILE, "utf-8")) as Tenant[];
-  } catch (err) {
-    console.error("[auth/tenants] не смог прочитать tenants.json:", (err as Error).message);
-    return [];
-  }
+export async function loadTenants(): Promise<Tenant[]> {
+  return readJSON<Tenant[]>(KEY, []);
 }
 
-function saveTenants(tenants: Tenant[]) {
-  if (!existsSync(DIR)) mkdirSync(DIR, { recursive: true });
-  const tmp = `${FILE}.tmp`;
-  writeFileSync(tmp, JSON.stringify(tenants, null, 2), "utf-8");
-  renameSync(tmp, FILE);
+async function saveTenants(tenants: Tenant[]): Promise<void> {
+  await writeJSON(KEY, tenants);
 }
 
-export function getTenantById(id: string): Tenant | null {
-  return loadTenants().find((t) => t.id === id) ?? null;
+export async function getTenantById(id: string): Promise<Tenant | null> {
+  return (await loadTenants()).find((t) => t.id === id) ?? null;
 }
 
-// --- Нормализация для матчинга при регистрации арендатора -------------
+// --- Нормализация для матчинга при регистрации ------------------------
 
 function normName(s: string): string {
   return s.trim().toLowerCase().replace(/ё/g, "е");
@@ -52,16 +32,14 @@ function normContract(s: string): string {
   return s.trim().toLowerCase().replace(/[№#\s]/g, "");
 }
 
-// Поиск по номеру договора + фамилии. Договор не уникален (несколько
-// арендаторов на одном договоре), поэтому матчим И по договору, И по фамилии.
-export function findTenantByContractAndSurname(
+export async function findTenantByContractAndSurname(
   contract: string,
   surname: string,
-): Tenant | null {
+): Promise<Tenant | null> {
   const c = normContract(contract);
   const n = normName(surname);
   return (
-    loadTenants().find(
+    (await loadTenants()).find(
       (t) => normContract(t.contract) === c && normName(t.name) === n,
     ) ?? null
   );
@@ -108,8 +86,8 @@ export type TenantInput = {
   telegramUsername?: string;
 };
 
-export function addTenant(input: TenantInput): Tenant {
-  const tenants = loadTenants();
+export async function addTenant(input: TenantInput): Promise<Tenant> {
+  const tenants = await loadTenants();
   const id = uniqueId(input.name, new Set(tenants.map((t) => t.id)));
   const tenant: Tenant = {
     id,
@@ -122,12 +100,12 @@ export function addTenant(input: TenantInput): Tenant {
     telegramUsername: input.telegramUsername?.trim() ?? "",
   };
   tenants.push(tenant);
-  saveTenants(tenants);
+  await saveTenants(tenants);
   return tenant;
 }
 
-export function updateTenant(id: string, input: TenantInput): Tenant | null {
-  const tenants = loadTenants();
+export async function updateTenant(id: string, input: TenantInput): Promise<Tenant | null> {
+  const tenants = await loadTenants();
   const idx = tenants.findIndex((t) => t.id === id);
   if (idx === -1) return null;
   const updated: Tenant = {
@@ -142,14 +120,14 @@ export function updateTenant(id: string, input: TenantInput): Tenant | null {
       input.telegramUsername?.trim() ?? tenants[idx].telegramUsername ?? "",
   };
   tenants[idx] = updated;
-  saveTenants(tenants);
+  await saveTenants(tenants);
   return updated;
 }
 
-export function deleteTenant(id: string): boolean {
-  const tenants = loadTenants();
+export async function deleteTenant(id: string): Promise<boolean> {
+  const tenants = await loadTenants();
   const next = tenants.filter((t) => t.id !== id);
   if (next.length === tenants.length) return false;
-  saveTenants(next);
+  await saveTenants(next);
   return true;
 }

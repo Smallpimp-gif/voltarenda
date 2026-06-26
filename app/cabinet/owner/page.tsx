@@ -90,9 +90,11 @@ export default async function OwnerPage({
   if (cu.user.role !== "owner") redirect("/cabinet");
 
   const sp = await searchParams;
-  const tenants = loadTenants();
-  const bikes = getAvailableBikes();
-  const paidMap = loadPaidMap();
+  const [tenants, bikes, paidMap] = await Promise.all([
+    loadTenants(),
+    getAvailableBikes(),
+    loadPaidMap(),
+  ]);
   const editTenant = sp.edit ? tenants.find((t) => t.id === sp.edit) : undefined;
 
   // Строки таблицы со статусом оплат (учёт отметок владельца).

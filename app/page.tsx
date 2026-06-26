@@ -19,7 +19,7 @@ import { CookieConsent } from "@/components/cookie-consent";
 import { getAvailableBikes } from "@/lib/settings";
 
 export default async function Home() {
-  const availableBikes = getAvailableBikes();
+  const availableBikes = await getAvailableBikes();
   return (
     <>
       <StickyHeader />

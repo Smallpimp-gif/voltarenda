@@ -66,17 +66,17 @@ export async function registerAction(
   if (!EMAIL_RE.test(email)) return { error: "Некорректный email." };
   if (password.length < 8) return { error: "Пароль не короче 8 символов." };
 
-  const tenant = findTenantByContractAndSurname(contract, surname);
+  const tenant = await findTenantByContractAndSurname(contract, surname);
   if (!tenant) {
     return {
       error: "Договор с такой фамилией не найден. Проверьте номер и фамилию.",
     };
   }
 
-  if (findUserByTenantId(tenant.id)) {
+  if (await findUserByTenantId(tenant.id)) {
     return { error: "Кабинет по этому договору уже создан. Войдите." };
   }
-  if (findUserByEmail(email)) {
+  if (await findUserByEmail(email)) {
     return { error: "Этот email уже зарегистрирован. Войдите." };
   }
 
@@ -90,7 +90,7 @@ export async function registerAction(
     createdAt: new Date().toISOString(),
     lastLoginAt: new Date().toISOString(),
   };
-  putUser(user);
+  await putUser(user);
   await createSession(user.id);
   redirect("/cabinet");
 }
@@ -110,7 +110,7 @@ export async function registerOwnerAction(
   if (!isOwnerEmail(email)) {
     return { error: "Этот email не в списке владельцев (OWNER_EMAILS)." };
   }
-  if (findUserByEmail(email)) {
+  if (await findUserByEmail(email)) {
     return { error: "Аккаунт с этим email уже создан. Войдите." };
   }
 
@@ -124,7 +124,7 @@ export async function registerOwnerAction(
     createdAt: new Date().toISOString(),
     lastLoginAt: new Date().toISOString(),
   };
-  putUser(user);
+  await putUser(user);
   await createSession(user.id);
   redirect("/cabinet/owner");
 }
@@ -147,7 +147,7 @@ export async function loginAction(
     return { error: "Введите email и пароль." };
   }
 
-  const user = findUserByEmail(email);
+  const user = await findUserByEmail(email);
   // Проверяем пароль даже при отсутствии юзера — чтобы не палить по времени
   // ответа, есть ли такой email (user enumeration).
   const ok = user
@@ -159,7 +159,7 @@ export async function loginAction(
   }
 
   resetAttempts(ip);
-  putUser({ ...user, lastLoginAt: new Date().toISOString() });
+  await putUser({ ...user, lastLoginAt: new Date().toISOString() });
   await createSession(user.id);
   redirect(user.role === "owner" ? "/cabinet/owner" : "/cabinet");
 }

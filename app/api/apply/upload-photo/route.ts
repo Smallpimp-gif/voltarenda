@@ -10,16 +10,13 @@
 // - Файлы хранятся в ./uploads/{uuid}.jpg (gitignored)
 
 import { NextResponse } from "next/server";
-import { writeFile, mkdir } from "fs/promises";
-import path from "path";
-import crypto from "crypto";
 import { isAllowedOrigin } from "@/lib/api-origin";
+import { savePhoto } from "@/lib/blob";
 
 export const runtime = "nodejs";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const ALLOWED_MIME = ["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"];
-const UPLOADS_DIR = path.join(process.cwd(), "uploads");
 
 export async function POST(req: Request) {
   // CSRF — см. lib/api-origin.ts
@@ -75,22 +72,13 @@ export async function POST(req: Request) {
   }
 
   try {
-    // Создаём директорию uploads если нет
-    await mkdir(UPLOADS_DIR, { recursive: true });
-
-    // Генерируем уникальное имя файла
-    const fileId = crypto.randomUUID();
-    const ext = file.type === "image/png" ? "png" : "jpg";
-    const filename = `${fileId}.${ext}`;
-    const filepath = path.join(UPLOADS_DIR, filename);
-
-    // Записываем файл
+    // Сохраняем в Blob (Vercel) или uploads/ (локально). fileId — opaque
+    // ref (URL в облаке, uuid локально), его клиент носит дальше.
     const buffer = Buffer.from(await file.arrayBuffer());
-    await writeFile(filepath, buffer);
+    const fileId = await savePhoto(buffer, file.type);
 
     return NextResponse.json({
       fileId,
-      filename,
       slot: String(slot),
       size: file.size,
       message: "Фото загружено",

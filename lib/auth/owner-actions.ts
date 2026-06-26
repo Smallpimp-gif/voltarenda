@@ -33,14 +33,14 @@ export async function markPaidAction(formData: FormData): Promise<void> {
   const dir = String(formData.get("dir") ?? "inc");
   if (!id) return;
   if (dir === "catchup") {
-    const t = getTenantById(id);
+    const t = await getTenantById(id);
     if (t) {
-      const ps = paymentState(t, getPaidThrough(id));
-      setPaidThrough(id, ps.paidThrough + ps.overdueCount); // = все просроченные
+      const ps = paymentState(t, await getPaidThrough(id));
+      await setPaidThrough(id, ps.paidThrough + ps.overdueCount); // = все просроченные
     }
   } else {
-    const cur = getPaidThrough(id);
-    setPaidThrough(id, dir === "dec" ? cur - 1 : cur + 1);
+    const cur = await getPaidThrough(id);
+    await setPaidThrough(id, dir === "dec" ? cur - 1 : cur + 1);
   }
   revalidatePath("/cabinet/owner");
 }
@@ -90,7 +90,7 @@ export async function addTenantAction(
   await requireOwner();
   const parsed = parseTenant(formData);
   if (typeof parsed === "string") return { error: parsed };
-  addTenant(parsed);
+  await addTenant(parsed);
   revalidatePath("/cabinet/owner");
   redirect("/cabinet/owner");
 }
@@ -103,7 +103,7 @@ export async function updateTenantAction(
   const id = String(formData.get("id") ?? "");
   const parsed = parseTenant(formData);
   if (typeof parsed === "string") return { error: parsed };
-  const ok = updateTenant(id, parsed);
+  const ok = await updateTenant(id, parsed);
   if (!ok) return { error: "Арендатор не найден." };
   revalidatePath("/cabinet/owner");
   redirect("/cabinet/owner");
@@ -112,7 +112,7 @@ export async function updateTenantAction(
 export async function deleteTenantAction(formData: FormData): Promise<void> {
   await requireOwner();
   const id = String(formData.get("id") ?? "");
-  deleteTenant(id);
+  await deleteTenant(id);
   revalidatePath("/cabinet/owner");
   redirect("/cabinet/owner");
 }
@@ -124,7 +124,7 @@ export async function setBikesAction(
   await requireOwner();
   const n = Number(formData.get("availableBikes"));
   if (!Number.isFinite(n) || n < 0) return { error: "Число велосипедов — 0 или больше." };
-  setAvailableBikes(n);
+  await setAvailableBikes(n);
   revalidatePath("/cabinet/owner");
   revalidatePath("/"); // лендинг показывает доступность
   return { error: null, ok: true };

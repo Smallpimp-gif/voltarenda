@@ -10,13 +10,15 @@
     "bot": "node bot/index.mjs"
   },
   "dependencies": {
+    "@vercel/blob": "^2.5.0",
+    "@vercel/kv": "^3.0.0",
     "eslint-config-next": "^15.5.15",
     "framer-motion": "^12.38.0",
-    "next": "^15.5.15",
-    "react": "^19.2.5",
-    "react-dom": "^19.2.5",
     "grammy": "^1.30.0",
-    "node-cron": "^3.0.3"
+    "next": "^15.5.15",
+    "node-cron": "^3.0.3",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5"
   },
   "devDependencies": {
     "@types/node": "22.19.17",
