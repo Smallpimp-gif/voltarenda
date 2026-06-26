@@ -26,3 +26,19 @@ export function ownerTelegramIds(): string[] {
 export function isOwnerTelegramId(id: string | number): boolean {
   return ownerTelegramIds().includes(String(id));
 }
+
+// Владельцы по Telegram-юзернейму (OWNER_TELEGRAM_USERNAMES, через запятую,
+// без учёта регистра и @). Юзернейм приходит в initData. Менее надёжно,
+// чем id (юзернейм можно сменить), поэтому при первом входе аккаунт
+// привязывается к числовому telegramId — дальше вход уже по нему.
+export function ownerTelegramUsernames(): string[] {
+  return (process.env.OWNER_TELEGRAM_USERNAMES ?? "")
+    .split(",")
+    .map((s) => s.trim().replace(/^@/, "").toLowerCase())
+    .filter(Boolean);
+}
+
+export function isOwnerTelegramUsername(username?: string): boolean {
+  if (!username) return false;
+  return ownerTelegramUsernames().includes(username.replace(/^@/, "").toLowerCase());
+}

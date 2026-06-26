@@ -9,7 +9,7 @@
 import { NextResponse } from "next/server";
 import { randomUUID } from "node:crypto";
 import { verifyInitData } from "@/lib/auth/telegram";
-import { isOwnerTelegramId } from "@/lib/auth/owner";
+import { isOwnerTelegramId, isOwnerTelegramUsername } from "@/lib/auth/owner";
 import { findUserByTelegramId, putUser, type User } from "@/lib/auth/storage";
 import { createSession } from "@/lib/auth/session";
 import { isAllowedOrigin } from "@/lib/api-origin";
@@ -35,8 +35,8 @@ export async function POST(req: Request) {
   const tid = String(tg.id);
   const name = [tg.first_name, tg.last_name].filter(Boolean).join(" ").trim();
 
-  // Владелец по telegram-id — создаём/обновляем аккаунт владельца.
-  if (isOwnerTelegramId(tid)) {
+  // Владелец по telegram-id или юзернейму — создаём/обновляем аккаунт.
+  if (isOwnerTelegramId(tid) || isOwnerTelegramUsername(tg.username)) {
     const existing = findUserByTelegramId(tid);
     const user: User = {
       id: existing?.id ?? randomUUID(),
