@@ -274,12 +274,18 @@ export function TenantsTable({ rows }: { rows: TenantRow[] }) {
               {/* Мобильная карточка */}
               <div className="flex flex-col gap-3 py-4 md:hidden">
                 <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="truncate text-body-lg font-medium text-[var(--text)]">{row.name}</p>
+                  <Link
+                    href={`/cabinet/owner?edit=${row.id}`}
+                    className="min-w-0 transition-opacity duration-quick active:opacity-60"
+                  >
+                    <p className="flex items-center gap-1 truncate text-body-lg font-medium text-[var(--text)]">
+                      {row.name}
+                      <span aria-hidden className="text-mute">›</span>
+                    </p>
                     <p className="mt-0.5 truncate font-mono text-caption uppercase text-mute">
                       Договор {row.contract} · {money(row.weekly)} · {paidInfo}
                     </p>
-                  </div>
+                  </Link>
                   <span className={`shrink-0 rounded-pill px-2.5 py-1 font-mono text-caption uppercase ${st.cls}`}>
                     {st.label}
                   </span>
@@ -292,12 +298,15 @@ export function TenantsTable({ rows }: { rows: TenantRow[] }) {
 
               {/* Десктопная строка */}
               <div className="hidden grid-cols-[1.8fr_1fr_auto_auto] items-center gap-4 px-4 py-4 transition-colors duration-quick hover:bg-[var(--bg-2)] md:grid">
-                <div className="min-w-0">
-                  <p className="truncate text-body-lg font-medium text-[var(--text)]">{row.name}</p>
+                <Link href={`/cabinet/owner?edit=${row.id}`} className="min-w-0 group">
+                  <p className="flex items-center gap-1 truncate text-body-lg font-medium text-[var(--text)] transition-colors duration-quick group-hover:text-volt">
+                    {row.name}
+                    <span aria-hidden className="text-mute opacity-0 transition-opacity duration-quick group-hover:opacity-100">›</span>
+                  </p>
                   <p className="mt-0.5 font-mono text-caption uppercase text-mute">
                     Договор {row.contract} · {row.type === "выкуп" ? "выкуп" : "аренда"} · {paidInfo}
                   </p>
-                </div>
+                </Link>
                 <div className="min-w-0">
                   <span className="text-body text-[var(--text)]">{money(row.weekly)}</span>
                   {row.nextDate && !row.paused && (
