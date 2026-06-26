@@ -17,7 +17,13 @@ import {
 } from "@/lib/auth/tenants";
 import { setAvailableBikes } from "@/lib/settings";
 import { getPaidThrough, setPaidThrough } from "@/lib/payments";
-import { addLedgerEntry, removeLastLedgerEntry, clearLedger } from "@/lib/ledger";
+import {
+  addLedgerEntry,
+  removeLastLedgerEntry,
+  clearLedger,
+  loadLedger,
+  ledgerTotal,
+} from "@/lib/ledger";
 import { paymentState, mskDayNum, isoToDayNum, dayNumToIso } from "@/lib/schedule";
 
 export type ActionState = { error: string | null; ok?: boolean };
@@ -71,6 +77,26 @@ export async function markPaidAction(formData: FormData): Promise<void> {
 export async function resetLedgerAction(): Promise<void> {
   await requireOwner();
   await clearLedger();
+  revalidatePath("/cabinet/owner");
+}
+
+// Задать сумму кассы вручную: добавляем запись-корректировку на разницу,
+// чтобы итог стал ровно нужным числом (история сохраняется, аудит прозрачен).
+export async function setLedgerTotalAction(formData: FormData): Promise<void> {
+  await requireOwner();
+  const target = Math.max(0, Math.round(Number(formData.get("total"))));
+  if (!Number.isFinite(target)) return;
+  const file = await loadLedger();
+  const delta = target - ledgerTotal(file);
+  if (delta !== 0) {
+    await addLedgerEntry({
+      tenantId: "",
+      name: "Корректировка кассы",
+      amount: delta,
+      weeks: 0,
+      kind: "manual",
+    });
+  }
   revalidatePath("/cabinet/owner");
 }
 

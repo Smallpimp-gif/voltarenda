@@ -9,9 +9,9 @@ export type LedgerEntry = {
   id: string;
   tenantId: string;
   name: string; // снимок фамилии на момент оплаты
-  amount: number; // ₽
+  amount: number; // ₽ (может быть отрицательным — корректировка вниз)
   weeks: number; // сколько недель закрыто этой записью
-  kind: "weekly" | "catchup";
+  kind: "weekly" | "catchup" | "manual";
   at: string; // ISO
 };
 
