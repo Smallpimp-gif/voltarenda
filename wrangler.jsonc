@@ -9,13 +9,11 @@
     "binding": "ASSETS"
   },
   // KV-хранилище данных (пользователи, сессии, арендаторы, платежи,
-  // настройки, заявки). Создать: `npx wrangler kv namespace create DATA`,
-  // затем вставить выданный id ниже. В дашборде Cloudflare этот биндинг
-  // подтянется автоматически из этого файла.
+  // настройки, заявки). Namespace "voltarenda-data" в аккаунте Cloudflare.
   "kv_namespaces": [
     {
       "binding": "DATA",
-      "id": "REPLACE_WITH_KV_NAMESPACE_ID"
+      "id": "3b078fddd5f64ce993f586a96eb8826a"
     }
   ]
 }
