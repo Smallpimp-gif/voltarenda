@@ -6,6 +6,11 @@ import { loadTenants } from "@/lib/auth/tenants";
 import { getAvailableBikes } from "@/lib/settings";
 import { paymentState } from "@/lib/schedule";
 import { loadPaidMap } from "@/lib/payments";
+import { loadLedger, ledgerTotal } from "@/lib/ledger";
+import {
+  LedgerPanel,
+  type LedgerRow,
+} from "@/components/cabinet/owner/ledger-panel";
 import { BikesForm } from "@/components/cabinet/owner/bikes-form";
 import { TenantForm } from "@/components/cabinet/owner/tenant-form";
 import {
@@ -90,11 +95,21 @@ export default async function OwnerPage({
   if (cu.user.role !== "owner") redirect("/cabinet");
 
   const sp = await searchParams;
-  const [tenants, bikes, paidMap] = await Promise.all([
+  const [tenants, bikes, paidMap, ledger] = await Promise.all([
     loadTenants(),
     getAvailableBikes(),
     loadPaidMap(),
+    loadLedger(),
   ]);
+  const ledgerSum = ledgerTotal(ledger);
+  const ledgerRows: LedgerRow[] = [...ledger.entries].reverse().map((e) => ({
+    id: e.id,
+    name: e.name,
+    amount: e.amount,
+    weeks: e.weeks,
+    kind: e.kind,
+    at: e.at,
+  }));
   const editTenant = sp.edit ? tenants.find((t) => t.id === sp.edit) : undefined;
 
   // Строки таблицы со статусом оплат (учёт отметок владельца).
@@ -141,6 +156,9 @@ export default async function OwnerPage({
         bikes={bikes}
         addOpen={Boolean(sp.add)}
         editTenant={editTenant}
+        ledgerTotal={ledgerSum}
+        ledgerRows={ledgerRows}
+        ledgerResetAt={ledger.lastResetAt}
       />
     </div>
 
@@ -236,6 +254,18 @@ export default async function OwnerPage({
           перезапишет список и удалит арендаторов, добавленных здесь. Если
           пользуетесь админкой — не запускайте импорт.
         </p>
+      </section>
+
+      {/* 03 / Касса */}
+      <section className="mt-20">
+        <SectionHeader num="03" eyebrow="Касса" title="Собранные оплаты">
+          <span className="hidden font-mono text-caption uppercase text-mute lg:inline">
+            обнуление не трогает прогресс выкупа
+          </span>
+        </SectionHeader>
+        <div className="mt-8">
+          <LedgerPanel total={ledgerSum} rows={ledgerRows} lastResetAt={ledger.lastResetAt} />
+        </div>
       </section>
     </div>
     </>

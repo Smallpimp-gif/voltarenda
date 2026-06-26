@@ -11,12 +11,13 @@ import { logoutAction } from "@/lib/auth/actions";
 import { BikesForm } from "./bikes-form";
 import { TenantForm } from "./tenant-form";
 import { TenantsTable, type TenantRow } from "./tenants-table";
+import { LedgerPanel, type LedgerRow } from "./ledger-panel";
 import type { Tenant } from "@/lib/schedule";
 
 const rub = new Intl.NumberFormat("ru-RU");
 const money = (n: number) => `${rub.format(n)} ₽`;
 
-type Tab = "overview" | "tenants" | "settings";
+type Tab = "overview" | "tenants" | "ledger" | "settings";
 
 export function OwnerMobile({
   email,
@@ -24,12 +25,18 @@ export function OwnerMobile({
   bikes,
   addOpen,
   editTenant,
+  ledgerTotal,
+  ledgerRows,
+  ledgerResetAt,
 }: {
   email: string;
   rows: TenantRow[];
   bikes: number;
   addOpen: boolean;
   editTenant?: Tenant;
+  ledgerTotal: number;
+  ledgerRows: LedgerRow[];
+  ledgerResetAt: string | null;
 }) {
   const [tab, setTab] = useState<Tab>("tenants");
 
@@ -129,6 +136,16 @@ export function OwnerMobile({
         </div>
       )}
 
+      {tab === "ledger" && (
+        <div className="px-gutter py-6">
+          <h2 className="text-h3 text-[var(--text)]">Касса</h2>
+          <p className="mt-1 font-mono text-caption uppercase text-mute">Собранные оплаты</p>
+          <div className="mt-5">
+            <LedgerPanel total={ledgerTotal} rows={ledgerRows} lastResetAt={ledgerResetAt} />
+          </div>
+        </div>
+      )}
+
       {tab === "settings" && (
         <div className="flex flex-col gap-5 px-gutter py-6">
           <BikesForm current={bikes} />
@@ -153,6 +170,7 @@ export function OwnerMobile({
         <div className="flex">
           <TabButton active={tab === "overview"} onClick={() => setTab("overview")} label="Обзор" icon={<GridIcon />} />
           <TabButton active={tab === "tenants"} onClick={() => setTab("tenants")} label="Арендаторы" icon={<UsersIcon />} />
+          <TabButton active={tab === "ledger"} onClick={() => setTab("ledger")} label="Касса" icon={<CashIcon />} />
           <TabButton active={tab === "settings"} onClick={() => setTab("settings")} label="Настройки" icon={<GearIcon />} />
         </div>
       </nav>
@@ -238,6 +256,15 @@ function UsersIcon() {
       <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
       <circle cx="9" cy="7" r="4" />
       <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+    </svg>
+  );
+}
+function CashIcon() {
+  return (
+    <svg {...iconProps}>
+      <rect x="2" y="6" width="20" height="12" rx="2" />
+      <circle cx="12" cy="12" r="2.5" />
+      <path d="M6 9v6M18 9v6" />
     </svg>
   );
 }

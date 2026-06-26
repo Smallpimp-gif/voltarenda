@@ -17,6 +17,7 @@ import {
 } from "@/lib/auth/tenants";
 import { setAvailableBikes } from "@/lib/settings";
 import { getPaidThrough, setPaidThrough } from "@/lib/payments";
+import { addLedgerEntry, removeLastLedgerEntry, clearLedger } from "@/lib/ledger";
 import { paymentState, mskDayNum, isoToDayNum, dayNumToIso } from "@/lib/schedule";
 
 export type ActionState = { error: string | null; ok?: boolean };
@@ -33,16 +34,43 @@ export async function markPaidAction(formData: FormData): Promise<void> {
   const id = String(formData.get("id") ?? "");
   const dir = String(formData.get("dir") ?? "inc");
   if (!id) return;
+  const t = await getTenantById(id);
+  if (!t) return;
   if (dir === "catchup") {
-    const t = await getTenantById(id);
-    if (t) {
-      const ps = paymentState(t, await getPaidThrough(id));
+    const ps = paymentState(t, await getPaidThrough(id));
+    if (ps.overdueCount > 0) {
       await setPaidThrough(id, ps.paidThrough + ps.overdueCount); // = все просроченные
+      await addLedgerEntry({
+        tenantId: id,
+        name: t.name,
+        amount: ps.overdueCount * t.weekly,
+        weeks: ps.overdueCount,
+        kind: "catchup",
+      });
     }
+  } else if (dir === "dec") {
+    const cur = await getPaidThrough(id);
+    await setPaidThrough(id, cur - 1);
+    await removeLastLedgerEntry(id); // откатываем последнюю запись кассы
   } else {
     const cur = await getPaidThrough(id);
-    await setPaidThrough(id, dir === "dec" ? cur - 1 : cur + 1);
+    await setPaidThrough(id, cur + 1);
+    await addLedgerEntry({
+      tenantId: id,
+      name: t.name,
+      amount: t.weekly,
+      weeks: 1,
+      kind: "weekly",
+    });
   }
+  revalidatePath("/cabinet/owner");
+}
+
+// Обнулить кассу — чистит журнал оплат и общую сумму. Прогресс выкупа
+// арендаторов (paidThrough) НЕ трогается.
+export async function resetLedgerAction(): Promise<void> {
+  await requireOwner();
+  await clearLedger();
   revalidatePath("/cabinet/owner");
 }
 
