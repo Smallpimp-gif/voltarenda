@@ -17,13 +17,29 @@ import { isAllowedOrigin } from "@/lib/api-origin";
 
 export const runtime = "nodejs";
 
+type Passport = {
+  series?: string;
+  number?: string;
+  birthDate?: string;
+  birthPlace?: string;
+  issueDate?: string;
+  departmentCode?: string;
+  issuedBy?: string;
+};
+
 type SubmitBody = {
   tariff: string;
+  bikeModel?: string;
+  battery?: string;
   firstName: string;
   lastName: string;
+  middleName?: string;
   phone: string;
   email: string;
-  // Паспортные данные НЕ собираются — оператор вводит с фото
+  currentAddress: string;
+  // Паспортные данные авто-распознаются на клиенте (Yandex Vision),
+  // пользователь проверяет; оператор сверяет с фото.
+  passport?: Passport;
   photoMainId: string;
   photoRegistrationId: string;
   photoSelfieId: string;
@@ -66,6 +82,7 @@ export async function POST(req: Request) {
   if (!body.lastName || body.lastName.trim().length < 2) errors.push("Укажи фамилию");
   if (!body.phone || body.phone.replace(/\D/g, "").length < 10) errors.push("Некорректный телефон");
   if (!body.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(body.email)) errors.push("Некорректный email");
+  if (!body.currentAddress || body.currentAddress.trim().length < 5) errors.push("Укажи актуальное место проживания");
   if (!body.photoMainId) errors.push("Фото паспорта не загружено");
   if (!body.photoRegistrationId) errors.push("Фото прописки не загружено");
   if (!body.photoSelfieId) errors.push("Селфи не загружено");
@@ -86,13 +103,20 @@ export async function POST(req: Request) {
       createdAt: new Date().toISOString(),
       status: "pending",
       tariff: body.tariff,
+      bike: {
+        model: body.bikeModel ?? "",
+        battery: body.battery ?? "",
+      },
       customer: {
         firstName: body.firstName.trim(),
         lastName: body.lastName.trim(),
+        middleName: body.middleName?.trim() ?? "",
         phone: body.phone,
         email: body.email.toLowerCase().trim(),
+        currentAddress: body.currentAddress.trim(),
       },
-      // Паспортные данные вводит оператор с фото
+      // Паспортные данные авто-распознаны на клиенте, проверены пользователем.
+      passport: body.passport ?? {},
       photos: {
         main: body.photoMainId,
         registration: body.photoRegistrationId,
@@ -114,10 +138,15 @@ export async function POST(req: Request) {
         tariff: body.tariff,
         tariffName: tariffMeta.name,
         tariffPrice: tariffMeta.price,
+        bikeModel: application.bike.model,
+        battery: application.bike.battery,
         firstName: application.customer.firstName,
         lastName: application.customer.lastName,
+        middleName: application.customer.middleName,
         phone: application.customer.phone,
         email: application.customer.email,
+        currentAddress: application.customer.currentAddress,
+        passport: application.passport,
         photoCount: 3,
       }),
     );
@@ -125,7 +154,7 @@ export async function POST(req: Request) {
     return NextResponse.json({
       id: applicationId,
       status: "pending",
-      message: "Заявка принята. Оператор перезвонит в течение 15 минут.",
+      message: "Заявка принята. Оператор напишет в Telegram в течение 15 минут.",
     });
   } catch (err) {
     console.error("[apply/submit] Error:", err);

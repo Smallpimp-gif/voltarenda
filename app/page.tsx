@@ -4,6 +4,7 @@ import { StickyHeader } from "@/components/sticky-header";
 import { Hero } from "@/components/hero";
 import { HowItWorksSection } from "@/components/how-it-works-section";
 import { BikeSection } from "@/components/bike-section";
+import { ConfiguratorSection } from "@/components/configurator-section";
 import { TariffsSection } from "@/components/tariffs-section";
 import { CalculatorSection } from "@/components/calculator-section";
 import { CompareSection } from "@/components/compare-section";
@@ -15,15 +16,18 @@ import { FooterSection } from "@/components/footer-section";
 import { MobileBottomNav } from "@/components/mobile-bottom-nav";
 import { TelegramButton } from "@/components/telegram-button";
 import { CookieConsent } from "@/components/cookie-consent";
+import { getAvailableBikes } from "@/lib/settings";
 
-export default function Home() {
+export default async function Home() {
+  const availableBikes = getAvailableBikes();
   return (
     <>
       <StickyHeader />
       <main id="main" className="overflow-x-clip">
-        <Hero />
+        <Hero availableBikes={availableBikes} />
         <HowItWorksSection />
         <BikeSection />
+        <ConfiguratorSection />
         <TariffsSection />
         <CalculatorSection />
         <CompareSection />

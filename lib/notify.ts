@@ -138,30 +138,67 @@ export function formatApplicationNotification(input: {
   tariff: string;
   tariffName: string;
   tariffPrice: number;
+  bikeModel?: string;
+  battery?: string;
   firstName: string;
   lastName: string;
+  middleName?: string;
   phone: string;
   email: string;
+  currentAddress?: string;
+  passport?: {
+    series?: string;
+    number?: string;
+    birthDate?: string;
+    birthPlace?: string;
+    issueDate?: string;
+    departmentCode?: string;
+    issuedBy?: string;
+  };
   photoCount: number;
 }): string {
   const shortId = input.id.slice(0, 8);
-  const fullName = `${input.firstName} ${input.lastName}`.trim();
+  const fullName = [input.lastName, input.firstName, input.middleName]
+    .filter(Boolean)
+    .join(" ")
+    .trim();
   const tariffPrice = new Intl.NumberFormat("ru-RU").format(input.tariffPrice);
 
   // HTML-escape обязателен — имена могут содержать <, >, &.
   const esc = (s: string) =>
     s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
-  return [
+  const lines = [
     `🔔 <b>Новая заявка</b> <code>#${shortId}</code>`,
     "",
     `👤 ${esc(fullName)}`,
     `📞 <code>${esc(input.phone)}</code>`,
     `📧 ${esc(input.email)}`,
+  ];
+
+  if (input.currentAddress) lines.push(`🏠 ${esc(input.currentAddress)}`);
+
+  const p = input.passport;
+  if (p && (p.series || p.number || p.birthDate || p.issuedBy)) {
+    const sn = [p.series, p.number].filter(Boolean).join(" ");
+    lines.push("", "<b>Паспорт</b>");
+    if (sn) lines.push(`📄 Серия/номер: <code>${esc(sn)}</code>`);
+    if (p.birthDate) lines.push(`🎂 ДР: ${esc(p.birthDate)}`);
+    if (p.birthPlace) lines.push(`📍 Место рождения: ${esc(p.birthPlace)}`);
+    if (p.issueDate || p.departmentCode)
+      lines.push(`🗓 Выдан: ${esc(p.issueDate || "")} ${p.departmentCode ? `· код ${esc(p.departmentCode)}` : ""}`.trim());
+    if (p.issuedBy) lines.push(`🏛 ${esc(p.issuedBy)}`);
+  }
+
+  const bike = [input.bikeModel, input.battery].filter(Boolean).join(" · ");
+  lines.push(
     "",
+    ...(bike ? [`🚲 ${esc(bike)}`] : []),
     `💳 ${esc(input.tariffName)} — ${tariffPrice} ₽`,
     `📸 Фото: ${input.photoCount}/3`,
     "",
     `🆔 <code>${input.id}</code>`,
-  ].join("\n");
+  );
+
+  return lines.join("\n");
 }

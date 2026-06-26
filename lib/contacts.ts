@@ -10,8 +10,8 @@ export const PHONE_TEL = `tel:${PHONE_RAW}`;
 export const EMAIL = "hi@voltarenda.ru";
 export const EMAIL_MAILTO = `mailto:${EMAIL}`;
 
-export const TELEGRAM_HANDLE = "@Voltarenda";
-export const TELEGRAM_URL = "https://t.me/Voltarenda";
+export const TELEGRAM_HANDLE = "@voltarenda_bot";
+export const TELEGRAM_URL = "https://t.me/voltarenda_bot";
 
 // ВКонтакте — группа бренда. Плейсхолдер; если у сообщества другой
 // адрес (например vk.com/voltarenda-spb) — заменить одну строку, все

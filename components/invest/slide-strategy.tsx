@@ -1,0 +1,141 @@
+"use client";
+
+// СЛАЙД 5 — СТРАТЕГИЯ ЗАХВАТА: АРЕНДА → БРЕНД → КИТАЙ → МИР.
+// Главный слайд про видение. Аренда — инструмент захвата, бренд + Китай —
+// то, что взрывает прибыль. Тёмный слайд, азарт и масштаб.
+
+import type { ReactNode } from "react";
+import { Eyebrow, Punch, R, Rise, Slide, SlideBody } from "./primitives";
+import styles from "./invest.module.css";
+
+const STEPS: {
+  n: string;
+  title: string;
+  desc: ReactNode;
+  pct: number;
+  tone: "mute" | "rise" | "peak";
+  pivot?: boolean;
+}[] = [
+  { n: "01", title: "Сейчас", desc: <>Аренда + выкуп через дарксторы. Лучшая цена, база.</>, pct: 30, tone: "mute" },
+  { n: "02", title: "Города", desc: <>СПб и дальше. Партнёры-директора — до&nbsp;275 курьеров.</>, pct: 46, tone: "mute" },
+  { n: "03", title: "Китай", desc: <>OEM под своим брендом. Себестоимость ↓ — маржа ↑.</>, pct: 64, tone: "peak", pivot: true },
+  { n: "04", title: "Бренд", desc: <>Видео, пиар, сарафан. «Как айфон в&nbsp;нише».</>, pct: 82, tone: "rise" },
+  { n: "05", title: "Мир", desc: <>Масштаб за&nbsp;пределы РФ. Глобальный горизонт.</>, pct: 100, tone: "rise" },
+];
+
+export function SlideStrategy() {
+  return (
+    <Slide id="strategy" theme="dark">
+      <Rise>
+        <Eyebrow index="05">Стратегия захвата</Eyebrow>
+      </Rise>
+      <Rise delay={0.05} as="h2" className="mt-6 max-w-[22ch] font-sans text-display-2">
+        Мы не прокат. Мы бренд, который захватывает рынок.
+      </Rise>
+      <Rise delay={0.1} as="p" className="mt-5 max-w-[68ch] font-sans text-body-lg text-mute">
+        Аренда/выкуп — не конечная цель, а&nbsp;быстрый способ зайти и&nbsp;набрать базу.
+        На этой базе мы строим бренд, который закрепляет нишу навсегда.
+      </Rise>
+
+      <SlideBody className="mt-10 gap-10">
+        {/* Восходящая лестница */}
+        <Rise delay={0.14}>
+        <div className="flex h-[clamp(92px,14vh,164px)] items-end gap-3 sm:gap-4">
+          {STEPS.map((s, i) => (
+            <div key={s.n} className="flex h-full flex-1 flex-col justify-end">
+              {s.pivot && (
+                <span className="mb-1.5 hidden text-center font-mono text-[10px] uppercase tracking-[0.06em] text-volt sm:block">
+                  переломный момент
+                </span>
+              )}
+              <div
+                style={{ height: `${s.pct}%`, animationDelay: `${0.2 + i * 0.1}s` }}
+                className={`${styles.bar} w-full rounded-t-sm ${
+                  s.tone === "peak"
+                    ? "bg-volt ring-2 ring-volt ring-offset-4 ring-offset-[var(--bg)]"
+                    : s.tone === "rise"
+                    ? "bg-volt"
+                    : "bg-[var(--line-strong)]"
+                }`}
+              />
+            </div>
+          ))}
+        </div>
+
+        {/* подписи ступеней */}
+        <div className="mt-6 grid grid-cols-5 gap-3 sm:gap-4">
+          {STEPS.map((s) => (
+            <div key={s.n} className="flex flex-col">
+              <span className={`font-mono tnum text-caption ${s.pivot ? "text-volt" : "text-mute"}`}>{s.n}</span>
+              <span className={`mt-0.5 font-sans text-body font-semibold leading-tight sm:text-h3 ${s.pivot ? "text-volt" : ""}`}>
+                {s.title}
+              </span>
+              <span className="mt-1 hidden font-mono text-[10px] uppercase leading-relaxed tracking-[0.03em] text-mute sm:block">
+                {s.desc}
+              </span>
+            </div>
+          ))}
+        </div>
+      </Rise>
+
+        {/* Китай — переломный момент, с цифрами */}
+        <Rise delay={0.12}>
+          <div className="rounded-lg border border-volt/40 bg-[var(--bg-2)] p-6 sm:p-8">
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <h3 className="font-sans text-h3 text-volt">Китай — рычаг маржи</h3>
+            <span className="font-mono text-caption uppercase text-mute">
+              OEM под своим брендом · цена клиенту та&nbsp;же
+            </span>
+          </div>
+
+          <div className="mt-6 grid gap-6 sm:grid-cols-3">
+            <Delta k="Себестоимость" from={<>110 000&nbsp;<R /></>} to={<>60–65к&nbsp;<R /></>} />
+            <Delta k="Маржа с договора" from={<>120к&nbsp;<R /></>} to={<>~160 000&nbsp;<R /></>} badge="+30–37%" accent />
+            <Delta k="Цена выкупа клиенту" from={<>~210–231к</>} to={<>та же</>} note="зарабатываем кратно больше" />
+          </div>
+          </div>
+        </Rise>
+      </SlideBody>
+
+      <Punch className="mt-12 max-w-[64ch] !text-h3">
+        Схему легко скопировать. Бренд с&nbsp;лучшей ценой и&nbsp;своим производством — нет.
+        Именно это закрывает нишу навсегда.
+      </Punch>
+    </Slide>
+  );
+}
+
+function Delta({
+  k,
+  from,
+  to,
+  badge,
+  note,
+  accent = false,
+}: {
+  k: ReactNode;
+  from: ReactNode;
+  to: ReactNode;
+  badge?: string;
+  note?: string;
+  accent?: boolean;
+}) {
+  return (
+    <div className="flex flex-col">
+      <span className="font-mono text-caption uppercase text-mute">{k}</span>
+      <div className="mt-1.5 flex items-baseline gap-2 font-mono tnum leading-none">
+        <span className="text-[clamp(14px,1.6vw,17px)] text-mute line-through decoration-mute/40">{from}</span>
+        <span className="text-mute">→</span>
+        <span className={`text-[clamp(20px,2.6vw,32px)] ${accent ? "text-volt" : "text-[var(--text)]"}`}>{to}</span>
+      </div>
+      {badge && (
+        <span className="mt-1.5 w-fit rounded-pill bg-volt px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.08em] text-ink">
+          {badge}
+        </span>
+      )}
+      {note && (
+        <span className="mt-1.5 font-mono text-[10px] uppercase tracking-[0.04em] text-mute">{note}</span>
+      )}
+    </div>
+  );
+}

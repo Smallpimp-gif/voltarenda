@@ -298,3 +298,17 @@ input[type="checkbox"]:active {
 
 /* next/font автоматически префетчит веса, preload-хак больше не нужен. */
 
+/* ══════════════════════════════════════════════════════════════════
+   Инвест-дек /invest — укрупнённая типографика.
+   Токены опорного текста унаследованы с САЙТА (caption 12px, body 16px),
+   но дек смотрят как СЛАЙДЫ (проектор / fit-to-screen), где такой кегль
+   нечитаем. Поднимаем мелкий текст ТОЛЬКО внутри дека ([data-invest-slide]) —
+   на сайт те же токены не влияют. Крупные цифры (clamp) не трогаем.
+   ══════════════════════════════════════════════════════════════════ */
+[data-invest-slide] .text-caption  { font-size: 15px; line-height: 20px; }
+[data-invest-slide] .text-body     { font-size: 18px; line-height: 27px; }
+[data-invest-slide] .text-body-lg  { font-size: 21px; line-height: 31px; }
+[data-invest-slide] .text-\[10px\] { font-size: 13px; }
+[data-invest-slide] .text-\[11px\] { font-size: 13px; }
+[data-invest-slide] .text-\[13px\] { font-size: 15px; }
+

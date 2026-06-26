@@ -44,7 +44,16 @@ const itemVariants = {
   },
 };
 
-export function Hero() {
+// Склонение «велосипед» по числу (1 велосипед / 2 велосипеда / 5 велосипедов).
+function bikesWord(n: number): string {
+  const mod10 = n % 10;
+  const mod100 = n % 100;
+  if (mod10 === 1 && mod100 !== 11) return "велосипед";
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) return "велосипеда";
+  return "велосипедов";
+}
+
+export function Hero({ availableBikes }: { availableBikes?: number | null }) {
   const { open, hasPersisted, persistedProgress } = useApply();
   const prefersReduced = useReducedMotion();
   const { scrollY } = useScroll();
@@ -157,6 +166,30 @@ export function Hero() {
           <span className="font-semibold text-volt">От 633 ₽/день</span> — ниже,
           чем у других прокатов СПб.
         </motion.p>
+
+        {/* Доступность — управляется из кабинета владельца. Лёгкий эффект
+            дефицита: «свободно N велосипедов». Скрыто, если число не задано. */}
+        {availableBikes != null && (
+          <motion.div
+            variants={itemVariants}
+            className="mt-6 inline-flex items-center gap-2 self-start rounded-pill border border-white/15 bg-white/5 px-3.5 py-2 font-mono text-[12px] uppercase tracking-[0.08em] text-white/85 backdrop-blur-sm"
+          >
+            {availableBikes > 0 ? (
+              <>
+                <span aria-hidden className="relative flex h-2 w-2">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-volt opacity-75" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-volt" />
+                </span>
+                Свободно {availableBikes} {bikesWord(availableBikes)}
+              </>
+            ) : (
+              <>
+                <span aria-hidden className="h-2 w-2 rounded-full bg-white/40" />
+                Все велосипеды в аренде
+              </>
+            )}
+          </motion.div>
+        )}
 
         <motion.div
           variants={itemVariants}

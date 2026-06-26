@@ -17,7 +17,16 @@ import {
 import { AnimatePresence, motion } from "framer-motion";
 import { TariffCard } from "./tariff-card";
 import { APPLE_EASE, EASE, MODAL_SPRING } from "./motion-config";
-import { PHONE_TEL, VK_URL } from "@/lib/contacts";
+import { VK_URL, TELEGRAM_URL } from "@/lib/contacts";
+import { BikePicker } from "./bike-picker";
+import {
+  DEFAULT_MODEL,
+  DEFAULT_BATTERY,
+  modelName,
+  batteryLabel,
+  type BikeModelKey,
+  type BatteryKey,
+} from "@/lib/bikes";
 
 // ============================================================
 // Типы и константы
@@ -50,23 +59,52 @@ const TARIFF_SPECS = [
 
 type FormData = {
   tariff: TariffKey | null;
+  bikeModel: BikeModelKey;
+  battery: BatteryKey;
   firstName: string;
   lastName: string;
+  middleName: string; // отчество (распознаётся с паспорта)
   phone: string; // хранится в формате +7 (XXX) XXX-XX-XX
   email: string;
-  // Паспортные данные убраны — оператор вводит с фото
+  currentAddress: string; // актуальное место проживания
+  // Паспортные данные — авто-распознаются с фото главного разворота
+  // (Yandex Vision OCR, см. lib/passport-ocr.ts), пользователь проверяет.
+  passport: {
+    birthDate: string;
+    birthPlace: string;
+    series: string;
+    number: string;
+    issuedBy: string;
+    issueDate: string;
+    departmentCode: string;
+  };
   photoMain: { fileId: string; previewUrl: string } | null;
   photoRegistration: { fileId: string; previewUrl: string } | null;
   photoSelfie: { fileId: string; previewUrl: string } | null;
   agreed: boolean;
 };
 
+const EMPTY_PASSPORT: FormData["passport"] = {
+  birthDate: "",
+  birthPlace: "",
+  series: "",
+  number: "",
+  issuedBy: "",
+  issueDate: "",
+  departmentCode: "",
+};
+
 const EMPTY_FORM: FormData = {
   tariff: null,
+  bikeModel: DEFAULT_MODEL,
+  battery: DEFAULT_BATTERY,
   firstName: "",
   lastName: "",
+  middleName: "",
   phone: "",
   email: "",
+  currentAddress: "",
+  passport: { ...EMPTY_PASSPORT },
   photoMain: null,
   photoRegistration: null,
   photoSelfie: null,
@@ -76,22 +114,22 @@ const EMPTY_FORM: FormData = {
 const STEPS = [
   { key: "tariff", label: "Тариф" },
   { key: "contact", label: "Контакты" },
-  { key: "photos", label: "Верификация" },
-  { key: "payment", label: "Оплата" },
+  { key: "photos", label: "Документы" },
+  { key: "review", label: "Заявка" },
 ] as const;
 
 const STEP_TITLES = [
-  "Выбери тариф",
+  "Велосипед и тариф",
   "Как с тобой связаться",
-  "Верификация · 2 минуты",
-  "Проверь и оплати",
+  "Документы · фото распознаются автоматически",
+  "Проверьте и отправьте",
 ];
 
 const STEP_SUBTITLES = [
-  "В тариф входит ВОЛЬТ U2 + залог 5 000 ₽ (вернём за 3 дня).",
-  "Перезвоним после проверки. Без спама.",
-  "🔒 Три фото: паспорт, прописка, селфи с паспортом. Данные не передаём третьим лицам, оператор проверит вручную — вводить ничего не нужно.",
-  "Осталось оплатить. Залог 5 000 ₽ вернём за 3 рабочих дня.",
+  "Выбери модель, аккумуляторы и период. Залог 5 000 ₽ вернём за 3 дня.",
+  "Напишем в Telegram после проверки. Без спама.",
+  "🔒 Сфотографируй паспорт — данные подставятся сами. Прописка и фото с паспортом в руках. Данные не передаём третьим лицам.",
+  "Проверьте данные и отправьте — оператор свяжется в течение ~15 минут.",
 ];
 
 // Числовые цены тарифов для шага оплаты (без пробелов и ₽).
@@ -124,8 +162,10 @@ function trackEvent(goal: string, params?: Record<string, unknown>) {
 // Context
 // ============================================================
 
+type BikeConfig = { bikeModel?: BikeModelKey; battery?: BatteryKey };
+
 type ApplyContextValue = {
-  open: (tariff?: TariffKey) => void;
+  open: (tariff?: TariffKey, cfg?: BikeConfig) => void;
   close: () => void;
   /** Сколько шагов уже заполнено в persisted форме (0..STEPS.length).
    *  Используется для Resume-баннера в Hero. */
@@ -231,12 +271,16 @@ export function ApplyProvider({ children }: { children: ReactNode }) {
     persistForm(form);
   }, [form, hydrated]);
 
-  const open = useCallback((tariff?: TariffKey) => {
-    // Смешиваем явный tariff из CTA с persisted формой и вычисляем
-    // стартовый шаг — первый НЕзаполненный. Если всё заполнено —
-    // отправляем на последний шаг (Оплата).
+  const open = useCallback((tariff?: TariffKey, cfg?: BikeConfig) => {
+    // Смешиваем явный tariff/конфиг из CTA с persisted формой и вычисляем
+    // стартовый шаг — первый НЕзаполненный.
     setForm((prev) => {
-      const next = tariff ? { ...prev, tariff } : prev;
+      const next: FormData = {
+        ...prev,
+        ...(tariff ? { tariff } : {}),
+        ...(cfg?.bikeModel ? { bikeModel: cfg.bikeModel } : {}),
+        ...(cfg?.battery ? { battery: cfg.battery } : {}),
+      };
       const progress = computeProgress(next);
       setStepIdx(Math.min(progress, STEPS.length - 1));
       return next;
@@ -381,14 +425,15 @@ function validateStep(step: number, form: FormData): string | null {
       if (form.lastName.trim().length < 2) return "Укажи фамилию";
       if (phoneDigits(form.phone).length !== 10) return "Телефон в формате +7 (XXX) XXX-XX-XX";
       if (!validEmail(form.email)) return "Проверь email";
+      if (form.currentAddress.trim().length < 5) return "Укажи актуальное место проживания";
       return null;
     case 2:
       if (!form.photoMain) return "Загрузи разворот паспорта с фото";
       if (!form.photoRegistration) return "Загрузи разворот с пропиской";
-      if (!form.photoSelfie) return "Загрузи селфи с паспортом в руках";
+      if (!form.photoSelfie) return "Загрузи фото с паспортом в руках";
       return null;
     case 3:
-      // Объединённый последний шаг: проверка данных + согласие + оплата
+      // Финальный шаг: проверка данных + согласие, затем отправка оператору
       if (!form.tariff) return "Тариф не выбран";
       if (!form.agreed) return "Нужно согласие на обработку данных";
       return null;
@@ -437,12 +482,51 @@ function ApplyModal({
     }
     setError(null);
     if (isLast) {
-      // Оплата через CloudPayments виджет
-      await submitPayment();
+      // Онлайн-оплаты пока нет — отправляем заявку оператору (Telegram).
+      await submitApplication();
       return;
     }
     trackEvent("STEP_COMPLETE", { step: stepIdx + 1, tariff: form.tariff });
     setStepIdx((i) => i + 1);
+  };
+
+  const submitApplication = async () => {
+    if (!form.tariff) return;
+    setSubmitting(true);
+    try {
+      const res = await fetch("/api/apply/submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tariff: form.tariff,
+          bikeModel: modelName(form.bikeModel),
+          battery: batteryLabel(form.battery),
+          firstName: form.firstName,
+          lastName: form.lastName,
+          middleName: form.middleName,
+          phone: form.phone,
+          email: form.email,
+          currentAddress: form.currentAddress,
+          passport: form.passport,
+          photoMainId: form.photoMain?.fileId ?? "",
+          photoRegistrationId: form.photoRegistration?.fileId ?? "",
+          photoSelfieId: form.photoSelfie?.fileId ?? "",
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        setError(data?.errors?.[0] || data?.error || "Не удалось отправить заявку. Попробуйте ещё раз.");
+        setSubmitting(false);
+        return;
+      }
+      trackEvent("APPLICATION_SUBMIT", { tariff: form.tariff });
+      setSubmitted(true);
+      clearPersisted();
+      setSubmitting(false);
+    } catch {
+      setError("Сеть недоступна. Проверь соединение и попробуй ещё раз");
+      setSubmitting(false);
+    }
   };
 
   const submitPayment = async () => {
@@ -782,7 +866,7 @@ function ApplyModal({
                   {TARIFFS.find((t) => t.key === form.tariff)?.name}
                 </span>
                 <span className="hidden sm:inline">·</span>
-                <span className="hidden sm:inline">ВОЛЬТ U2</span>
+                <span className="hidden sm:inline">{modelName(form.bikeModel)}</span>
               </div>
               <div className="flex items-baseline gap-3 text-mute">
                 <span className="hidden sm:inline">
@@ -840,7 +924,7 @@ function ApplyModal({
                   </>
                 ) : isLast ? (
                   <>
-                    <span>Оплатить {form.tariff ? formatRub((TARIFF_PRICES[form.tariff] || 0) + DEPOSIT_RUB) + " ₽" : ""}</span>
+                    <span>Отправить заявку</span>
                     <span>→</span>
                   </>
                 ) : (
@@ -899,8 +983,20 @@ function StepTariff({
   setForm: ModalProps["setForm"];
 }) {
   return (
-    <div className="apply-modal-tariffs mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2">
-      {TARIFFS.map((t) => {
+    <div className="mt-10 flex flex-col gap-10">
+      {/* Выбор велосипеда */}
+      <BikePicker
+        model={form.bikeModel}
+        battery={form.battery}
+        onModel={(m) => setForm((f) => ({ ...f, bikeModel: m }))}
+        onBattery={(b) => setForm((f) => ({ ...f, battery: b }))}
+      />
+
+      {/* Период / тариф */}
+      <div>
+        <p className="font-mono text-caption uppercase text-mute">Период</p>
+        <div className="apply-modal-tariffs mt-3 grid grid-cols-1 gap-6 sm:grid-cols-2">
+          {TARIFFS.map((t) => {
         const selected = form.tariff === t.key;
         return (
           <motion.div
@@ -930,6 +1026,8 @@ function StepTariff({
           </motion.div>
         );
       })}
+        </div>
+      </div>
     </div>
   );
 }
@@ -971,6 +1069,7 @@ function StepContact({
         <Field label="Телефон">
           <input
             type="tel"
+            inputMode="tel"
             value={form.phone}
             onChange={(e) =>
               setForm((f) => ({ ...f, phone: formatPhone(e.target.value) }))
@@ -984,11 +1083,24 @@ function StepContact({
         <Field label="Email">
           <input
             type="email"
+            inputMode="email"
+            autoCapitalize="off"
             value={form.email}
             onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
             autoComplete="email"
             className={inputCls}
             placeholder="ivan@example.com"
+          />
+        </Field>
+
+        <Field label="Актуальное место проживания">
+          <input
+            type="text"
+            value={form.currentAddress}
+            onChange={(e) => setForm((f) => ({ ...f, currentAddress: e.target.value }))}
+            autoComplete="street-address"
+            className={inputCls}
+            placeholder="Город, улица, дом, кв."
           />
         </Field>
       </div>
@@ -1010,7 +1122,7 @@ const PHOTO_SLOTS: {
     key: "photoMain",
     index: "01",
     title: "Паспорт · разворот с фото",
-    hint: "2-3 страница с фото и ФИО",
+    hint: "Данные распознаются автоматически",
     tips: [
       "✅ Все данные читаемы, без бликов",
       "✅ Паспорт лежит на ровной поверхности",
@@ -1033,8 +1145,8 @@ const PHOTO_SLOTS: {
   {
     key: "photoSelfie",
     index: "03",
-    title: "Селфи с паспортом",
-    hint: "Паспорт рядом с лицом",
+    title: "Фото с паспортом в руках",
+    hint: "Вы держите раскрытый паспорт",
     tips: [
       "✅ Лицо и паспорт в кадре одновременно",
       "✅ Хорошее освещение, без теней",
@@ -1044,6 +1156,8 @@ const PHOTO_SLOTS: {
   },
 ];
 
+type OcrState = "idle" | "loading" | "done" | "manual" | "error";
+
 function StepPhotos({
   form,
   setForm,
@@ -1051,6 +1165,60 @@ function StepPhotos({
   form: FormData;
   setForm: ModalProps["setForm"];
 }) {
+  const [ocr, setOcr] = useState<OcrState>(form.photoMain ? "done" : "idle");
+
+  // Распознаём паспорт после загрузки главного разворота (Yandex Vision
+  // через /api/apply/recognize-passport). Поля подставляются, пользователь
+  // проверяет. Если OCR не настроен/ошибся — переходим в ручной ввод.
+  const recognize = async (fileId: string) => {
+    setOcr("loading");
+    try {
+      const res = await fetch("/api/apply/recognize-passport", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fileId }),
+      });
+      const data = await res.json();
+      if (data?.configured && data?.ok && data.fields) {
+        const fx = data.fields;
+        setForm((f) => ({
+          ...f,
+          firstName: fx.firstName || f.firstName,
+          lastName: fx.lastName || f.lastName,
+          middleName: fx.middleName || f.middleName,
+          passport: {
+            birthDate: fx.birthDate || f.passport.birthDate,
+            birthPlace: fx.birthPlace || f.passport.birthPlace,
+            series: fx.series || f.passport.series,
+            number: fx.number || f.passport.number,
+            issuedBy: fx.issuedBy || f.passport.issuedBy,
+            issueDate: fx.issueDate || f.passport.issueDate,
+            departmentCode: fx.departmentCode || f.passport.departmentCode,
+          },
+        }));
+        setOcr("done");
+      } else {
+        setOcr(data?.configured ? "error" : "manual");
+      }
+    } catch {
+      setOcr("error");
+    }
+  };
+
+  const handleChange = (
+    key: PhotoSlotKey,
+    value: { fileId: string; previewUrl: string } | null,
+  ) => {
+    setForm((f) => ({ ...f, [key]: value }));
+    if (key === "photoMain") {
+      if (value) recognize(value.fileId);
+      else setOcr("idle");
+    }
+  };
+
+  const setP = (key: keyof FormData["passport"], v: string) =>
+    setForm((f) => ({ ...f, passport: { ...f.passport, [key]: v } }));
+
   return (
     <div className="mt-10 flex flex-col gap-6">
       {PHOTO_SLOTS.map((slot) => (
@@ -1058,12 +1226,84 @@ function StepPhotos({
           key={slot.key}
           slot={slot}
           value={form[slot.key]}
-          onChange={(dataUrl) =>
-            setForm((f) => ({ ...f, [slot.key]: dataUrl }))
-          }
+          onChange={(v) => handleChange(slot.key, v)}
         />
       ))}
+
+      {/* Данные паспорта — авто-распознавание + проверка */}
+      {form.photoMain && (
+        <div className="rounded-lg border border-[var(--line)] bg-[var(--bg-2)] p-5">
+          <div className="flex items-center gap-2.5 border-b border-[var(--line)] pb-3">
+            {ocr === "loading" ? (
+              <>
+                <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-volt border-t-transparent" />
+                <span className="font-mono text-caption uppercase text-mute">Распознаём паспорт…</span>
+              </>
+            ) : ocr === "done" ? (
+              <>
+                <span className="text-volt">✓</span>
+                <span className="font-mono text-caption uppercase text-[var(--text)]">Данные распознаны — проверьте</span>
+              </>
+            ) : (
+              <span className="font-mono text-caption uppercase text-mute">Данные паспорта</span>
+            )}
+          </div>
+
+          {ocr !== "loading" && (
+            <>
+              {(ocr === "manual" || ocr === "error") && (
+                <p className="mt-3 font-mono text-caption uppercase text-mute">
+                  {ocr === "error" ? "Не удалось распознать — заполните вручную" : "Заполните данные с паспорта"}
+                </p>
+              )}
+              <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <PassportField label="Отчество" value={form.middleName} onChange={(v) => setForm((f) => ({ ...f, middleName: v }))} placeholder="Иванович" />
+                <PassportField label="Дата рождения" value={form.passport.birthDate} onChange={(v) => setP("birthDate", v)} placeholder="дд.мм.гггг" inputMode="numeric" />
+                <PassportField label="Серия" value={form.passport.series} onChange={(v) => setP("series", v)} placeholder="0000" inputMode="numeric" />
+                <PassportField label="Номер" value={form.passport.number} onChange={(v) => setP("number", v)} placeholder="000000" inputMode="numeric" />
+                <PassportField label="Дата выдачи" value={form.passport.issueDate} onChange={(v) => setP("issueDate", v)} placeholder="дд.мм.гггг" inputMode="numeric" />
+                <PassportField label="Код подразделения" value={form.passport.departmentCode} onChange={(v) => setP("departmentCode", v)} placeholder="000-000" inputMode="numeric" />
+                <div className="sm:col-span-2">
+                  <PassportField label="Кем выдан" value={form.passport.issuedBy} onChange={(v) => setP("issuedBy", v)} placeholder="Наименование органа" />
+                </div>
+                <div className="sm:col-span-2">
+                  <PassportField label="Место рождения" value={form.passport.birthPlace} onChange={(v) => setP("birthPlace", v)} placeholder="Город" />
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+      )}
     </div>
+  );
+}
+
+// Компактное поле паспорта (плотнее, чем крупный inputCls контактов).
+function PassportField({
+  label,
+  value,
+  onChange,
+  placeholder,
+  inputMode,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+  inputMode?: "numeric" | "text";
+}) {
+  return (
+    <label className="flex flex-col gap-1.5">
+      <span className="font-mono text-caption uppercase text-mute">{label}</span>
+      <input
+        type="text"
+        inputMode={inputMode}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="w-full rounded-md border border-[var(--line-strong)] bg-[var(--bg)] px-3 py-2.5 font-sans text-body text-[var(--text)] outline-none transition-colors duration-quick placeholder:text-[var(--line-strong)] focus:border-volt"
+      />
+    </label>
   );
 }
 
@@ -1270,68 +1510,51 @@ function StepPayment({
   setForm: ModalProps["setForm"];
 }) {
   const tariff = TARIFFS.find((t) => t.key === form.tariff);
-  const tariffPrice = form.tariff ? TARIFF_PRICES[form.tariff] : 0;
-  const total = tariffPrice + DEPOSIT_RUB;
+  const p = form.passport;
+  const fio = [form.lastName, form.firstName, form.middleName]
+    .filter(Boolean)
+    .join(" ")
+    .toUpperCase();
+  const seriesNumber = [p.series, p.number].filter(Boolean).join(" ");
+  const docsDone = [form.photoMain, form.photoRegistration, form.photoSelfie].filter(Boolean).length;
 
   return (
     <div className="mt-10 flex flex-col">
-      {/* Краткое резюме заявки */}
+      {/* Резюме заявки */}
       <div className="border-b border-[var(--line)] pb-3">
-        <span className="font-mono text-caption uppercase text-mute">
-          ТЕХ. ПАСПОРТ ЗАЯВКИ
-        </span>
+        <span className="font-mono text-caption uppercase text-mute">ДАННЫЕ ЗАЯВКИ</span>
       </div>
-      <SummaryRow
-        label="ФИО"
-        value={`${form.firstName} ${form.lastName}`.trim().toUpperCase() || "—"}
-      />
+      <SummaryRow label="ФИО" value={fio || "—"} />
       <SummaryRow label="ТЕЛЕФОН" value={form.phone || "—"} />
       <SummaryRow label="EMAIL" value={form.email?.toUpperCase() || "—"} />
-      <SummaryRow
-        label="ДОКУМЕНТЫ"
-        value={(() => {
-          const total = 3;
-          const done = [
-            form.photoMain,
-            form.photoRegistration,
-            form.photoSelfie,
-          ].filter(Boolean).length;
-          return done === total ? `${done} / ${total} ✓` : `${done} / ${total}`;
-        })()}
-      />
+      <SummaryRow label="ПРОЖИВАНИЕ" value={form.currentAddress?.toUpperCase() || "—"} />
 
-      {/* Расчёт к оплате */}
+      {/* Паспорт */}
       <div className="mt-10 border-b border-[var(--line)] pb-3">
-        <span className="font-mono text-caption uppercase text-mute">
-          РАСЧЁТ К ОПЛАТЕ
-        </span>
+        <span className="font-mono text-caption uppercase text-mute">ПАСПОРТ</span>
+      </div>
+      <SummaryRow label="СЕРИЯ · НОМЕР" value={seriesNumber || "—"} />
+      <SummaryRow label="ДАТА РОЖДЕНИЯ" value={p.birthDate || "—"} />
+      <SummaryRow label="ДАТА ВЫДАЧИ" value={p.issueDate || "—"} />
+      <SummaryRow label="КОД ПОДРАЗДЕЛЕНИЯ" value={p.departmentCode || "—"} />
+      <SummaryRow label="КЕМ ВЫДАН" value={p.issuedBy?.toUpperCase() || "—"} />
+
+      {/* Документы и тариф */}
+      <div className="mt-10 border-b border-[var(--line)] pb-3">
+        <span className="font-mono text-caption uppercase text-mute">ДОКУМЕНТЫ И ТАРИФ</span>
       </div>
       <SummaryRow
-        label={`ТАРИФ · ${(tariff?.name ?? "").toUpperCase()}`}
-        value={
-          form.tariff === "buyout"
-            ? `${formatRub(tariffPrice)} ₽ / НЕД × 26`
-            : `${formatRub(tariffPrice)} ₽`
-        }
+        label="ФОТО"
+        value={docsDone === 3 ? `3 / 3 ✓` : `${docsDone} / 3`}
       />
-      <SummaryRow
-        label="ЗАЛОГ (ВОЗВРАТНЫЙ)"
-        value={`${formatRub(DEPOSIT_RUB)} ₽`}
-      />
-      <div className="flex items-baseline justify-between gap-4 border-b-2 border-[var(--text)] py-6">
-        <span className="font-mono text-caption uppercase text-mute">
-          {form.tariff === "buyout" ? "ПЕРВЫЙ ПЛАТЁЖ" : "ИТОГО"}
-        </span>
-        <span className="font-sans text-h2 tnum">{formatRub(total)} ₽</span>
-      </div>
-      {form.tariff === "buyout" && (
-        <p className="mt-4 max-w-[44ch] font-mono text-[11px] uppercase tracking-[0.08em] text-mute">
-          далее автоматически списывается по 6 500 ₽ еженедельно
-          в течение 25 недель. итого по тарифу «выкуп»: 169 000 ₽ +
-          залог 5 000 ₽. по окончании право собственности на велосипед
-          переходит к арендатору.
-        </p>
-      )}
+      <SummaryRow label="ВЕЛОСИПЕД" value={modelName(form.bikeModel).toUpperCase()} />
+      <SummaryRow label="АКБ" value={batteryLabel(form.battery).toUpperCase()} />
+      <SummaryRow label="ТАРИФ" value={(tariff?.name ?? "—").toUpperCase()} />
+
+      <p className="mt-6 max-w-[46ch] font-mono text-[11px] uppercase tracking-[0.08em] text-mute">
+        Онлайн-оплаты пока нет. После отправки оператор проверит документы
+        и свяжется с вами для выдачи и оплаты.
+      </p>
 
       {/* Согласие */}
       <label className="mt-8 flex cursor-pointer items-start gap-4">
@@ -1365,23 +1588,6 @@ function StepPayment({
         </span>
       </label>
 
-      {/* Платёжка info */}
-      <div className="mt-8 flex flex-col gap-3 rounded-lg border border-[var(--line)] bg-[var(--bg-2)] p-5">
-        <div className="flex items-baseline justify-between gap-4 font-mono text-caption uppercase">
-          <span className="text-mute">ПРОВАЙДЕР</span>
-          <span className="tnum text-[var(--text)]">CLOUDPAYMENTS</span>
-        </div>
-        <div className="flex items-baseline justify-between gap-4 font-mono text-caption uppercase">
-          <span className="text-mute">ПРИНИМАЕМ</span>
-          <span className="tnum text-[var(--text)]">
-            VISA / MIR / MASTERCARD / SBP
-          </span>
-        </div>
-        <div className="flex items-baseline justify-between gap-4 font-mono text-caption uppercase">
-          <span className="text-mute">ЗАЩИТА</span>
-          <span className="tnum text-[var(--text)]">3DSECURE · SSL</span>
-        </div>
-      </div>
     </div>
   );
 }
@@ -1417,8 +1623,8 @@ function SuccessScreen({
       </div>
       <h3 className="mt-8 font-sans text-h2">Заявка принята</h3>
       <p className="mx-auto mt-4 max-w-[44ch] font-sans text-body-lg text-mute">
-        Оператор проверит документы и перезвонит на {form.phone || "указанный номер"} в
-        течение ~15 минут.
+        Оператор проверит документы и напишет вам в Telegram в течение
+        ~15 минут.
       </p>
 
       {/* Чеклист статуса — что происходит дальше */}
@@ -1426,7 +1632,7 @@ function SuccessScreen({
         <div className="flex flex-col gap-4 rounded-lg border border-[var(--line)] bg-[var(--bg-2)] p-5">
           <div className="flex items-center gap-3 font-mono text-caption uppercase">
             <span className="text-volt">✓</span>
-            <span className="text-[var(--text)]">Оплата прошла</span>
+            <span className="text-[var(--text)]">Заявка отправлена</span>
           </div>
           <div className="flex items-center gap-3 font-mono text-caption uppercase">
             <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-volt border-t-transparent" />
@@ -1438,13 +1644,15 @@ function SuccessScreen({
           </div>
         </div>
 
-        {/* Быстрые действия — звонок, ВК, маршрут */}
+        {/* Быстрые действия — Telegram (основной канал), ВК, маршрут */}
         <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
           <a
-            href={PHONE_TEL}
+            href={TELEGRAM_URL}
+            target="_blank"
+            rel="noopener noreferrer"
             className="btn-cta btn-cta-outline flex items-center justify-center gap-2 rounded-md border border-[var(--line-strong)] px-4 py-4 font-mono text-caption uppercase hover:border-volt hover:text-volt"
           >
-            Позвонить
+            Telegram
           </a>
           <a
             href={VK_URL}
@@ -1467,7 +1675,7 @@ function SuccessScreen({
         {/* Инфо о тарифе */}
         <div className="mt-4 flex items-baseline justify-between gap-4 font-mono text-caption uppercase text-mute">
           <span>ТАРИФ</span>
-          <span className="text-[var(--text)]">{tariff?.name ?? "—"} · ВОЛЬТ U2</span>
+          <span className="text-[var(--text)]">{tariff?.name ?? "—"} · {modelName(form.bikeModel)}</span>
         </div>
       </div>
 

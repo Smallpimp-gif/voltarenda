@@ -166,6 +166,12 @@ export function StickyHeader() {
               </a>
             ))}
           </nav>
+          <a
+            href="/cabinet"
+            className="hidden font-mono text-caption uppercase text-mute transition-colors duration-quick ease-out-soft hover:text-[var(--text)] lg:inline-block"
+          >
+            Кабинет
+          </a>
           <button
             type="button"
             onClick={() => openApply()}
@@ -287,6 +293,16 @@ export function StickyHeader() {
                 <span>{fullCtaLabel}</span>
                 <span>→</span>
               </motion.button>
+              <motion.a
+                href="/cabinet"
+                onClick={() => closeMenu()}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.55, ease: [0.22, 0.61, 0.36, 1] }}
+                className="mt-3 flex items-center justify-center rounded-md border border-[var(--line-strong)] px-6 py-4 font-mono text-caption uppercase text-mute"
+              >
+                Личный кабинет
+              </motion.a>
             </div>
           </motion.div>
         )}

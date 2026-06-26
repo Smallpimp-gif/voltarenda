@@ -1,0 +1,237 @@
+import Link from "next/link";
+import { redirect } from "next/navigation";
+import { getCurrentUser } from "@/lib/auth/session";
+import { logoutAction } from "@/lib/auth/actions";
+import { loadTenants } from "@/lib/auth/tenants";
+import { getAvailableBikes } from "@/lib/settings";
+import { paymentState } from "@/lib/schedule";
+import { loadPaidMap } from "@/lib/payments";
+import { BikesForm } from "@/components/cabinet/owner/bikes-form";
+import { TenantForm } from "@/components/cabinet/owner/tenant-form";
+import {
+  TenantsTable,
+  type TenantRow,
+} from "@/components/cabinet/owner/tenants-table";
+import { OwnerMobile } from "@/components/cabinet/owner/owner-mobile";
+
+const rub = new Intl.NumberFormat("ru-RU");
+const money = (n: number) => `${rub.format(n)} ₽`;
+
+// Карточка-метрика в стиле лендинга: высокая, число снизу крупным display,
+// label сверху (justify-between), как карточки «01/02/03» в how-it-works.
+function StatCard({
+  label,
+  value,
+  sub,
+  accent = false,
+  danger = false,
+}: {
+  label: string;
+  value: string;
+  sub?: string;
+  accent?: boolean;
+  danger?: boolean;
+}) {
+  const border = danger ? "border-danger/50" : accent ? "border-volt" : "border-[var(--line)]";
+  const dot = danger ? "bg-danger" : "bg-volt";
+  return (
+    <div className={`flex min-h-[172px] flex-col justify-between rounded-lg border bg-[var(--bg-2)] p-6 ${border}`}>
+      <span className="flex items-center gap-2 font-mono text-caption uppercase text-mute">
+        {(accent || danger) && <span aria-hidden className={`h-1.5 w-1.5 rounded-full ${dot}`} />}
+        {label}
+      </span>
+      <div>
+        <p
+          className={`whitespace-nowrap font-sans text-display-2 leading-none tracking-tight tabular-nums ${
+            danger ? "text-danger" : "text-[var(--text)]"
+          }`}
+        >
+          {value}
+        </p>
+        {sub && <p className="mt-3 font-mono text-caption uppercase text-mute">{sub}</p>}
+      </div>
+    </div>
+  );
+}
+
+// Нумерованный заголовок секции — фирменный приём лендинга
+// (эйбрау «01 / СЕКЦИЯ» + крупный h2 + нижняя линия).
+function SectionHeader({
+  num,
+  eyebrow,
+  title,
+  children,
+}: {
+  num: string;
+  eyebrow: string;
+  title: string;
+  children?: React.ReactNode;
+}) {
+  return (
+    <div className="flex items-end justify-between gap-4 border-b border-[var(--line)] pb-4">
+      <div className="flex flex-col gap-2">
+        <span className="font-mono text-caption uppercase text-mute">
+          {num} / {eyebrow}
+        </span>
+        <h2 className="font-sans text-h2">{title}</h2>
+      </div>
+      {children}
+    </div>
+  );
+}
+
+export default async function OwnerPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ add?: string; edit?: string }>;
+}) {
+  const cu = await getCurrentUser();
+  if (!cu) redirect("/cabinet/owner/login");
+  if (cu.user.role !== "owner") redirect("/cabinet");
+
+  const sp = await searchParams;
+  const tenants = loadTenants();
+  const bikes = getAvailableBikes();
+  const paidMap = loadPaidMap();
+  const editTenant = sp.edit ? tenants.find((t) => t.id === sp.edit) : undefined;
+
+  // Строки таблицы со статусом оплат (учёт отметок владельца).
+  const rows: TenantRow[] = tenants.map((t) => {
+    const ps = paymentState(t, paidMap[t.id] ?? 0);
+    return {
+      id: t.id,
+      name: t.name,
+      contract: t.contract,
+      type: t.type,
+      weekly: t.weekly,
+      telegramUsername: t.telegramUsername ?? "",
+      paidThrough: ps.paidThrough,
+      totalWeeks: ps.totalWeeks,
+      overdueCount: ps.overdueCount,
+      nextNumber: ps.nextNumber,
+      nextDate: ps.nextDate,
+      nextWeekday: ps.nextWeekday,
+      nextDaysUntil: ps.nextDaysUntil,
+      kind: ps.kind,
+    };
+  });
+
+  // Сводка.
+  const buyoutCount = tenants.filter((t) => t.buyoutWeeks).length;
+  const rentCount = tenants.length - buyoutCount;
+  const activeRows = rows.filter((r) => r.kind !== "done");
+  const weeklyIncome = activeRows.reduce((s, r) => s + r.weekly, 0);
+  const overdueRows = rows.filter((r) => r.kind === "overdue");
+  const overdueCount = overdueRows.length;
+  const overdueSum = overdueRows.reduce((s, r) => s + r.overdueCount * r.weekly, 0);
+
+  return (
+    <>
+    {/* Мобильная версия — app-подобные вкладки снизу */}
+    <div className="md:hidden">
+      <OwnerMobile
+        email={cu.user.email}
+        rows={rows}
+        bikes={bikes}
+        addOpen={Boolean(sp.add)}
+        editTenant={editTenant}
+      />
+    </div>
+
+    {/* Десктопная версия */}
+    <div className="mx-auto hidden w-full max-w-content px-gutter py-14 md:block">
+      {/* Шапка — editorial */}
+      <header className="flex items-end justify-between gap-4 border-b border-[var(--line)] pb-6">
+        <div className="min-w-0">
+          <span className="font-mono text-caption uppercase text-mute">Кабинет владельца</span>
+          <h1 className="mt-3 font-sans text-display-2 leading-none tracking-tight">Вольтаренда</h1>
+          <p className="mt-3 truncate font-mono text-caption uppercase text-mute">{cu.user.email}</p>
+        </div>
+        <form action={logoutAction} className="shrink-0">
+          <button
+            type="submit"
+            className="rounded-pill border border-[var(--line-strong)] px-5 py-2.5 font-mono text-caption uppercase text-mute transition-colors duration-quick hover:border-[var(--text)] hover:text-[var(--text)]"
+          >
+            Выйти
+          </button>
+        </form>
+      </header>
+
+      {/* 01 / Сводка */}
+      <section className="mt-16">
+        <SectionHeader num="01" eyebrow="Сводка" title="Бизнес в цифрах">
+          <span className="hidden font-mono text-caption uppercase text-mute lg:inline">
+            {tenants.length} активных договоров
+          </span>
+        </SectionHeader>
+        <div className="mt-8 grid grid-cols-2 gap-6 lg:grid-cols-4">
+          <StatCard
+            label="Арендаторов"
+            value={String(tenants.length)}
+            sub={`выкуп ${buyoutCount} · аренда ${rentCount}`}
+          />
+          <StatCard
+            label="Недельный доход"
+            value={money(weeklyIncome)}
+            sub="со всех активных"
+          />
+          <StatCard
+            label="Просрочено"
+            value={overdueCount > 0 ? String(overdueCount) : "0"}
+            sub={overdueCount > 0 ? `долг ${money(overdueSum)}` : "все оплатили"}
+            danger={overdueCount > 0}
+          />
+          <BikesForm current={bikes} variant="metric" />
+        </div>
+      </section>
+
+      {/* 02 / Арендаторы */}
+      <section className="mt-20">
+        <SectionHeader num="02" eyebrow="Арендаторы" title="Договоры и платежи">
+          {!sp.add && !sp.edit && (
+            <Link
+              href="/cabinet/owner?add=1"
+              className="shrink-0 rounded-pill bg-volt px-5 py-2.5 font-mono text-caption uppercase text-ink transition-transform duration-quick hover:bg-volt-hover active:scale-95"
+            >
+              + Добавить
+            </Link>
+          )}
+        </SectionHeader>
+
+        {/* Форма добавления / редактирования (поверх таблицы) */}
+        {sp.add && (
+          <div className="mt-8">
+            <TenantForm />
+          </div>
+        )}
+        {editTenant && (
+          <div className="mt-8">
+            <TenantForm tenant={editTenant} />
+          </div>
+        )}
+
+        {/* Таблица */}
+        {tenants.length === 0 ? (
+          !sp.add && (
+            <p className="mt-8 rounded-lg border border-[var(--line)] bg-[var(--bg-2)] p-8 text-body text-mute">
+              Пока нет арендаторов. Нажмите «Добавить».
+            </p>
+          )
+        ) : (
+          <div className="mt-8">
+            <TenantsTable rows={rows} />
+          </div>
+        )}
+
+        {/* Подсказка про Excel-импорт */}
+        <p className="mt-10 max-w-[70ch] text-body text-mute">
+          Список — тот же, что читает Telegram-бот напоминаний. Повторный запуск
+          Excel-импорта (<span className="font-mono">bot/import-tenants.py</span>)
+          перезапишет список и удалит арендаторов, добавленных здесь. Если
+          пользуетесь админкой — не запускайте импорт.
+        </p>
+      </section>
+    </div>
+    </>
+  );
+}

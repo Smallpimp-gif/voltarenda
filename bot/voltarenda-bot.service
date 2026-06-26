@@ -1,0 +1,22 @@
+# systemd-юнит для бота напоминаний.
+#   sudo cp bot/voltarenda-bot.service /etc/systemd/system/
+#   поправь User и WorkingDirectory под свой сервер
+#   sudo systemctl daemon-reload && sudo systemctl enable --now voltarenda-bot
+[Unit]
+Description=Voltarenda payment-reminder Telegram bot
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=www-data
+# Папка проекта (где package.json и bot/). Подставь свой путь:
+WorkingDirectory=/var/www/voltarenda
+# Переменные берём из .env проекта (TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID):
+EnvironmentFile=/var/www/voltarenda/.env
+ExecStart=/usr/bin/node bot/index.mjs
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

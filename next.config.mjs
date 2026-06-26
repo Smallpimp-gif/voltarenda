@@ -17,7 +17,9 @@ const nextConfig = {
         source: "/(.*)",
         headers: [
           { key: "X-Content-Type-Options", value: "nosniff" },
-          { key: "X-Frame-Options", value: "DENY" },
+          // X-Frame-Options убран в пользу CSP frame-ancestors (ниже):
+          // нужно разрешить встраивание в Telegram (Mini App), но больше
+          // никому. X-Frame-Options не умеет «только Telegram».
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
           {
             key: "Permissions-Policy",
@@ -31,12 +33,15 @@ const nextConfig = {
             key: "Content-Security-Policy",
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://widget.cloudpayments.ru https://mc.yandex.ru",
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://widget.cloudpayments.ru https://mc.yandex.ru https://telegram.org",
               "style-src 'self' 'unsafe-inline'",
-              "img-src 'self' data: blob: https://mc.yandex.ru https://*.yandex.ru https://*.yandex.net",
+              "img-src 'self' data: blob: https://mc.yandex.ru https://*.yandex.ru https://*.yandex.net https://t.me",
               "font-src 'self' https://fonts.gstatic.com",
               "connect-src 'self' https://api.cloudpayments.ru https://mc.yandex.ru https://*.yandex.ru",
               "frame-src https://widget.cloudpayments.ru https://yandex.ru https://*.yandex.ru",
+              // Встраивание только в Telegram (Mini App) и self. Всем
+              // остальным фрейминг запрещён (защита от clickjacking).
+              "frame-ancestors 'self' https://web.telegram.org https://*.telegram.org",
             ].join("; "),
           },
         ],
