@@ -59,7 +59,7 @@ export function OwnerMobile({
   const attention = [...overdueRows, ...todayRows];
 
   return (
-    <div className="min-h-dvh pb-[calc(72px+env(safe-area-inset-bottom))]">
+    <div className="min-h-dvh pb-[calc(96px+env(safe-area-inset-bottom))]">
       {/* Топ-бар */}
       <div className="border-b border-[var(--line)] px-gutter py-4">
         <p className="font-mono text-caption uppercase text-mute">Кабинет владельца</p>
@@ -70,11 +70,11 @@ export function OwnerMobile({
         <div className="flex flex-col gap-4 px-gutter py-6">
           {/* Требует внимания */}
           <section
-            className={`rounded-lg border p-5 ${
+            className={`rounded-[28px] border p-5 shadow-[0_6px_28px_-12px_rgba(0,0,0,0.12)] ${
               overdueRows.length ? "border-danger/50" : "border-[var(--line)]"
             }`}
           >
-            <p className="font-mono text-caption uppercase text-mute">Требует внимания</p>
+            <p className="text-caption font-medium text-mute">Требует внимания</p>
             {attention.length ? (
               <ul className="mt-3 flex flex-col">
                 {attention.map((r) => (
@@ -96,7 +96,7 @@ export function OwnerMobile({
           </section>
 
           {/* Метрики */}
-          <section className="rounded-lg border border-[var(--line)]">
+          <section className="overflow-hidden rounded-[28px] border border-[var(--line)] shadow-[0_6px_28px_-12px_rgba(0,0,0,0.12)]">
             <Metric label="Просрочено" value={String(overdueRows.length)} hint={overdueRows.length ? `долг ${money(overdueSum)}` : "все оплатили"} danger={overdueRows.length > 0} />
             <Metric label="Доход за месяц" value={money(incomeThisMonth)} hint="оплачено в этом месяце" />
             <Metric label="Арендаторов" value={String(rows.length)} hint={`выкуп ${buyout} · аренда ${rows.length - buyout}`} />
@@ -107,7 +107,7 @@ export function OwnerMobile({
           <button
             type="button"
             onClick={() => setTab("tenants")}
-            className="rounded-md border border-[var(--line-strong)] px-5 py-4 font-mono text-caption uppercase text-mute transition-colors duration-quick hover:text-[var(--text)]"
+            className="rounded-2xl border border-[var(--line-strong)] px-5 py-4 text-caption font-medium text-mute transition-colors duration-quick hover:text-[var(--text)]"
           >
             Открыть список арендаторов →
           </button>
@@ -123,7 +123,7 @@ export function OwnerMobile({
             {!addOpen && !editTenant && (
               <Link
                 href="/cabinet/owner?add=1"
-                className="rounded-pill bg-volt px-5 py-3 font-mono text-caption uppercase text-ink"
+                className="rounded-pill bg-volt px-5 py-3 text-caption font-semibold text-ink"
               >
                 + Добавить
               </Link>
@@ -171,7 +171,7 @@ export function OwnerMobile({
           <form action={logoutAction}>
             <button
               type="submit"
-              className="w-full rounded-md border border-[var(--line-strong)] px-5 py-4 font-mono text-caption uppercase text-mute transition-colors duration-quick hover:text-[var(--text)]"
+              className="w-full rounded-2xl border border-[var(--line-strong)] px-5 py-4 text-caption font-medium text-mute transition-colors duration-quick hover:text-[var(--text)]"
             >
               Выйти
             </button>
@@ -184,9 +184,9 @@ export function OwnerMobile({
         </div>
       )}
 
-      {/* Нижняя навигация */}
-      <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-[var(--line)] bg-[var(--bg)]/95 backdrop-blur-sm pb-[env(safe-area-inset-bottom)]">
-        <div className="flex">
+      {/* Нижняя навигация — плавающий скруглённый бар */}
+      <nav className="fixed inset-x-0 bottom-0 z-40 px-3 pb-[max(10px,env(safe-area-inset-bottom))] pt-2">
+        <div className="mx-auto flex max-w-md items-center gap-1.5 rounded-[26px] border border-[var(--line)] bg-[var(--bg)]/80 p-1.5 shadow-[0_12px_34px_-12px_rgba(0,0,0,0.3)] backdrop-blur-xl">
           <TabButton active={tab === "overview"} onClick={() => setTab("overview")} label="Обзор" icon={<GridIcon />} />
           <TabButton active={tab === "tenants"} onClick={() => setTab("tenants")} label="Арендаторы" icon={<UsersIcon />} />
           <TabButton active={tab === "ledger"} onClick={() => setTab("ledger")} label="Касса" icon={<CashIcon />} />
@@ -213,8 +213,8 @@ function Metric({
   return (
     <div className={`flex items-center justify-between gap-3 px-5 py-5 ${last ? "" : "border-b border-[var(--line)]"}`}>
       <div className="min-w-0">
-        <p className="font-mono text-caption uppercase text-mute">{label}</p>
-        {hint && <p className="mt-1 text-caption text-mute">{hint}</p>}
+        <p className="text-caption font-medium text-[var(--text)]">{label}</p>
+        {hint && <p className="mt-0.5 text-caption text-mute">{hint}</p>}
       </div>
       <span className={`shrink-0 whitespace-nowrap font-sans text-h2 font-semibold tabular-nums ${danger ? "text-danger" : "text-[var(--text)]"}`}>
         {value}
@@ -238,13 +238,17 @@ function TabButton({
     <button
       type="button"
       onClick={onClick}
-      className={`flex flex-1 flex-col items-center gap-1 py-2.5 transition-colors duration-quick ${
-        active ? "text-[var(--text)]" : "text-mute"
+      aria-label={label}
+      className={`flex h-12 items-center justify-center gap-2 rounded-[20px] transition-all duration-quick ${
+        active
+          ? "flex-1 bg-[var(--text)] px-4 text-[var(--bg)]"
+          : "w-12 shrink-0 text-mute hover:text-[var(--text)]"
       }`}
     >
-      <span className={`flex h-6 w-6 items-center justify-center ${active ? "text-[var(--text)]" : "text-mute"}`}>{icon}</span>
-      <span className="font-mono text-[10px] uppercase tracking-[0.06em]">{label}</span>
-      <span className={`mt-0.5 h-0.5 w-6 rounded-full ${active ? "bg-volt" : "bg-transparent"}`} />
+      <span className="flex h-5 w-5 shrink-0 items-center justify-center">{icon}</span>
+      {active && (
+        <span className="truncate text-caption font-semibold">{label}</span>
+      )}
     </button>
   );
 }

@@ -223,7 +223,7 @@ export function TenantsTable({ rows }: { rows: TenantRow[] }) {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Поиск по фамилии или договору…"
-          className="w-full rounded-md border border-[var(--line-strong)] bg-[var(--bg-2)] px-4 py-2.5 text-body text-[var(--text)] outline-none transition-colors duration-quick placeholder:text-mute focus:border-volt sm:flex-1"
+          className="w-full rounded-2xl border border-[var(--line-strong)] bg-[var(--bg-2)] px-5 py-3 text-body text-[var(--text)] outline-none transition-colors duration-quick placeholder:text-mute focus:border-volt sm:flex-1"
         />
         <div className="-mx-gutter flex gap-1.5 overflow-x-auto px-gutter sm:mx-0 sm:flex-wrap sm:px-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {FILTERS.map((f) => (

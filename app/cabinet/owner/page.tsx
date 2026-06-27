@@ -49,7 +49,7 @@ function StatCard({
   const border = danger ? "border-danger/50" : accent ? "border-volt" : "border-[var(--line)]";
   const dot = danger ? "bg-danger" : "bg-volt";
   return (
-    <div className={`flex min-h-[172px] flex-col justify-between rounded-lg border bg-[var(--bg-2)] p-6 ${border}`}>
+    <div className={`flex min-h-[172px] flex-col justify-between rounded-[28px] border bg-[var(--bg-2)] p-6 shadow-[0_6px_28px_-12px_rgba(0,0,0,0.1)] ${border}`}>
       <span className="flex items-center gap-2 font-mono text-caption uppercase text-mute">
         {(accent || danger) && <span aria-hidden className={`h-1.5 w-1.5 rounded-full ${dot}`} />}
         {label}
