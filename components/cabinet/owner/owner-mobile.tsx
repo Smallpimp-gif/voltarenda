@@ -59,7 +59,7 @@ export function OwnerMobile({
   const attention = [...overdueRows, ...todayRows];
 
   return (
-    <div className="min-h-dvh pb-[calc(96px+env(safe-area-inset-bottom))]">
+    <div className="min-h-dvh pb-[calc(124px+env(safe-area-inset-bottom))]">
       {/* Топ-бар */}
       <div className="border-b border-[var(--line)] px-gutter py-4">
         <p className="font-mono text-caption uppercase text-mute">Кабинет владельца</p>
@@ -185,7 +185,7 @@ export function OwnerMobile({
       )}
 
       {/* Нижняя навигация — плавающий скруглённый бар */}
-      <nav className="fixed inset-x-0 bottom-0 z-40 px-3 pb-[max(10px,env(safe-area-inset-bottom))] pt-2">
+      <nav className="fixed inset-x-0 bottom-0 z-40 px-3 pb-[max(22px,calc(env(safe-area-inset-bottom)+16px))] pt-2">
         <div className="mx-auto flex max-w-md items-center gap-1.5 rounded-[26px] border border-[var(--line)] bg-[var(--bg)]/80 p-1.5 shadow-[0_12px_34px_-12px_rgba(0,0,0,0.3)] backdrop-blur-xl">
           <TabButton active={tab === "overview"} onClick={() => setTab("overview")} label="Обзор" icon={<GridIcon />} />
           <TabButton active={tab === "tenants"} onClick={() => setTab("tenants")} label="Арендаторы" icon={<UsersIcon />} />
