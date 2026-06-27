@@ -177,6 +177,16 @@ export default async function CabinetPage() {
           <Row label="Номер договора" value={tenant.contract} />
           <Row label="Тип" value={v.type === "выкуп" ? "Выкуп" : "Аренда"} />
           <Row label="Недельный платёж" value={money(v.weekly)} />
+          {v.isBuyout && v.buyoutSum != null && (
+            <Row label="Выкупная сумма" value={money(v.buyoutSum)} />
+          )}
+          {v.positions.map((p, i) => (
+            <Row
+              key={i}
+              label={`Доп: ${p.name}`}
+              value={`${money(p.cost)} · +${money(p.weekly)}/нед`}
+            />
+          ))}
           <Row label="Дата заезда" value={v.startDate} />
           <Row label="Email" value={user.email} />
         </div>

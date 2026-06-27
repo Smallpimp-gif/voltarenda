@@ -7,7 +7,7 @@
 // Локально (файловый режим) — единый файл, всё совместимо.
 
 import { readJSON, writeJSON } from "@/lib/store";
-import type { Tenant } from "@/lib/schedule";
+import type { Tenant, TenantPosition } from "@/lib/schedule";
 
 const KEY = "bot/tenants";
 
@@ -84,6 +84,7 @@ export type TenantInput = {
   startDate: string; // YYYY-MM-DD
   buyoutWeeks: number | null;
   telegramUsername?: string;
+  positions?: TenantPosition[];
 };
 
 export async function addTenant(input: TenantInput): Promise<Tenant> {
@@ -98,6 +99,7 @@ export async function addTenant(input: TenantInput): Promise<Tenant> {
     startDate: input.startDate,
     buyoutWeeks: input.type === "выкуп" ? input.buyoutWeeks : null,
     telegramUsername: input.telegramUsername?.trim() ?? "",
+    positions: input.positions ?? [],
   };
   tenants.push(tenant);
   await saveTenants(tenants);
@@ -118,6 +120,7 @@ export async function updateTenant(id: string, input: TenantInput): Promise<Tena
     buyoutWeeks: input.type === "выкуп" ? input.buyoutWeeks : null,
     telegramUsername:
       input.telegramUsername?.trim() ?? tenants[idx].telegramUsername ?? "",
+    positions: input.positions ?? tenants[idx].positions ?? [],
   };
   tenants[idx] = updated;
   await saveTenants(tenants);

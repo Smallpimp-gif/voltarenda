@@ -4,7 +4,7 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { logoutAction } from "@/lib/auth/actions";
 import { loadTenants } from "@/lib/auth/tenants";
 import { getAvailableBikes } from "@/lib/settings";
-import { paymentState } from "@/lib/schedule";
+import { paymentState, effectiveWeekly } from "@/lib/schedule";
 import { loadPaidMap } from "@/lib/payments";
 import {
   loadLedger,
@@ -130,6 +130,7 @@ export default async function OwnerPage({
   const incomeMonths = incomeByMonth(ledger);
   const incomeTenants = incomeByTenant(ledger);
   const editTenant = sp.edit ? tenants.find((t) => t.id === sp.edit) : undefined;
+  const editPaidThrough = editTenant ? (paidMap[editTenant.id] ?? 0) : 0;
 
   // Строки таблицы со статусом оплат (учёт отметок владельца).
   const rows: TenantRow[] = tenants.map((t) => {
@@ -139,7 +140,7 @@ export default async function OwnerPage({
       name: t.name,
       contract: t.contract,
       type: t.type,
-      weekly: t.weekly,
+      weekly: effectiveWeekly(t),
       telegramUsername: t.telegramUsername ?? "",
       paidThrough: ps.paidThrough,
       totalWeeks: ps.totalWeeks,
@@ -175,6 +176,7 @@ export default async function OwnerPage({
         bikes={bikes}
         addOpen={Boolean(sp.add)}
         editTenant={editTenant}
+        editPaidThrough={editPaidThrough}
         ledgerTotal={cassaSum}
         ledgerRows={ledgerRows}
         ledgerResetAt={ledger.lastResetAt}
@@ -253,7 +255,7 @@ export default async function OwnerPage({
         )}
         {editTenant && (
           <div className="mt-8">
-            <TenantForm tenant={editTenant} />
+            <TenantForm tenant={editTenant} paidThrough={editPaidThrough} />
           </div>
         )}
 

@@ -7,6 +7,16 @@
 // Бот (bot/lib/schedule.mjs) держит свою копию намеренно — он отдельный
 // процесс на .mjs без сборки. Логика nextDue идентична; менять надо обе.
 
+// Доп. позиция к договору (напр. второй АКБ, добавленный позже).
+// weekly — добавка к недельному платежу; cost — стоимость позиции;
+// intoBuyout — идёт ли стоимость в общую выкупную сумму.
+export type TenantPosition = {
+  name: string;
+  cost: number;
+  weekly: number;
+  intoBuyout: boolean;
+};
+
 export type Tenant = {
   id: string;
   name: string; // фамилия
@@ -20,10 +30,31 @@ export type Tenant = {
   // вместо недельных — фикс. плата за паузу (PAUSE_FEE_MONTHLY), отдельно.
   pausedSince?: string | null; // ISO YYYY-MM-DD — дата постановки на паузу
   pausedDays?: number; // накоплено дней паузы из завершённых периодов
+  positions?: TenantPosition[]; // доп. позиции (АКБ и т.п.)
 };
 
 // Плата за паузу выкупа — фикс., в месяц, отдельно от выкупной суммы.
 export const PAUSE_FEE_MONTHLY = 11000;
+
+// Фактический недельный платёж = базовый + все доп. позиции.
+export function effectiveWeekly(
+  t: Pick<Tenant, "weekly" | "positions">,
+): number {
+  return t.weekly + (t.positions ?? []).reduce((s, p) => s + p.weekly, 0);
+}
+
+// Полная выкупная сумма = база (недель × базовый платёж) + стоимости
+// позиций, помеченных «в выкуп». null для аренды.
+export function buyoutTotal(
+  t: Pick<Tenant, "weekly" | "buyoutWeeks" | "positions">,
+): number | null {
+  if (!t.buyoutWeeks) return null;
+  const base = t.buyoutWeeks * t.weekly;
+  const pos = (t.positions ?? [])
+    .filter((p) => p.intoBuyout)
+    .reduce((s, p) => s + p.cost, 0);
+  return base + pos;
+}
 
 export function mskDayNum(date = new Date()): number {
   const fmt = new Intl.DateTimeFormat("en-CA", {
@@ -120,9 +151,12 @@ export type CabinetView = {
   remainingWeeks: number | null;
   remainingAmount: number | null;
   progressPct: number | null;
+  buyoutSum: number | null; // полная выкупная сумма (с позициями «в выкуп»)
   // пауза выкупа
   paused: boolean;
   pauseFee: number | null;
+  // доп. позиции
+  positions: TenantPosition[];
 };
 
 export function buildCabinetView(tenant: Tenant, todayNum = mskDayNum()): CabinetView {
@@ -145,7 +179,7 @@ export function buildCabinetView(tenant: Tenant, todayNum = mskDayNum()): Cabine
   return {
     type: tenant.type,
     isBuyout,
-    weekly: tenant.weekly,
+    weekly: effectiveWeekly(tenant),
     contract: tenant.contract,
     startDate: formatDay(isoToDayNum(tenant.startDate)),
     completed,
@@ -159,13 +193,16 @@ export function buildCabinetView(tenant: Tenant, todayNum = mskDayNum()): Cabine
     buyoutWeeks: isBuyout ? (tenant.buyoutWeeks as number) : null,
     paidCount: isBuyout ? paidCount : null,
     remainingWeeks,
-    remainingAmount: remainingWeeks !== null ? remainingWeeks * tenant.weekly : null,
+    remainingAmount:
+      remainingWeeks !== null ? remainingWeeks * effectiveWeekly(tenant) : null,
     progressPct:
       isBuyout && tenant.buyoutWeeks
         ? Math.round((paidCount / (tenant.buyoutWeeks as number)) * 100)
         : null,
+    buyoutSum: buyoutTotal(tenant),
     paused: Boolean(tenant.pausedSince),
     pauseFee: isBuyout ? PAUSE_FEE_MONTHLY : null,
+    positions: tenant.positions ?? [],
   };
 }
 
@@ -194,7 +231,7 @@ export function nextPayment(tenant: Tenant, todayNum = mskDayNum()): NextPayment
     date: formatDay(dueNum),
     weekday: weekdayOf(dueNum),
     number: paymentNumber,
-    amount: tenant.weekly,
+    amount: effectiveWeekly(tenant),
     daysUntil: dueNum - todayNum,
     completed,
   };
@@ -242,6 +279,7 @@ export function buildSchedule(
     to = nextNumber + upcomingWindow - 1;
   }
 
+  const weekly = effectiveWeekly(tenant);
   const rows: ScheduleRow[] = [];
   for (let n = from; n <= to; n += 1) {
     const d = startNum + (n - 1) * 7;
@@ -249,7 +287,7 @@ export function buildSchedule(
       number: n,
       date: formatDay(d),
       weekday: weekdayOf(d),
-      amount: tenant.weekly,
+      amount: weekly,
       status: d < todayNum ? "past" : d === nextNum ? "next" : "upcoming",
     });
   }
@@ -313,17 +351,19 @@ export function paymentState(
   else if (overdueCount > 0) kind = "overdue";
   else if (nextDaysUntil === 0) kind = "today";
 
+  const weekly = effectiveWeekly(tenant);
+
   return {
     paidThrough: paid,
     totalWeeks: tenant.buyoutWeeks ?? null,
     overdueCount,
-    overdueAmount: overdueCount * tenant.weekly,
+    overdueAmount: overdueCount * weekly,
     completed,
     nextNumber,
     nextDate,
     nextWeekday,
     nextDaysUntil,
-    amount: tenant.weekly,
+    amount: weekly,
     kind,
     paused: Boolean(tenant.pausedSince),
     pauseFee: PAUSE_FEE_MONTHLY,

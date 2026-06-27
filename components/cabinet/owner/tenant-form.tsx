@@ -7,7 +7,7 @@ import {
   updateTenantAction,
   type ActionState,
 } from "@/lib/auth/owner-actions";
-import type { Tenant } from "@/lib/schedule";
+import type { Tenant, TenantPosition } from "@/lib/schedule";
 
 const initial: ActionState = { error: null };
 
@@ -20,35 +20,59 @@ function Labeled({
 }) {
   return (
     <label className="flex flex-col gap-1.5">
-      <span className="font-mono text-caption uppercase text-mute">{label}</span>
+      <span className="text-caption font-medium text-mute">{label}</span>
       {children}
     </label>
   );
 }
 
 const inputCls =
-  "w-full rounded-md border border-[var(--line-strong)] bg-[var(--bg)] px-3 py-2.5 text-body text-[var(--text)] outline-none transition-colors duration-quick focus:border-volt";
+  "w-full rounded-xl border border-[var(--line-strong)] bg-[var(--bg)] px-3 py-2.5 text-body text-[var(--text)] outline-none transition-colors duration-quick focus:border-volt";
 
-export function TenantForm({ tenant }: { tenant?: Tenant }) {
+export function TenantForm({
+  tenant,
+  paidThrough,
+}: {
+  tenant?: Tenant;
+  paidThrough?: number;
+}) {
   const isEdit = Boolean(tenant);
   const [state, formAction, pending] = useActionState(
     isEdit ? updateTenantAction : addTenantAction,
     initial,
   );
   const [type, setType] = useState<string>(tenant?.type ?? "аренда");
+  const [positions, setPositions] = useState<TenantPosition[]>(
+    tenant?.positions ?? [],
+  );
+
+  const addPos = () =>
+    setPositions((p) => [
+      ...p,
+      { name: "", cost: 0, weekly: 0, intoBuyout: type === "выкуп" },
+    ]);
+  const updPos = (i: number, patch: Partial<TenantPosition>) =>
+    setPositions((p) => p.map((x, j) => (j === i ? { ...x, ...patch } : x)));
+  const delPos = (i: number) =>
+    setPositions((p) => p.filter((_, j) => j !== i));
 
   return (
     <form
       action={formAction}
-      className="rounded-md border border-[var(--line)] bg-[var(--bg-2)] p-5"
+      className="rounded-[28px] border border-[var(--line)] bg-[var(--bg-2)] p-5"
     >
       {isEdit && <input type="hidden" name="id" value={tenant!.id} />}
-      <h3 className="font-mono text-caption uppercase text-mute">
+      <input
+        type="hidden"
+        name="positions"
+        value={JSON.stringify(positions.filter((p) => p.name.trim()))}
+      />
+      <h3 className="text-body-lg font-medium text-[var(--text)]">
         {isEdit ? `Редактировать · ${tenant!.name}` : "Новый арендатор"}
       </h3>
 
       {state.error && (
-        <p role="alert" className="mt-4 rounded-md border border-danger/40 bg-danger/10 px-3 py-2 text-body text-danger">
+        <p role="alert" className="mt-4 rounded-xl border border-danger/40 bg-danger/10 px-3 py-2 text-body text-danger">
           {state.error}
         </p>
       )}
@@ -98,6 +122,18 @@ export function TenantForm({ tenant }: { tenant?: Tenant }) {
             />
           </Labeled>
         )}
+        {isEdit && (
+          <Labeled label="Внесено выплат">
+            <input
+              name="paidThrough"
+              type="number"
+              min={0}
+              defaultValue={paidThrough ?? 0}
+              className={inputCls}
+              placeholder="0"
+            />
+          </Labeled>
+        )}
         <Labeled label="Telegram (необязательно)">
           <input
             name="telegramUsername"
@@ -108,17 +144,84 @@ export function TenantForm({ tenant }: { tenant?: Tenant }) {
         </Labeled>
       </div>
 
+      {/* Доп. позиции */}
+      <div className="mt-6">
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-caption font-medium text-mute">Доп. позиции (например, второй АКБ)</p>
+          <button
+            type="button"
+            onClick={addPos}
+            className="rounded-pill border border-[var(--line-strong)] px-3 py-1.5 text-caption font-medium text-mute transition-colors duration-quick hover:text-[var(--text)]"
+          >
+            + Позиция
+          </button>
+        </div>
+
+        {positions.length === 0 ? (
+          <p className="mt-2 text-caption text-mute">
+            Можно добавить позже: название, стоимость и прибавку к недельному платежу.
+          </p>
+        ) : (
+          <div className="mt-3 flex flex-col gap-3">
+            {positions.map((p, i) => (
+              <div key={i} className="rounded-2xl border border-[var(--line)] bg-[var(--bg)] p-3">
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <input
+                    placeholder="Название (АКБ 60/60)"
+                    value={p.name}
+                    onChange={(e) => updPos(i, { name: e.target.value })}
+                    className={inputCls}
+                  />
+                  <input
+                    type="number"
+                    min={0}
+                    placeholder="Стоимость, ₽"
+                    value={p.cost || ""}
+                    onChange={(e) => updPos(i, { cost: Number(e.target.value) || 0 })}
+                    className={inputCls}
+                  />
+                  <input
+                    type="number"
+                    min={0}
+                    placeholder="+ к недельному, ₽"
+                    value={p.weekly || ""}
+                    onChange={(e) => updPos(i, { weekly: Number(e.target.value) || 0 })}
+                    className={inputCls}
+                  />
+                  <label className="flex items-center gap-2 px-1 text-body text-[var(--text)]">
+                    <input
+                      type="checkbox"
+                      checked={p.intoBuyout}
+                      onChange={(e) => updPos(i, { intoBuyout: e.target.checked })}
+                      className="h-4 w-4 accent-volt"
+                    />
+                    Идёт в выкуп
+                  </label>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => delPos(i)}
+                  className="mt-2 text-caption text-mute transition-colors duration-quick hover:text-danger"
+                >
+                  Удалить позицию
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
       <div className="mt-5 flex items-center gap-3">
         <button
           type="submit"
           disabled={pending}
-          className="rounded-pill bg-volt px-5 py-2.5 font-mono text-caption uppercase text-ink transition-colors duration-quick hover:bg-volt-hover disabled:opacity-60"
+          className="rounded-pill bg-volt px-5 py-2.5 text-caption font-semibold text-ink transition-colors duration-quick hover:bg-volt-hover disabled:opacity-60"
         >
           {pending ? "Сохранение…" : isEdit ? "Сохранить" : "Добавить"}
         </button>
         <Link
           href="/cabinet/owner"
-          className="font-mono text-caption uppercase text-mute transition-colors duration-quick hover:text-[var(--text)]"
+          className="text-caption font-medium text-mute transition-colors duration-quick hover:text-[var(--text)]"
         >
           Отмена
         </Link>

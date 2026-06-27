@@ -24,7 +24,14 @@ import {
   loadLedger,
   cassaTotal,
 } from "@/lib/ledger";
-import { paymentState, mskDayNum, isoToDayNum, dayNumToIso } from "@/lib/schedule";
+import {
+  paymentState,
+  effectiveWeekly,
+  mskDayNum,
+  isoToDayNum,
+  dayNumToIso,
+  type TenantPosition,
+} from "@/lib/schedule";
 
 export type ActionState = { error: string | null; ok?: boolean };
 
@@ -42,6 +49,7 @@ export async function markPaidAction(formData: FormData): Promise<void> {
   if (!id) return;
   const t = await getTenantById(id);
   if (!t) return;
+  const ew = effectiveWeekly(t); // фактический платёж (с доп. позициями)
   if (dir === "catchup") {
     const ps = paymentState(t, await getPaidThrough(id));
     if (ps.overdueCount > 0) {
@@ -49,7 +57,7 @@ export async function markPaidAction(formData: FormData): Promise<void> {
       await addLedgerEntry({
         tenantId: id,
         name: t.name,
-        amount: ps.overdueCount * t.weekly,
+        amount: ps.overdueCount * ew,
         weeks: ps.overdueCount,
         kind: "catchup",
       });
@@ -64,7 +72,7 @@ export async function markPaidAction(formData: FormData): Promise<void> {
     await addLedgerEntry({
       tenantId: id,
       name: t.name,
-      amount: t.weekly,
+      amount: ew,
       weeks: 1,
       kind: "weekly",
     });
@@ -150,6 +158,29 @@ function parseTenant(formData: FormData): TenantInput | string {
     buyoutWeeks = w;
   }
 
+  // Доп. позиции — JSON-массив из скрытого поля формы.
+  let positions: TenantPosition[] = [];
+  const posRaw = String(formData.get("positions") ?? "").trim();
+  if (posRaw) {
+    try {
+      const arr = JSON.parse(posRaw);
+      if (Array.isArray(arr)) {
+        positions = arr
+          .map(
+            (p): TenantPosition => ({
+              name: String(p?.name ?? "").trim(),
+              cost: Math.max(0, Math.round(Number(p?.cost) || 0)),
+              weekly: Math.max(0, Math.round(Number(p?.weekly) || 0)),
+              intoBuyout: Boolean(p?.intoBuyout),
+            }),
+          )
+          .filter((p) => p.name.length > 0);
+      }
+    } catch {
+      /* игнорируем кривой JSON */
+    }
+  }
+
   return {
     name,
     contract,
@@ -158,7 +189,16 @@ function parseTenant(formData: FormData): TenantInput | string {
     startDate,
     buyoutWeeks,
     telegramUsername,
+    positions,
   };
+}
+
+// «Внесено выплат» — необязательное поле формы; задаёт paidThrough напрямую.
+async function applyPaidThrough(formData: FormData, id: string): Promise<void> {
+  const raw = formData.get("paidThrough");
+  if (raw == null || String(raw).trim() === "") return;
+  const n = Number(raw);
+  if (Number.isFinite(n) && n >= 0) await setPaidThrough(id, Math.floor(n));
 }
 
 export async function addTenantAction(
@@ -168,7 +208,8 @@ export async function addTenantAction(
   await requireOwner();
   const parsed = parseTenant(formData);
   if (typeof parsed === "string") return { error: parsed };
-  await addTenant(parsed);
+  const tenant = await addTenant(parsed);
+  await applyPaidThrough(formData, tenant.id);
   revalidatePath("/cabinet/owner");
   redirect("/cabinet/owner");
 }
@@ -183,6 +224,7 @@ export async function updateTenantAction(
   if (typeof parsed === "string") return { error: parsed };
   const ok = await updateTenant(id, parsed);
   if (!ok) return { error: "Арендатор не найден." };
+  await applyPaidThrough(formData, id);
   revalidatePath("/cabinet/owner");
   redirect("/cabinet/owner");
 }

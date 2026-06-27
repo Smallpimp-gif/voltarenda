@@ -27,6 +27,7 @@ export function OwnerMobile({
   bikes,
   addOpen,
   editTenant,
+  editPaidThrough,
   ledgerTotal,
   ledgerRows,
   ledgerResetAt,
@@ -40,6 +41,7 @@ export function OwnerMobile({
   bikes: number;
   addOpen: boolean;
   editTenant?: Tenant;
+  editPaidThrough: number;
   ledgerTotal: number;
   ledgerRows: LedgerRow[];
   ledgerResetAt: string | null;
@@ -137,7 +139,7 @@ export function OwnerMobile({
           )}
           {editTenant && (
             <div className="mt-5">
-              <TenantForm tenant={editTenant} />
+              <TenantForm tenant={editTenant} paidThrough={editPaidThrough} />
             </div>
           )}
 
