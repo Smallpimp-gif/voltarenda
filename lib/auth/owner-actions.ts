@@ -92,7 +92,8 @@ export async function resetLedgerAction(): Promise<void> {
 // чтобы итог стал ровно нужным числом (история сохраняется, аудит прозрачен).
 export async function setLedgerTotalAction(formData: FormData): Promise<void> {
   await requireOwner();
-  const target = Math.max(0, Math.round(Number(formData.get("total"))));
+  // До копеек: округляем к 2 знакам, не к целым рублям.
+  const target = Math.max(0, Math.round(Number(formData.get("total")) * 100) / 100);
   if (!Number.isFinite(target)) return;
   const file = await loadLedger();
   const delta = target - cassaTotal(file);

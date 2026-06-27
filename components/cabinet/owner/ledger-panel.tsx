@@ -7,7 +7,7 @@
 import { useState } from "react";
 import { resetLedgerAction, setLedgerTotalAction } from "@/lib/auth/owner-actions";
 
-const rub = new Intl.NumberFormat("ru-RU");
+const rub = new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 2 });
 const money = (n: number) => `${rub.format(Math.abs(n))} ₽`;
 
 const dtFmt = new Intl.DateTimeFormat("ru-RU", {
@@ -65,7 +65,8 @@ export function LedgerPanel({
                 name="total"
                 type="number"
                 min={0}
-                step={100}
+                step="0.01"
+                inputMode="decimal"
                 defaultValue={total}
                 autoFocus
                 className="w-36 bg-transparent font-sans text-h2 tabular-nums text-[var(--text)] outline-none"
