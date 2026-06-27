@@ -31,8 +31,9 @@ function isoToDayNum(iso) {
 const rub = new Intl.NumberFormat("ru-RU");
 const money = (n) => `${rub.format(n)} ₽`;
 
-// Карта для оплаты (показывается в напоминании в день оплаты).
+// Реквизиты для оплаты (показываются в напоминании в день оплаты).
 const PAYMENT_CARD = "5536 9139 0297 3763";
+const PAYMENT_PHONE = "+7 952 215-41-04"; // СБП по номеру телефона
 
 function effectiveWeekly(t) {
   return t.weekly + (t.positions ?? []).reduce((s, p) => s + (p.weekly || 0), 0);
@@ -63,7 +64,7 @@ function tenantMessage(name, amount, days) {
   const first = String(name).split(" ")[0] || name;
   if (days === 1)
     return `Привет, ${first}! Завтра оплата за аренду — ${money(amount)}. Спасибо, что с нами!`;
-  return `Привет, ${first}! Напоминаю про оплату на сегодня — ${money(amount)}.\n💳 Карта для оплаты: <code>${PAYMENT_CARD}</code>\nЕсли уже внёс — не обращай внимания 👍`;
+  return `Привет, ${first}! Напоминаю про оплату на сегодня — ${money(amount)}.\n💳 Карта: <code>${PAYMENT_CARD}</code>\n📱 СБП: <code>${PAYMENT_PHONE}</code>\nЕсли уже внёс — не обращай внимания 👍`;
 }
 
 async function runReminders(env) {
