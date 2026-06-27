@@ -32,8 +32,8 @@ const rub = new Intl.NumberFormat("ru-RU");
 const money = (n) => `${rub.format(n)} ₽`;
 
 // Реквизиты для оплаты (показываются в напоминании в день оплаты).
-const PAYMENT_CARD = "5536 9139 0297 3763";
-const PAYMENT_PHONE = "+7 952 215-41-04"; // СБП по номеру телефона
+const PAYMENT_CARD = "5536913902973763";
+const PAYMENT_PHONE = "+79522154104"; // СБП по номеру телефона
 
 function effectiveWeekly(t) {
   return t.weekly + (t.positions ?? []).reduce((s, p) => s + (p.weekly || 0), 0);
