@@ -72,7 +72,9 @@ async function runReminders(env) {
 
   const tenants = (await env.DATA.get("bot/tenants", "json")) ?? [];
   const paymentsRaw = (await env.DATA.get("bot/payments", "json")) ?? {};
-  const users = (await env.DATA.get("auth/users", "json")) ?? [];
+  const users = (await env.DATA.get("auth/users", "json")) ?? {};
+  // username -> chat_id, заполняется при /start (см. webhook бота).
+  const tgChats = (await env.DATA.get("bot/tg-chats", "json")) ?? {};
 
   // tenantId -> telegram chat_id (из привязанных аккаунтов). auth/users —
   // объект {userId: User}.
@@ -80,6 +82,9 @@ async function runReminders(env) {
   for (const u of Object.values(users || {})) {
     if (u?.tenantId && u?.telegramId) chatByTenant[u.tenantId] = u.telegramId;
   }
+  const chatFor = (t) =>
+    chatByTenant[t.id] ??
+    (t.telegramUsername ? tgChats[String(t.telegramUsername).toLowerCase()] : undefined);
 
   const today = mskDayNum();
   const dueToday = []; // для дайджеста владельцу
@@ -99,7 +104,7 @@ async function runReminders(env) {
     const amount = effectiveWeekly(t);
 
     // Арендатору (если привязан Telegram).
-    const chat = chatByTenant[t.id];
+    const chat = chatFor(t);
     if (chat) {
       const ok = await tg(token, chat, tenantMessage(t.name, amount, days));
       if (ok) sentTenant++;
