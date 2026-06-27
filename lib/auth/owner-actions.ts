@@ -20,9 +20,9 @@ import { getPaidThrough, setPaidThrough } from "@/lib/payments";
 import {
   addLedgerEntry,
   removeLastLedgerEntry,
-  clearLedger,
+  resetCassa,
   loadLedger,
-  ledgerTotal,
+  cassaTotal,
 } from "@/lib/ledger";
 import { paymentState, mskDayNum, isoToDayNum, dayNumToIso } from "@/lib/schedule";
 
@@ -76,7 +76,7 @@ export async function markPaidAction(formData: FormData): Promise<void> {
 // арендаторов (paidThrough) НЕ трогается.
 export async function resetLedgerAction(): Promise<void> {
   await requireOwner();
-  await clearLedger();
+  await resetCassa();
   revalidatePath("/cabinet/owner");
 }
 
@@ -87,7 +87,7 @@ export async function setLedgerTotalAction(formData: FormData): Promise<void> {
   const target = Math.max(0, Math.round(Number(formData.get("total"))));
   if (!Number.isFinite(target)) return;
   const file = await loadLedger();
-  const delta = target - ledgerTotal(file);
+  const delta = target - cassaTotal(file);
   if (delta !== 0) {
     await addLedgerEntry({
       tenantId: "",

@@ -12,7 +12,9 @@ import { BikesForm } from "./bikes-form";
 import { TenantForm } from "./tenant-form";
 import { TenantsTable, type TenantRow } from "./tenants-table";
 import { LedgerPanel, type LedgerRow } from "./ledger-panel";
+import { IncomeReport } from "./income-report";
 import type { Tenant } from "@/lib/schedule";
+import type { MonthIncome, TenantIncome } from "@/lib/ledger";
 
 const rub = new Intl.NumberFormat("ru-RU");
 const money = (n: number) => `${rub.format(n)} ₽`;
@@ -28,6 +30,9 @@ export function OwnerMobile({
   ledgerTotal,
   ledgerRows,
   ledgerResetAt,
+  incomeTotal,
+  incomeMonths,
+  incomeTenants,
 }: {
   email: string;
   rows: TenantRow[];
@@ -37,6 +42,9 @@ export function OwnerMobile({
   ledgerTotal: number;
   ledgerRows: LedgerRow[];
   ledgerResetAt: string | null;
+  incomeTotal: number;
+  incomeMonths: MonthIncome[];
+  incomeTenants: TenantIncome[];
 }) {
   const [tab, setTab] = useState<Tab>("tenants");
 
@@ -137,11 +145,22 @@ export function OwnerMobile({
       )}
 
       {tab === "ledger" && (
-        <div className="px-gutter py-6">
-          <h2 className="text-h3 text-[var(--text)]">Касса</h2>
-          <p className="mt-1 font-mono text-caption uppercase text-mute">Собранные оплаты</p>
-          <div className="mt-5">
-            <LedgerPanel total={ledgerTotal} rows={ledgerRows} lastResetAt={ledgerResetAt} />
+        <div className="flex flex-col gap-8 px-gutter py-6">
+          <div>
+            <h2 className="text-h3 text-[var(--text)]">Касса</h2>
+            <p className="mt-1 font-mono text-caption uppercase text-mute">
+              Собрано с последнего обнуления
+            </p>
+            <div className="mt-5">
+              <LedgerPanel total={ledgerTotal} rows={ledgerRows} lastResetAt={ledgerResetAt} />
+            </div>
+          </div>
+          <div>
+            <h2 className="text-h3 text-[var(--text)]">Доходы</h2>
+            <p className="mt-1 font-mono text-caption uppercase text-mute">Вся история заработка</p>
+            <div className="mt-5">
+              <IncomeReport total={incomeTotal} months={incomeMonths} tenants={incomeTenants} />
+            </div>
           </div>
         </div>
       )}

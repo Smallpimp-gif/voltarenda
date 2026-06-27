@@ -6,11 +6,19 @@ import { loadTenants } from "@/lib/auth/tenants";
 import { getAvailableBikes } from "@/lib/settings";
 import { paymentState } from "@/lib/schedule";
 import { loadPaidMap } from "@/lib/payments";
-import { loadLedger, ledgerTotal } from "@/lib/ledger";
+import {
+  loadLedger,
+  cassaTotal,
+  cassaEntries,
+  incomeTotal,
+  incomeByMonth,
+  incomeByTenant,
+} from "@/lib/ledger";
 import {
   LedgerPanel,
   type LedgerRow,
 } from "@/components/cabinet/owner/ledger-panel";
+import { IncomeReport } from "@/components/cabinet/owner/income-report";
 import { BikesForm } from "@/components/cabinet/owner/bikes-form";
 import { TenantForm } from "@/components/cabinet/owner/tenant-form";
 import {
@@ -101,8 +109,8 @@ export default async function OwnerPage({
     loadPaidMap(),
     loadLedger(),
   ]);
-  const ledgerSum = ledgerTotal(ledger);
-  const ledgerRows: LedgerRow[] = [...ledger.entries].reverse().map((e) => ({
+  const cassaSum = cassaTotal(ledger);
+  const ledgerRows: LedgerRow[] = [...cassaEntries(ledger)].reverse().map((e) => ({
     id: e.id,
     name: e.name,
     amount: e.amount,
@@ -110,6 +118,9 @@ export default async function OwnerPage({
     kind: e.kind,
     at: e.at,
   }));
+  const incomeSum = incomeTotal(ledger);
+  const incomeMonths = incomeByMonth(ledger);
+  const incomeTenants = incomeByTenant(ledger);
   const editTenant = sp.edit ? tenants.find((t) => t.id === sp.edit) : undefined;
 
   // Строки таблицы со статусом оплат (учёт отметок владельца).
@@ -156,9 +167,12 @@ export default async function OwnerPage({
         bikes={bikes}
         addOpen={Boolean(sp.add)}
         editTenant={editTenant}
-        ledgerTotal={ledgerSum}
+        ledgerTotal={cassaSum}
         ledgerRows={ledgerRows}
         ledgerResetAt={ledger.lastResetAt}
+        incomeTotal={incomeSum}
+        incomeMonths={incomeMonths}
+        incomeTenants={incomeTenants}
       />
     </div>
 
@@ -264,7 +278,19 @@ export default async function OwnerPage({
           </span>
         </SectionHeader>
         <div className="mt-8">
-          <LedgerPanel total={ledgerSum} rows={ledgerRows} lastResetAt={ledger.lastResetAt} />
+          <LedgerPanel total={cassaSum} rows={ledgerRows} lastResetAt={ledger.lastResetAt} />
+        </div>
+      </section>
+
+      {/* 04 / Доходы */}
+      <section className="mt-20">
+        <SectionHeader num="04" eyebrow="Доходы" title="Сколько заработано">
+          <span className="hidden font-mono text-caption uppercase text-mute lg:inline">
+            вся история · не сбрасывается
+          </span>
+        </SectionHeader>
+        <div className="mt-8">
+          <IncomeReport total={incomeSum} months={incomeMonths} tenants={incomeTenants} />
         </div>
       </section>
     </div>
