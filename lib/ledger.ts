@@ -79,6 +79,14 @@ export function incomeTotal(file: LedgerFile): number {
   return file.entries.filter(isIncome).reduce((s, e) => s + e.amount, 0);
 }
 
+// Доход за текущий месяц (по МСК) — самый рабочий показатель.
+export function incomeThisMonth(file: LedgerFile): number {
+  const nowKey = monthKeyFmt.format(new Date());
+  return file.entries
+    .filter((e) => isIncome(e) && monthKeyFmt.format(new Date(e.at)) === nowKey)
+    .reduce((s, e) => s + e.amount, 0);
+}
+
 const monthKeyFmt = new Intl.DateTimeFormat("en-CA", {
   timeZone: "Europe/Moscow",
   year: "numeric",

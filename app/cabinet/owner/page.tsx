@@ -11,6 +11,7 @@ import {
   cassaTotal,
   cassaEntries,
   incomeTotal,
+  incomeThisMonth,
   incomeByMonth,
   incomeByTenant,
 } from "@/lib/ledger";
@@ -119,6 +120,7 @@ export default async function OwnerPage({
     at: e.at,
   }));
   const incomeSum = incomeTotal(ledger);
+  const incomeMonth = incomeThisMonth(ledger);
   const incomeMonths = incomeByMonth(ledger);
   const incomeTenants = incomeByTenant(ledger);
   const editTenant = sp.edit ? tenants.find((t) => t.id === sp.edit) : undefined;
@@ -171,6 +173,7 @@ export default async function OwnerPage({
         ledgerRows={ledgerRows}
         ledgerResetAt={ledger.lastResetAt}
         incomeTotal={incomeSum}
+        incomeThisMonth={incomeMonth}
         incomeMonths={incomeMonths}
         incomeTenants={incomeTenants}
       />
@@ -290,7 +293,12 @@ export default async function OwnerPage({
           </span>
         </SectionHeader>
         <div className="mt-8">
-          <IncomeReport total={incomeSum} months={incomeMonths} tenants={incomeTenants} />
+          <IncomeReport
+            total={incomeSum}
+            thisMonth={incomeMonth}
+            months={incomeMonths}
+            tenants={incomeTenants}
+          />
         </div>
       </section>
     </div>

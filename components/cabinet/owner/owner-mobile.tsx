@@ -31,6 +31,7 @@ export function OwnerMobile({
   ledgerRows,
   ledgerResetAt,
   incomeTotal,
+  incomeThisMonth,
   incomeMonths,
   incomeTenants,
 }: {
@@ -43,6 +44,7 @@ export function OwnerMobile({
   ledgerRows: LedgerRow[];
   ledgerResetAt: string | null;
   incomeTotal: number;
+  incomeThisMonth: number;
   incomeMonths: MonthIncome[];
   incomeTenants: TenantIncome[];
 }) {
@@ -96,8 +98,9 @@ export function OwnerMobile({
           {/* Метрики */}
           <section className="rounded-lg border border-[var(--line)]">
             <Metric label="Просрочено" value={String(overdueRows.length)} hint={overdueRows.length ? `долг ${money(overdueSum)}` : "все оплатили"} danger={overdueRows.length > 0} />
+            <Metric label="Доход за месяц" value={money(incomeThisMonth)} hint="оплачено в этом месяце" />
             <Metric label="Арендаторов" value={String(rows.length)} hint={`выкуп ${buyout} · аренда ${rows.length - buyout}`} />
-            <Metric label="Недельный доход" value={money(weeklyIncome)} hint="со всех активных" />
+            <Metric label="Недельный доход" value={money(weeklyIncome)} hint="ожидается со всех активных" />
             <Metric label="Свободно велосипедов" value={String(bikes)} hint="видно на сайте" last />
           </section>
 
@@ -159,7 +162,12 @@ export function OwnerMobile({
             <h2 className="text-h3 text-[var(--text)]">Доходы</h2>
             <p className="mt-1 font-mono text-caption uppercase text-mute">Вся история заработка</p>
             <div className="mt-5">
-              <IncomeReport total={incomeTotal} months={incomeMonths} tenants={incomeTenants} />
+              <IncomeReport
+                total={incomeTotal}
+                thisMonth={incomeThisMonth}
+                months={incomeMonths}
+                tenants={incomeTenants}
+              />
             </div>
           </div>
         </div>
