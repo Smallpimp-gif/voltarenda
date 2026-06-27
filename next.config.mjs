@@ -14,6 +14,13 @@ const nextConfig = {
   async headers() {
     return [
       {
+        // Вход Mini App — не кэшировать (Telegram иначе держит старый бандл).
+        source: "/app",
+        headers: [
+          { key: "Cache-Control", value: "no-store, must-revalidate" },
+        ],
+      },
+      {
         source: "/(.*)",
         headers: [
           { key: "X-Content-Type-Options", value: "nosniff" },
