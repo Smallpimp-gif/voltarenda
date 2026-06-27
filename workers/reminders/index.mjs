@@ -32,7 +32,7 @@ const rub = new Intl.NumberFormat("ru-RU");
 const money = (n) => `${rub.format(n)} ₽`;
 
 // Карта для оплаты (показывается в напоминании в день оплаты).
-const PAYMENT_CARD = "2200 7010 9983 1833";
+const PAYMENT_CARD = "5536 9139 0297 3763";
 
 function effectiveWeekly(t) {
   return t.weekly + (t.positions ?? []).reduce((s, p) => s + (p.weekly || 0), 0);
