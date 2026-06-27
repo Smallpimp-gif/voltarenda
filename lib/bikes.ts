@@ -52,10 +52,10 @@ export const DEFAULT_MODEL: BikeModelKey = "u2pro";
 export const DEFAULT_BATTERY: BatteryKey = "2x60-30";
 
 // ── Примерная стоимость аренды, ₽/неделя ─────────────────────────────
-// ПЛЕЙСХОЛДЕРЫ. База U2 + 2 АКБ 60+30 = 5500 ₽/нед (как тариф «Неделя»).
+// Доступная комплектация U2 Pro + 2×60/33 = 5500 ₽/нед (договор: 5500 × 41 нед).
 const MODEL_WEEKLY: Record<BikeModelKey, number> = {
-  u2: 5500,
-  u2pro: 6500,
+  u2: 4500,
+  u2pro: 5500,
   u7: 7500,
 };
 

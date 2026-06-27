@@ -39,6 +39,35 @@ export async function notifyOperator(text: string): Promise<void> {
   }
 }
 
+// Отправляет файл (договор .docx) оператору в Telegram. No-op без env.
+export async function sendDocumentToOperator(
+  blob: Blob,
+  filename: string,
+  caption?: string,
+): Promise<void> {
+  const token = process.env.TELEGRAM_BOT_TOKEN;
+  const chatId = process.env.TELEGRAM_CHAT_ID;
+  if (!token || !chatId) return;
+  try {
+    const form = new FormData();
+    form.append("chat_id", chatId);
+    if (caption) {
+      form.append("caption", caption);
+      form.append("parse_mode", "HTML");
+    }
+    form.append("document", blob, filename);
+    const res = await fetch(`https://api.telegram.org/bot${token}/sendDocument`, {
+      method: "POST",
+      body: form,
+    });
+    if (!res.ok) {
+      console.error("[notify] sendDocument failed:", res.status, await res.text());
+    }
+  } catch (err) {
+    console.error("[notify] sendDocument error:", err);
+  }
+}
+
 /**
  * Форматирует уведомление о новой заявке в HTML для Telegram.
  * HTML выбран вместо Markdown — меньше edge-cases с escape'ом
@@ -56,6 +85,7 @@ export function formatApplicationNotification(input: {
   middleName?: string;
   phone: string;
   email: string;
+  telegram?: string;
   currentAddress?: string;
   passport?: {
     series?: string;
@@ -87,6 +117,7 @@ export function formatApplicationNotification(input: {
     `📧 ${esc(input.email)}`,
   ];
 
+  if (input.telegram) lines.push(`✈️ <a href="https://t.me/${esc(input.telegram)}">@${esc(input.telegram)}</a>`);
   if (input.currentAddress) lines.push(`🏠 ${esc(input.currentAddress)}`);
 
   const p = input.passport;

@@ -10,9 +10,12 @@ import crypto from "crypto";
 import {
   formatApplicationNotification,
   notifyOperator,
+  sendDocumentToOperator,
 } from "@/lib/notify";
 import { isAllowedOrigin } from "@/lib/api-origin";
 import { writeJSON } from "@/lib/store";
+import { nextContractNumber } from "@/lib/contract-number";
+import { generateContractBlob } from "@/lib/contract";
 
 export const runtime = "nodejs";
 
@@ -35,6 +38,7 @@ type SubmitBody = {
   middleName?: string;
   phone: string;
   email: string;
+  telegram?: string;
   currentAddress: string;
   // Паспортные данные авто-распознаются на клиенте (Yandex Vision),
   // пользователь проверяет; оператор сверяет с фото.
@@ -108,6 +112,7 @@ export async function POST(req: Request) {
         middleName: body.middleName?.trim() ?? "",
         phone: body.phone,
         email: body.email.toLowerCase().trim(),
+        telegram: (body.telegram ?? "").trim().replace(/^@/, ""),
         currentAddress: body.currentAddress.trim(),
       },
       // Паспортные данные авто-распознаны на клиенте, проверены пользователем.
@@ -139,11 +144,57 @@ export async function POST(req: Request) {
         middleName: application.customer.middleName,
         phone: application.customer.phone,
         email: application.customer.email,
+        telegram: application.customer.telegram,
         currentAddress: application.customer.currentAddress,
         passport: application.passport,
         photoCount: 3,
       }),
     );
+
+    // Авто-договор аренды (.docx) → оператору в Telegram. Best-effort:
+    // ошибка генерации не валит заявку.
+    try {
+      const number = await nextContractNumber();
+      const dateText =
+        new Intl.DateTimeFormat("ru-RU", {
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+          timeZone: "Europe/Moscow",
+        }).format(new Date()) + " г.";
+      const fio = [
+        application.customer.lastName,
+        application.customer.firstName,
+        application.customer.middleName,
+      ]
+        .filter(Boolean)
+        .join(" ");
+      const blob = await generateContractBlob({
+        number,
+        dateText,
+        tenant: {
+          fio,
+          birthDate: application.passport.birthDate,
+          birthPlace: application.passport.birthPlace,
+          passportSeries: application.passport.series,
+          passportNumber: application.passport.number,
+          issuedBy: application.passport.issuedBy,
+          issueDate: application.passport.issueDate,
+          departmentCode: application.passport.departmentCode,
+          factAddress: application.customer.currentAddress,
+          phone: application.customer.phone,
+          telegram: application.customer.telegram,
+        },
+      });
+      const safeFio = fio.replace(/[^\p{L}\d]+/gu, "_");
+      await sendDocumentToOperator(
+        blob,
+        `Договор_№${number}_${safeFio}.docx`,
+        `📄 Договор №${number} · ${fio}`,
+      );
+    } catch (e) {
+      console.error("[apply/submit] contract gen failed:", e);
+    }
 
     return NextResponse.json({
       id: applicationId,

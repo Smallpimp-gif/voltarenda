@@ -66,6 +66,7 @@ type FormData = {
   middleName: string; // отчество (распознаётся с паспорта)
   phone: string; // хранится в формате +7 (XXX) XXX-XX-XX
   email: string;
+  telegram: string; // @username — в Mini App подтянется сам
   currentAddress: string; // актуальное место проживания
   // Паспортные данные — авто-распознаются с фото главного разворота
   // (Yandex Vision OCR, см. lib/passport-ocr.ts), пользователь проверяет.
@@ -103,6 +104,7 @@ const EMPTY_FORM: FormData = {
   middleName: "",
   phone: "",
   email: "",
+  telegram: "",
   currentAddress: "",
   passport: { ...EMPTY_PASSPORT },
   photoMain: null,
@@ -254,6 +256,21 @@ export function ApplyProvider({ children }: { children: ReactNode }) {
       setForm((prev) => ({ ...prev, ...persisted }));
     }
     setHydrated(true);
+  }, []);
+
+  // Авто-подстановка Telegram-username, если форма открыта в Mini App.
+  useEffect(() => {
+    try {
+      const wa = (
+        window as unknown as {
+          Telegram?: { WebApp?: { initDataUnsafe?: { user?: { username?: string } } } };
+        }
+      ).Telegram?.WebApp;
+      const uname = wa?.initDataUnsafe?.user?.username;
+      if (uname) setForm((f) => (f.telegram ? f : { ...f, telegram: uname }));
+    } catch {
+      /* не в Telegram — поле заполнят вручную */
+    }
   }, []);
 
   // Автосейв в localStorage на каждом изменении формы (после гидрации, чтобы
@@ -506,6 +523,7 @@ function ApplyModal({
           middleName: form.middleName,
           phone: form.phone,
           email: form.email,
+          telegram: form.telegram,
           currentAddress: form.currentAddress,
           passport: form.passport,
           photoMainId: form.photoMain?.fileId ?? "",
@@ -1090,6 +1108,20 @@ function StepContact({
             autoComplete="email"
             className={inputCls}
             placeholder="ivan@example.com"
+          />
+        </Field>
+
+        <Field label="Telegram (для связи)">
+          <input
+            type="text"
+            inputMode="text"
+            autoCapitalize="off"
+            value={form.telegram}
+            onChange={(e) =>
+              setForm((f) => ({ ...f, telegram: e.target.value.replace(/^@/, "") }))
+            }
+            className={inputCls}
+            placeholder="username (без @)"
           />
         </Field>
 
