@@ -45,6 +45,22 @@ export async function findTenantByContractAndSurname(
   );
 }
 
+const normUsername = (s: string) => s.trim().replace(/^@/, "").toLowerCase();
+
+// Поиск арендатора по вписанному в карточке Telegram-нику. Для авто-привязки
+// при входе в Mini App.
+export async function findTenantByTelegramUsername(
+  username: string,
+): Promise<Tenant | null> {
+  const u = normUsername(username);
+  if (!u) return null;
+  return (
+    (await loadTenants()).find(
+      (t) => normUsername(t.telegramUsername ?? "") === u,
+    ) ?? null
+  );
+}
+
 // --- Генерация id (slug из фамилии транслитом, как в import-tenants.py) -
 
 const TRANSLIT: Record<string, string> = {

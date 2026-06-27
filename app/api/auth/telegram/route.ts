@@ -11,6 +11,7 @@ import { randomUUID } from "node:crypto";
 import { verifyInitData } from "@/lib/auth/telegram";
 import { isOwnerTelegramId, isOwnerTelegramUsername } from "@/lib/auth/owner";
 import { findUserByTelegramId, putUser, type User } from "@/lib/auth/storage";
+import { findTenantByTelegramUsername } from "@/lib/auth/tenants";
 import { createSession } from "@/lib/auth/session";
 import { isAllowedOrigin } from "@/lib/api-origin";
 
@@ -62,6 +63,28 @@ export async function POST(req: Request) {
       status: user.tenantId ? "tenant" : "user",
       redirect: user.tenantId ? "/cabinet" : "/cabinet/register",
     });
+  }
+
+  // Авто-привязка по Telegram-нику: если владелец вписал ник в карточке
+  // арендатора — создаём ему аккаунт, привязываем к договору, пускаем в
+  // кабинет. Заодно сохраняется telegramId → дойдут напоминания.
+  if (tg.username) {
+    const tenant = await findTenantByTelegramUsername(tg.username);
+    if (tenant) {
+      const linked: User = {
+        id: randomUUID(),
+        email: `tg${tid}@telegram.local`,
+        passwordHash: "",
+        role: "tenant",
+        tenantId: tenant.id,
+        telegramId: tid,
+        createdAt: new Date().toISOString(),
+        lastLoginAt: new Date().toISOString(),
+      };
+      await putUser(linked);
+      await createSession(linked.id);
+      return NextResponse.json({ status: "tenant", redirect: "/cabinet" });
+    }
   }
 
   // Новый человек — аккаунта ещё нет.
