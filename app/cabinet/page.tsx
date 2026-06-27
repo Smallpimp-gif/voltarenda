@@ -105,7 +105,7 @@ export default async function CabinetPage() {
         <div className="mt-8 grid gap-6 lg:grid-cols-2">
           {/* Сумма / следующий платёж */}
           <div
-            className={`flex min-h-[200px] flex-col justify-between rounded-[28px] border border-[var(--line)] bg-[var(--bg-2)] shadow-[0_6px_28px_-12px_rgba(0,0,0,0.1)] p-8 ${
+            className={`flex min-h-[200px] flex-col justify-between rounded-[28px] border border-[var(--line)] bg-[var(--bg-2)] p-8 ${
               v.isBuyout ? "" : "lg:col-span-2"
             }`}
           >
@@ -147,7 +147,7 @@ export default async function CabinetPage() {
 
           {/* Прогресс выкупа */}
           {v.isBuyout && (
-            <div className="flex min-h-[200px] flex-col justify-between rounded-[28px] border border-[var(--line)] bg-[var(--bg-2)] shadow-[0_6px_28px_-12px_rgba(0,0,0,0.1)] p-8">
+            <div className="flex min-h-[200px] flex-col justify-between rounded-[28px] border border-[var(--line)] bg-[var(--bg-2)] p-8">
               <span className="font-mono text-caption uppercase text-mute">Прогресс выкупа</span>
               <div>
                 <p className="font-sans text-display-2 leading-none tabular-nums text-[var(--text)]">
@@ -173,7 +173,7 @@ export default async function CabinetPage() {
       {/* 02 / Договор */}
       <section className="mt-20">
         <SectionHeader num="02" eyebrow="Договор" title="Условия аренды" />
-        <div className="mt-8 rounded-[28px] border border-[var(--line)] bg-[var(--bg-2)] shadow-[0_6px_28px_-12px_rgba(0,0,0,0.1)] p-6 sm:p-8">
+        <div className="mt-8 rounded-[28px] border border-[var(--line)] bg-[var(--bg-2)] p-6 sm:p-8">
           <Row label="Номер договора" value={tenant.contract} />
           <Row label="Тип" value={v.type === "выкуп" ? "Выкуп" : "Аренда"} />
           <Row label="Недельный платёж" value={money(v.weekly)} />

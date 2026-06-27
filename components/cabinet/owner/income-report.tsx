@@ -48,7 +48,7 @@ export function IncomeReport({
   tenants: TenantRow[];
 }) {
   return (
-    <div className="overflow-hidden rounded-[28px] border border-[var(--line)] bg-[var(--bg-2)] shadow-[0_6px_28px_-12px_rgba(0,0,0,0.12)]">
+    <div className="overflow-hidden rounded-[28px] border border-[var(--line)] bg-[var(--bg-2)]">
       <div className="p-5">
         <p className="text-caption font-medium text-mute">Доходы за всё время</p>
         <p className="mt-1.5 font-sans text-display-2 leading-none tracking-tight tabular-nums text-[var(--text)]">

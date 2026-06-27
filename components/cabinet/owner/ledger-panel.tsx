@@ -39,7 +39,7 @@ export function LedgerPanel({
   const [editing, setEditing] = useState(false);
 
   return (
-    <div className="overflow-hidden rounded-[28px] border border-[var(--line)] bg-[var(--bg-2)] shadow-[0_6px_28px_-12px_rgba(0,0,0,0.12)]">
+    <div className="overflow-hidden rounded-[28px] border border-[var(--line)] bg-[var(--bg-2)]">
       <div className="p-5">
         <div className="flex items-center justify-between gap-3">
           <p className="text-caption font-medium text-mute">На руках сейчас</p>

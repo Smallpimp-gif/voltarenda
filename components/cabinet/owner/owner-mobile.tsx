@@ -70,7 +70,7 @@ export function OwnerMobile({
         <div className="flex flex-col gap-4 px-gutter py-6">
           {/* Требует внимания */}
           <section
-            className={`rounded-[28px] border p-5 shadow-[0_6px_28px_-12px_rgba(0,0,0,0.12)] ${
+            className={`rounded-[28px] border p-5 ${
               overdueRows.length ? "border-danger/50" : "border-[var(--line)]"
             }`}
           >
@@ -96,7 +96,7 @@ export function OwnerMobile({
           </section>
 
           {/* Метрики */}
-          <section className="overflow-hidden rounded-[28px] border border-[var(--line)] shadow-[0_6px_28px_-12px_rgba(0,0,0,0.12)]">
+          <section className="overflow-hidden rounded-[28px] border border-[var(--line)]">
             <Metric label="Просрочено" value={String(overdueRows.length)} hint={overdueRows.length ? `долг ${money(overdueSum)}` : "все оплатили"} danger={overdueRows.length > 0} />
             <Metric label="Доход за месяц" value={money(incomeThisMonth)} hint="оплачено в этом месяце" />
             <Metric label="Арендаторов" value={String(rows.length)} hint={`выкуп ${buyout} · аренда ${rows.length - buyout}`} />
@@ -186,7 +186,7 @@ export function OwnerMobile({
 
       {/* Нижняя навигация — плавающий скруглённый бар */}
       <nav className="fixed inset-x-0 bottom-0 z-40 px-3 pb-[max(22px,calc(env(safe-area-inset-bottom)+16px))] pt-2">
-        <div className="mx-auto flex max-w-md items-center gap-1.5 rounded-[26px] border border-[var(--line)] bg-[var(--bg)]/80 p-1.5 shadow-[0_12px_34px_-12px_rgba(0,0,0,0.3)] backdrop-blur-xl">
+        <div className="mx-auto flex max-w-md items-center gap-1.5 rounded-[26px] border border-[var(--line)] bg-[var(--bg)]/80 p-1.5 backdrop-blur-xl">
           <TabButton active={tab === "overview"} onClick={() => setTab("overview")} label="Обзор" icon={<GridIcon />} />
           <TabButton active={tab === "tenants"} onClick={() => setTab("tenants")} label="Арендаторы" icon={<UsersIcon />} />
           <TabButton active={tab === "ledger"} onClick={() => setTab("ledger")} label="Касса" icon={<CashIcon />} />
