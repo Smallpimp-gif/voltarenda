@@ -1,6 +1,6 @@
-// Доходы — постоянная сводка по всей истории оплат: всего, за текущий месяц,
-// по месяцам и по арендаторам. Обнуление кассы её не сбрасывает. Без
-// интерактива — общий компонент (рендерится и на сервере, и в мобильном).
+// Доходы — постоянная сводка: всего, за текущий месяц, по месяцам и по
+// арендаторам. Обнуление кассы её не сбрасывает. Без интерактива — общий
+// компонент (рендерится и на сервере, и в мобильном).
 
 const rub = new Intl.NumberFormat("ru-RU");
 const money = (n: number) => `${rub.format(n)} ₽`;
@@ -17,19 +17,17 @@ type Item = { id: string; label: string; sub: string; amount: number };
 function Section({ title, items }: { title: string; items: Item[] }) {
   return (
     <div>
-      <div className="bg-[var(--bg)] px-5 py-2 font-mono text-[10px] uppercase tracking-[0.08em] text-mute">
-        {title}
-      </div>
+      <p className="bg-[var(--bg)] px-5 py-2.5 text-caption font-medium text-mute">{title}</p>
       {items.map((it) => (
         <div
           key={it.id}
-          className="flex items-center justify-between gap-3 border-t border-[var(--line)] px-5 py-3 transition-colors duration-quick hover:bg-[var(--bg)]"
+          className="flex items-center justify-between gap-3 border-t border-[var(--line)] px-5 py-3.5"
         >
           <div className="min-w-0">
             <p className="truncate text-body text-[var(--text)]">{it.label}</p>
-            <p className="mt-0.5 font-mono text-caption uppercase text-mute">{it.sub}</p>
+            <p className="mt-0.5 text-caption text-mute">{it.sub}</p>
           </div>
-          <span className="shrink-0 font-mono text-body tabular-nums text-[var(--text)]">
+          <span className="shrink-0 font-sans text-body font-medium tabular-nums text-[var(--text)]">
             {money(it.amount)}
           </span>
         </div>
@@ -52,18 +50,13 @@ export function IncomeReport({
   return (
     <div className="overflow-hidden rounded-lg border border-[var(--line)] bg-[var(--bg-2)]">
       <div className="p-5">
-        <span className="font-mono text-caption uppercase text-mute">Доходы за всё время</span>
-        <p className="mt-2 font-sans text-display-2 leading-none tracking-tight tabular-nums text-[var(--text)]">
+        <p className="text-caption font-medium text-mute">Доходы за всё время</p>
+        <p className="mt-1.5 font-sans text-display-2 leading-none tracking-tight tabular-nums text-[var(--text)]">
           {money(total)}
         </p>
-        <div className="mt-3 flex flex-wrap items-center gap-2">
-          <span className="rounded-pill bg-volt/20 px-3 py-1 font-mono text-caption uppercase text-[var(--text)]">
-            Этот месяц · {money(thisMonth)}
-          </span>
-          <span className="font-mono text-caption uppercase text-mute">
-            не сбрасывается обнулением
-          </span>
-        </div>
+        <span className="mt-3 inline-block rounded-pill bg-volt/20 px-3 py-1.5 text-caption font-medium text-[var(--text)]">
+          Этот месяц: {money(thisMonth)}
+        </span>
       </div>
 
       {months.length === 0 ? (

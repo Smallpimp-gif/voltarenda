@@ -103,6 +103,12 @@ export default async function OwnerPage({
   if (!cu) redirect("/cabinet/owner/login");
   if (cu.user.role !== "owner") redirect("/cabinet");
 
+  // Для входа через Telegram email синтетический (tg<id>@telegram.local) —
+  // не показываем его, пишем «Владелец».
+  const ownerLabel = cu.user.email.endsWith("@telegram.local")
+    ? "Владелец"
+    : cu.user.email;
+
   const sp = await searchParams;
   const [tenants, bikes, paidMap, ledger] = await Promise.all([
     loadTenants(),
@@ -164,7 +170,7 @@ export default async function OwnerPage({
     {/* Мобильная версия — app-подобные вкладки снизу */}
     <div className="md:hidden">
       <OwnerMobile
-        email={cu.user.email}
+        email={ownerLabel}
         rows={rows}
         bikes={bikes}
         addOpen={Boolean(sp.add)}
@@ -186,7 +192,7 @@ export default async function OwnerPage({
         <div className="min-w-0">
           <span className="font-mono text-caption uppercase text-mute">Кабинет владельца</span>
           <h1 className="mt-3 font-sans text-display-2 leading-none tracking-tight">Вольтаренда</h1>
-          <p className="mt-3 truncate font-mono text-caption uppercase text-mute">{cu.user.email}</p>
+          <p className="mt-3 truncate font-mono text-caption uppercase text-mute">{ownerLabel}</p>
         </div>
         <form action={logoutAction} className="shrink-0">
           <button

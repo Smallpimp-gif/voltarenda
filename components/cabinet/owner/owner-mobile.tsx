@@ -150,25 +150,17 @@ export function OwnerMobile({
       {tab === "ledger" && (
         <div className="flex flex-col gap-8 px-gutter py-6">
           <div>
-            <h2 className="text-h3 text-[var(--text)]">Касса</h2>
-            <p className="mt-1 font-mono text-caption uppercase text-mute">
-              Собрано с последнего обнуления
-            </p>
-            <div className="mt-5">
-              <LedgerPanel total={ledgerTotal} rows={ledgerRows} lastResetAt={ledgerResetAt} />
-            </div>
+            <h2 className="mb-3 text-h3 text-[var(--text)]">Касса</h2>
+            <LedgerPanel total={ledgerTotal} rows={ledgerRows} lastResetAt={ledgerResetAt} />
           </div>
           <div>
-            <h2 className="text-h3 text-[var(--text)]">Доходы</h2>
-            <p className="mt-1 font-mono text-caption uppercase text-mute">Вся история заработка</p>
-            <div className="mt-5">
-              <IncomeReport
-                total={incomeTotal}
-                thisMonth={incomeThisMonth}
-                months={incomeMonths}
-                tenants={incomeTenants}
-              />
-            </div>
+            <h2 className="mb-3 text-h3 text-[var(--text)]">Доходы</h2>
+            <IncomeReport
+              total={incomeTotal}
+              thisMonth={incomeThisMonth}
+              months={incomeMonths}
+              tenants={incomeTenants}
+            />
           </div>
         </div>
       )}
@@ -222,7 +214,7 @@ function Metric({
     <div className={`flex items-center justify-between gap-3 px-5 py-5 ${last ? "" : "border-b border-[var(--line)]"}`}>
       <div className="min-w-0">
         <p className="font-mono text-caption uppercase text-mute">{label}</p>
-        {hint && <p className="mt-1 font-mono text-caption uppercase text-mute opacity-70">{hint}</p>}
+        {hint && <p className="mt-1 text-caption text-mute">{hint}</p>}
       </div>
       <span className={`shrink-0 whitespace-nowrap font-sans text-h2 font-semibold tabular-nums ${danger ? "text-danger" : "text-[var(--text)]"}`}>
         {value}

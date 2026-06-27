@@ -15,7 +15,7 @@ export function DeleteTenantButton({ id, name }: { id: string; name: string }) {
       <input type="hidden" name="id" value={id} />
       <button
         type="submit"
-        className="font-mono text-caption uppercase text-mute transition-colors duration-quick hover:text-danger"
+        className="text-caption text-mute transition-colors duration-quick hover:text-danger"
       >
         Удалить
       </button>

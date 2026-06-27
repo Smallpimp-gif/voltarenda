@@ -12,6 +12,7 @@ import { DeleteTenantButton } from "./delete-button";
 
 const rub = new Intl.NumberFormat("ru-RU");
 const money = (n: number) => `${rub.format(n)} ₽`;
+const capFirst = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 export type PayKind = "overdue" | "today" | "upcoming" | "done";
 
@@ -70,7 +71,7 @@ function PaidControls({ row }: { row: TenantRow }) {
   // На паузе недельные платежи не идут — показываем плату за паузу.
   if (row.paused) {
     return (
-      <span className="font-mono text-caption uppercase text-mute">
+      <span className="text-caption text-mute">
         Пауза · {money(row.pauseFee)}/мес
       </span>
     );
@@ -80,7 +81,7 @@ function PaidControls({ row }: { row: TenantRow }) {
       <form action={markPaidAction}>
         <input type="hidden" name="id" value={row.id} />
         <input type="hidden" name="dir" value="dec" />
-        <button type="submit" className="font-mono text-caption uppercase text-mute transition-colors duration-quick hover:text-[var(--text)]">
+        <button type="submit" className="text-caption text-mute transition-colors duration-quick hover:text-[var(--text)]">
           Отменить
         </button>
       </form>
@@ -93,7 +94,7 @@ function PaidControls({ row }: { row: TenantRow }) {
         <input type="hidden" name="dir" value="inc" />
         <button
           type="submit"
-          className="rounded-pill bg-volt px-3.5 py-1.5 font-mono text-caption uppercase text-ink transition-transform duration-quick hover:bg-volt-hover active:scale-95"
+          className="rounded-pill bg-volt px-4 py-1.5 text-caption font-medium text-ink transition-transform duration-quick hover:bg-volt-hover active:scale-95"
         >
           Оплатил
         </button>
@@ -102,7 +103,7 @@ function PaidControls({ row }: { row: TenantRow }) {
         <form action={markPaidAction} title="Отметить все просроченные оплаченными">
           <input type="hidden" name="id" value={row.id} />
           <input type="hidden" name="dir" value="catchup" />
-          <button type="submit" className="font-mono text-caption uppercase text-mute transition-colors duration-quick hover:text-[var(--text)]">
+          <button type="submit" className="text-caption text-mute transition-colors duration-quick hover:text-[var(--text)]">
             до сегодня
           </button>
         </form>
@@ -111,7 +112,7 @@ function PaidControls({ row }: { row: TenantRow }) {
         <form action={markPaidAction} title="Отменить последнюю оплату">
           <input type="hidden" name="id" value={row.id} />
           <input type="hidden" name="dir" value="dec" />
-          <button type="submit" className="font-mono text-caption uppercase text-mute transition-colors duration-quick hover:text-[var(--text)]">
+          <button type="submit" className="text-caption text-mute transition-colors duration-quick hover:text-[var(--text)]">
             ↩
           </button>
         </form>
@@ -141,7 +142,7 @@ function PauseControl({ row }: { row: TenantRow }) {
 
 function RowActions({ row }: { row: TenantRow }) {
   return (
-    <div className="flex items-center gap-3 font-mono text-caption uppercase text-mute">
+    <div className="flex items-center gap-4 text-caption text-mute">
       <PauseControl row={row} />
       {row.telegramUsername && (
         <a
@@ -282,8 +283,8 @@ export function TenantsTable({ rows }: { rows: TenantRow[] }) {
                       {row.name}
                       <span aria-hidden className="text-mute">›</span>
                     </p>
-                    <p className="mt-0.5 truncate font-mono text-caption uppercase text-mute">
-                      Договор {row.contract} · {money(row.weekly)} · {paidInfo}
+                    <p className="mt-1 truncate text-caption text-mute">
+                      {capFirst(paidInfo)} · {money(row.weekly)}/нед · договор {row.contract}
                     </p>
                   </Link>
                   <span className={`shrink-0 rounded-pill px-2.5 py-1 font-mono text-caption uppercase ${st.cls}`}>
@@ -303,8 +304,8 @@ export function TenantsTable({ rows }: { rows: TenantRow[] }) {
                     {row.name}
                     <span aria-hidden className="text-mute opacity-0 transition-opacity duration-quick group-hover:opacity-100">›</span>
                   </p>
-                  <p className="mt-0.5 font-mono text-caption uppercase text-mute">
-                    Договор {row.contract} · {row.type === "выкуп" ? "выкуп" : "аренда"} · {paidInfo}
+                  <p className="mt-0.5 text-caption text-mute">
+                    {capFirst(paidInfo)} · {money(row.weekly)}/нед · {row.type === "выкуп" ? "выкуп" : "аренда"} · договор {row.contract}
                   </p>
                 </Link>
                 <div className="min-w-0">
