@@ -103,15 +103,32 @@ export default function MiniApp() {
         >
           У меня есть договор
         </Link>
+        <SupportLink />
       </div>
     </main>
   );
 }
 
+const SUPPORT_URL = "https://t.me/voltarenda_bike";
+
+function SupportLink() {
+  return (
+    <a
+      href={SUPPORT_URL}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="mt-1 text-center font-mono text-caption uppercase text-mute underline-offset-2 transition-colors duration-quick hover:text-[var(--text)] hover:underline"
+    >
+      Связаться с поддержкой
+    </a>
+  );
+}
+
 function Centered({ children }: { children: React.ReactNode }) {
   return (
-    <main className="mx-auto flex min-h-dvh max-w-md items-center justify-center px-gutter text-center">
+    <main className="mx-auto flex min-h-dvh max-w-md flex-col items-center justify-center gap-5 px-gutter text-center">
       <p className="text-body-lg text-mute">{children}</p>
+      <SupportLink />
     </main>
   );
 }

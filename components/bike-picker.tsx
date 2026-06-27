@@ -51,17 +51,26 @@ export function BikePicker({
         <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
           {BIKE_MODELS.map((m) => {
             const active = m.key === model;
+            const disabled = !m.available;
             return (
               <button
                 key={m.key}
                 type="button"
-                onClick={() => onModel(m.key)}
-                className={`rounded-lg border p-4 text-left transition-colors duration-quick ${
-                  active
-                    ? "border-volt bg-volt/5"
-                    : "border-[var(--line-strong)] hover:border-[var(--text)]"
+                disabled={disabled}
+                onClick={() => !disabled && onModel(m.key)}
+                className={`relative rounded-lg border p-4 text-left transition-colors duration-quick ${
+                  disabled
+                    ? "cursor-not-allowed border-[var(--line)] opacity-55"
+                    : active
+                      ? "border-volt bg-volt/5"
+                      : "border-[var(--line-strong)] hover:border-[var(--text)]"
                 }`}
               >
+                {disabled && (
+                  <span className="absolute right-3 top-3 rounded-pill border border-[var(--line-strong)] px-2 py-0.5 text-[10px] uppercase text-mute">
+                    под заказ
+                  </span>
+                )}
                 <span className="block text-body-lg font-semibold text-[var(--text)]">{m.name}</span>
                 <span className="mt-1 block font-mono text-caption uppercase text-mute">{m.power}</span>
                 <span className="mt-2 block text-body text-mute">{m.note}</span>
@@ -77,15 +86,19 @@ export function BikePicker({
         <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
           {BATTERIES.map((b) => {
             const active = b.key === battery;
+            const disabled = !b.available;
             return (
               <button
                 key={b.key}
                 type="button"
-                onClick={() => onBattery(b.key)}
+                disabled={disabled}
+                onClick={() => !disabled && onBattery(b.key)}
                 className={`rounded-lg border p-3 text-left transition-colors duration-quick ${
-                  active
-                    ? "border-volt bg-volt/5"
-                    : "border-[var(--line-strong)] hover:border-[var(--text)]"
+                  disabled
+                    ? "cursor-not-allowed border-[var(--line)] opacity-55"
+                    : active
+                      ? "border-volt bg-volt/5"
+                      : "border-[var(--line-strong)] hover:border-[var(--text)]"
                 }`}
               >
                 <span className="block font-mono text-body-lg font-semibold tabular-nums text-[var(--text)]">
@@ -94,6 +107,9 @@ export function BikePicker({
                 <span className="mt-1 block font-mono text-caption uppercase text-mute">
                   {b.count === 1 ? "1 АКБ" : "2 АКБ"} · {b.range}
                 </span>
+                {disabled && (
+                  <span className="mt-1 block text-[10px] uppercase text-mute">под заказ</span>
+                )}
               </button>
             );
           })}

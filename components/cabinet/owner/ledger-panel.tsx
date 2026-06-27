@@ -111,9 +111,12 @@ export function LedgerPanel({
             return (
               <div
                 key={r.id}
-                className="flex items-center justify-between gap-3 border-b border-[var(--line)] px-5 py-3.5 last:border-0"
+                className="flex items-center gap-3 border-b border-[var(--line)] px-5 py-3.5 last:border-0"
               >
-                <div className="min-w-0">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[var(--line-strong)] text-mute">
+                  <TxnIcon negative={negative} manual={r.kind === "manual"} />
+                </span>
+                <div className="min-w-0 flex-1">
                   <p className={`truncate text-body ${r.kind === "manual" ? "text-mute" : "text-[var(--text)]"}`}>
                     {r.name}
                   </p>
@@ -122,7 +125,11 @@ export function LedgerPanel({
                     {r.kind === "catchup" ? ` · ${r.weeks} нед.` : ""}
                   </p>
                 </div>
-                <span className="shrink-0 font-sans text-body font-medium tabular-nums text-[var(--text)]">
+                <span
+                  className={`shrink-0 font-sans text-body font-semibold tabular-nums ${
+                    negative ? "text-mute" : "text-[#16a34a]"
+                  }`}
+                >
                   {negative ? "−" : "+"}
                   {money(r.amount)}
                 </span>
@@ -156,6 +163,39 @@ function ResetButton() {
         Обнулить
       </button>
     </form>
+  );
+}
+
+function TxnIcon({ negative, manual }: { negative: boolean; manual: boolean }) {
+  const p = {
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: 1.8,
+    strokeLinecap: "round" as const,
+    strokeLinejoin: "round" as const,
+    className: "h-4 w-4",
+  };
+  if (manual) {
+    // корректировка — карандаш
+    return (
+      <svg {...p}>
+        <path d="M12 20h9" />
+        <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
+      </svg>
+    );
+  }
+  // поступление — стрелка вниз-влево (деньги пришли); откат — вверх-вправо
+  return negative ? (
+    <svg {...p}>
+      <path d="M7 17 17 7" />
+      <path d="M8 7h9v9" />
+    </svg>
+  ) : (
+    <svg {...p}>
+      <path d="M17 7 7 17" />
+      <path d="M16 17H7V8" />
+    </svg>
   );
 }
 
