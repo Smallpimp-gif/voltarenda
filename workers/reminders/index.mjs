@@ -55,14 +55,12 @@ async function tg(token, chatId, text) {
   }
 }
 
-// Мягкие тексты для арендатора.
+// Мягкие тексты для арендатора (за день / в день).
 function tenantMessage(name, amount, days) {
   const first = String(name).split(" ")[0] || name;
-  if (days === 2)
-    return `Привет, ${first}! 🙂\nЧерез 2 дня — оплата аренды велосипеда, ${money(amount)}. Напоминаю заранее, чтобы было спокойно. Хорошего дня! 💛`;
   if (days === 1)
-    return `Привет, ${first}! 🚲\nЗавтра оплата аренды — ${money(amount)}. Спасибо, что вовремя!`;
-  return `Доброе утро, ${first}! ☀️\nСегодня день оплаты аренды — ${money(amount)}. Не забудьте, пожалуйста 🙏 Спасибо!`;
+    return `Привет, ${first}! Завтра оплата за аренду — ${money(amount)}. Спасибо, что с нами!`;
+  return `Привет, ${first}! Напоминаю про оплату на сегодня — ${money(amount)}. Если уже внёс — не обращай внимания 👍`;
 }
 
 async function runReminders(env) {
@@ -99,7 +97,7 @@ async function runReminders(env) {
     const start = accrualStart(t, today);
     const nextDueNum = start + paid * 7; // ближайший неоплаченный платёж
     const days = nextDueNum - today;
-    if (days < 0 || days > 2) continue;
+    if (days < 0 || days > 1) continue;
 
     const amount = effectiveWeekly(t);
 
