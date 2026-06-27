@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { generalSans, geistMono } from "./fonts";
 import { ApplyProvider } from "@/components/apply";
 import { YandexMetrika } from "@/components/yandex-metrika";
@@ -59,6 +59,16 @@ export const metadata: Metadata = {
     },
   },
   category: "transportation",
+};
+
+// viewport-fit=cover включает env(safe-area-inset-*) — нужно, чтобы вёрстка
+// (особенно нижний бар кабинета) корректно ложилась под notch/home-индикатор
+// на iPhone и вырезы/жест-навигацию на Android.
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#F2F1EC",
 };
 
 const jsonLd = {

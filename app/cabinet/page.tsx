@@ -58,7 +58,7 @@ export default async function CabinetPage() {
   const due = v.daysUntil !== null ? dueLabel(v.daysUntil) : null;
 
   return (
-    <div className="mx-auto w-full max-w-content px-gutter py-14">
+    <div className="mx-auto w-full max-w-content px-gutter pb-14 pt-[max(3.5rem,calc(env(safe-area-inset-top)+1.5rem))]">
       {/* Шапка — editorial */}
       <header className="flex items-end justify-between gap-4 border-b border-[var(--line)] pb-6">
         <div className="min-w-0">
