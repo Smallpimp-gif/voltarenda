@@ -172,9 +172,11 @@ export async function POST(req: Request) {
       ]
         .filter(Boolean)
         .join(" ");
+      const kind = body.tariff === "buyout" ? "выкуп" : "аренда";
       const blob = await generateContractBlob({
         number,
         dateText,
+        kind,
         tenant: {
           fio,
           birthDate: application.passport.birthDate,
@@ -193,8 +195,8 @@ export async function POST(req: Request) {
       const safeFio = fio.replace(/[^\p{L}\d]+/gu, "_");
       await sendDocumentToOperator(
         blob,
-        `Договор_№${number}_${safeFio}.docx`,
-        `📄 Договор №${number} · ${fio}`,
+        `Договор_№${number}_${safeFio}_${kind}.docx`,
+        `📄 Договор №${number} (${kind}) · ${fio}`,
       );
     } catch (e) {
       console.error("[apply/submit] contract gen failed:", e);
