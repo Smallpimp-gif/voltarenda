@@ -127,6 +127,18 @@ export default function RootLayout({
       className={`${generalSans.variable} ${geistMono.variable}`}
     >
       <head>
+        {/* Telegram Mini App SDK — грузим РАНО, прямо в head, и сразу зовём
+            ready()/expand(). Иначе на медленном LTE Telegram держит скелетон
+            (приложение «не открывается»), пока ready() не вызван. */}
+        <link rel="preconnect" href="https://telegram.org" />
+        <script src="https://telegram.org/js/telegram-web-app.js" />
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "try{var w=window.Telegram&&window.Telegram.WebApp;if(w){w.ready();w.expand();}}catch(e){}",
+          }}
+        />
+
         {/* Preconnect — ускоряет загрузку сторонних скриптов */}
         <link rel="preconnect" href="https://mc.yandex.ru" />
 
