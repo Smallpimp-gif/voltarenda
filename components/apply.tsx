@@ -67,6 +67,7 @@ type FormData = {
   phone: string; // хранится в формате +7 (XXX) XXX-XX-XX
   email: string;
   telegram: string; // @username — в Mini App подтянется сам
+  regAddress: string; // адрес регистрации (для договора)
   currentAddress: string; // актуальное место проживания
   // Паспортные данные — авто-распознаются с фото главного разворота
   // (Yandex Vision OCR, см. lib/passport-ocr.ts), пользователь проверяет.
@@ -105,6 +106,7 @@ const EMPTY_FORM: FormData = {
   phone: "",
   email: "",
   telegram: "",
+  regAddress: "",
   currentAddress: "",
   passport: { ...EMPTY_PASSPORT },
   photoMain: null,
@@ -524,6 +526,7 @@ function ApplyModal({
           phone: form.phone,
           email: form.email,
           telegram: form.telegram,
+          regAddress: form.regAddress,
           currentAddress: form.currentAddress,
           passport: form.passport,
           photoMainId: form.photoMain?.fileId ?? "",
@@ -1122,6 +1125,17 @@ function StepContact({
             }
             className={inputCls}
             placeholder="username (без @)"
+          />
+        </Field>
+
+        <Field label="Адрес регистрации (по паспорту)">
+          <input
+            type="text"
+            value={form.regAddress}
+            onChange={(e) => setForm((f) => ({ ...f, regAddress: e.target.value }))}
+            autoComplete="off"
+            className={inputCls}
+            placeholder="Как в прописке: город, улица, дом, кв."
           />
         </Field>
 

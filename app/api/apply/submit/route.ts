@@ -39,6 +39,7 @@ type SubmitBody = {
   phone: string;
   email: string;
   telegram?: string;
+  regAddress?: string;
   currentAddress: string;
   // Паспортные данные авто-распознаются на клиенте (Yandex Vision),
   // пользователь проверяет; оператор сверяет с фото.
@@ -113,6 +114,7 @@ export async function POST(req: Request) {
         phone: body.phone,
         email: body.email.toLowerCase().trim(),
         telegram: (body.telegram ?? "").trim().replace(/^@/, ""),
+        regAddress: (body.regAddress ?? "").trim(),
         currentAddress: body.currentAddress.trim(),
       },
       // Паспортные данные авто-распознаны на клиенте, проверены пользователем.
@@ -155,13 +157,14 @@ export async function POST(req: Request) {
     // ошибка генерации не валит заявку.
     try {
       const number = await nextContractNumber();
-      const dateText =
-        new Intl.DateTimeFormat("ru-RU", {
-          day: "numeric",
-          month: "long",
-          year: "numeric",
-          timeZone: "Europe/Moscow",
-        }).format(new Date()) + " г.";
+      const dp = new Intl.DateTimeFormat("ru-RU", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+        timeZone: "Europe/Moscow",
+      }).formatToParts(new Date());
+      const part = (type: string) => dp.find((p) => p.type === type)?.value ?? "";
+      const dateText = `«${part("day")}» ${part("month")} ${part("year")} г.`;
       const fio = [
         application.customer.lastName,
         application.customer.firstName,
@@ -181,6 +184,7 @@ export async function POST(req: Request) {
           issuedBy: application.passport.issuedBy,
           issueDate: application.passport.issueDate,
           departmentCode: application.passport.departmentCode,
+          regAddress: application.customer.regAddress,
           factAddress: application.customer.currentAddress,
           phone: application.customer.phone,
           telegram: application.customer.telegram,
