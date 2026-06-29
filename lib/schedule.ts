@@ -31,10 +31,17 @@ export type Tenant = {
   pausedSince?: string | null; // ISO YYYY-MM-DD — дата постановки на паузу
   pausedDays?: number; // накоплено дней паузы из завершённых периодов
   positions?: TenantPosition[]; // доп. позиции (АКБ и т.п.)
+  deposit?: number; // залог, ₽ (по умолчанию DEFAULT_DEPOSIT)
 };
 
 // Плата за паузу выкупа — фикс., в месяц, отдельно от выкупной суммы.
 export const PAUSE_FEE_MONTHLY = 11000;
+
+// Залог по умолчанию (если у арендатора не задан явно).
+export const DEFAULT_DEPOSIT = 5000;
+export function depositOf(t: Pick<Tenant, "deposit">): number {
+  return t.deposit ?? DEFAULT_DEPOSIT;
+}
 
 // Фактический недельный платёж = базовый + все доп. позиции.
 export function effectiveWeekly(

@@ -13,6 +13,7 @@ import { TenantForm } from "./tenant-form";
 import { TenantsTable, type TenantRow } from "./tenants-table";
 import { LedgerPanel, type LedgerRow } from "./ledger-panel";
 import { IncomeReport } from "./income-report";
+import { DepositsPanel, type DepositRow } from "./deposits-panel";
 import type { Tenant } from "@/lib/schedule";
 import type { MonthIncome, TenantIncome } from "@/lib/ledger";
 
@@ -35,6 +36,7 @@ export function OwnerMobile({
   incomeThisMonth,
   incomeMonths,
   incomeTenants,
+  depositRows,
 }: {
   email: string;
   rows: TenantRow[];
@@ -49,6 +51,7 @@ export function OwnerMobile({
   incomeThisMonth: number;
   incomeMonths: MonthIncome[];
   incomeTenants: TenantIncome[];
+  depositRows: DepositRow[];
 }) {
   const [tab, setTab] = useState<Tab>("tenants");
 
@@ -163,6 +166,10 @@ export function OwnerMobile({
               months={incomeMonths}
               tenants={incomeTenants}
             />
+          </div>
+          <div>
+            <h2 className="mb-3 text-h3 text-[var(--text)]">Залоги</h2>
+            <DepositsPanel rows={depositRows} />
           </div>
         </div>
       )}

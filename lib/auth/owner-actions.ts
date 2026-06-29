@@ -182,6 +182,9 @@ function parseTenant(formData: FormData): TenantInput | string {
     }
   }
 
+  const depositRaw = String(formData.get("deposit") ?? "").trim();
+  const deposit = depositRaw === "" ? undefined : Math.max(0, Math.round(Number(depositRaw) || 0));
+
   return {
     name,
     contract,
@@ -191,6 +194,7 @@ function parseTenant(formData: FormData): TenantInput | string {
     buyoutWeeks,
     telegramUsername,
     positions,
+    deposit,
   };
 }
 

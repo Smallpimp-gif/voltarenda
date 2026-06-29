@@ -101,6 +101,7 @@ export type TenantInput = {
   buyoutWeeks: number | null;
   telegramUsername?: string;
   positions?: TenantPosition[];
+  deposit?: number;
 };
 
 export async function addTenant(input: TenantInput): Promise<Tenant> {
@@ -116,6 +117,7 @@ export async function addTenant(input: TenantInput): Promise<Tenant> {
     buyoutWeeks: input.type === "выкуп" ? input.buyoutWeeks : null,
     telegramUsername: input.telegramUsername?.trim() ?? "",
     positions: input.positions ?? [],
+    deposit: input.deposit,
   };
   tenants.push(tenant);
   await saveTenants(tenants);
@@ -137,6 +139,7 @@ export async function updateTenant(id: string, input: TenantInput): Promise<Tena
     telegramUsername:
       input.telegramUsername?.trim() ?? tenants[idx].telegramUsername ?? "",
     positions: input.positions ?? tenants[idx].positions ?? [],
+    deposit: input.deposit ?? tenants[idx].deposit,
   };
   tenants[idx] = updated;
   await saveTenants(tenants);

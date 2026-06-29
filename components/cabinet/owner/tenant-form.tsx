@@ -134,6 +134,16 @@ export function TenantForm({
             />
           </Labeled>
         )}
+        <Labeled label="Залог, ₽">
+          <input
+            name="deposit"
+            type="number"
+            min={0}
+            defaultValue={tenant?.deposit ?? 5000}
+            className={inputCls}
+            placeholder="5000"
+          />
+        </Labeled>
         <Labeled label="Telegram (необязательно)">
           <input
             name="telegramUsername"

@@ -4,7 +4,11 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { logoutAction } from "@/lib/auth/actions";
 import { loadTenants } from "@/lib/auth/tenants";
 import { getAvailableBikes } from "@/lib/settings";
-import { paymentState, effectiveWeekly } from "@/lib/schedule";
+import { paymentState, effectiveWeekly, depositOf } from "@/lib/schedule";
+import {
+  DepositsPanel,
+  type DepositRow,
+} from "@/components/cabinet/owner/deposits-panel";
 import { loadPaidMap } from "@/lib/payments";
 import {
   loadLedger,
@@ -129,6 +133,10 @@ export default async function OwnerPage({
   const incomeMonth = incomeThisMonth(ledger);
   const incomeMonths = incomeByMonth(ledger);
   const incomeTenants = incomeByTenant(ledger);
+  // Залоги — по убыванию (с залогом сверху).
+  const depositRows: DepositRow[] = tenants
+    .map((t) => ({ id: t.id, name: t.name, deposit: depositOf(t) }))
+    .sort((a, b) => b.deposit - a.deposit || a.name.localeCompare(b.name, "ru"));
   const editTenant = sp.edit ? tenants.find((t) => t.id === sp.edit) : undefined;
   const editPaidThrough = editTenant ? (paidMap[editTenant.id] ?? 0) : 0;
 
@@ -184,6 +192,7 @@ export default async function OwnerPage({
         incomeThisMonth={incomeMonth}
         incomeMonths={incomeMonths}
         incomeTenants={incomeTenants}
+        depositRows={depositRows}
       />
     </div>
 
@@ -307,6 +316,18 @@ export default async function OwnerPage({
             months={incomeMonths}
             tenants={incomeTenants}
           />
+        </div>
+      </section>
+
+      {/* 05 / Залоги */}
+      <section className="mt-20">
+        <SectionHeader num="05" eyebrow="Залоги" title="Удержанные залоги">
+          <span className="hidden font-mono text-caption uppercase text-mute lg:inline">
+            по умолчанию 5 000 ₽
+          </span>
+        </SectionHeader>
+        <div className="mt-8">
+          <DepositsPanel rows={depositRows} />
         </div>
       </section>
     </div>
