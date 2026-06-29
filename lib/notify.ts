@@ -14,58 +14,90 @@
 // РЕАЛИЗАЦИЯ: глобальный fetch — работает и в Node 20+, и в Cloudflare
 // Workers (исходящее соединение к api.telegram.org, доступно из РФ).
 
-export async function notifyOperator(text: string): Promise<void> {
-  const token = process.env.TELEGRAM_BOT_TOKEN;
-  const chatId = process.env.TELEGRAM_CHAT_ID;
+import { readJSON } from "@/lib/store";
 
-  if (!token || !chatId) return;
+// Все chat_id владельцев: legacy TELEGRAM_CHAT_ID + OWNER_TELEGRAM_IDS +
+// по OWNER_TELEGRAM_USERNAMES через карту bot/tg-chats (кто жал /start).
+async function adminChats(): Promise<string[]> {
+  const ids = new Set<string>();
+  const add = (v?: string | number | null) => {
+    const s = String(v ?? "").trim();
+    if (s) ids.add(s);
+  };
+  add(process.env.TELEGRAM_CHAT_ID);
+  (process.env.OWNER_TELEGRAM_IDS ?? "").split(",").forEach(add);
 
-  try {
-    const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json; charset=utf-8" },
-      body: JSON.stringify({
-        chat_id: chatId,
-        text,
-        parse_mode: "HTML",
-        disable_web_page_preview: true,
-      }),
-    });
-    if (!res.ok) {
-      console.error("[notify] Telegram sendMessage failed:", res.status, await res.text());
-    }
-  } catch (err) {
-    console.error("[notify] Telegram network error:", err);
+  const usernames = (process.env.OWNER_TELEGRAM_USERNAMES ?? "")
+    .split(",")
+    .map((u) => u.trim().replace(/^@/, "").toLowerCase())
+    .filter(Boolean);
+  if (usernames.length) {
+    const map = await readJSON<Record<string, number>>("bot/tg-chats", {});
+    for (const u of usernames) add(map[u]);
   }
+  return [...ids];
 }
 
-// Отправляет файл (договор .docx) оператору в Telegram. No-op без env.
+export async function notifyOperator(text: string): Promise<void> {
+  const token = process.env.TELEGRAM_BOT_TOKEN;
+  if (!token) return;
+  const chats = await adminChats();
+
+  await Promise.all(
+    chats.map(async (chatId) => {
+      try {
+        const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json; charset=utf-8" },
+          body: JSON.stringify({
+            chat_id: chatId,
+            text,
+            parse_mode: "HTML",
+            disable_web_page_preview: true,
+          }),
+        });
+        if (!res.ok) {
+          console.error("[notify] sendMessage failed:", chatId, res.status, await res.text());
+        }
+      } catch (err) {
+        console.error("[notify] network error:", chatId, err);
+      }
+    }),
+  );
+}
+
+// Отправляет файл (договор .docx) всем владельцам в Telegram. No-op без env.
 export async function sendDocumentToOperator(
   blob: Blob,
   filename: string,
   caption?: string,
 ): Promise<void> {
   const token = process.env.TELEGRAM_BOT_TOKEN;
-  const chatId = process.env.TELEGRAM_CHAT_ID;
-  if (!token || !chatId) return;
-  try {
-    const form = new FormData();
-    form.append("chat_id", chatId);
-    if (caption) {
-      form.append("caption", caption);
-      form.append("parse_mode", "HTML");
-    }
-    form.append("document", blob, filename);
-    const res = await fetch(`https://api.telegram.org/bot${token}/sendDocument`, {
-      method: "POST",
-      body: form,
-    });
-    if (!res.ok) {
-      console.error("[notify] sendDocument failed:", res.status, await res.text());
-    }
-  } catch (err) {
-    console.error("[notify] sendDocument error:", err);
-  }
+  if (!token) return;
+  const chats = await adminChats();
+
+  await Promise.all(
+    chats.map(async (chatId) => {
+      try {
+        const form = new FormData();
+        form.append("chat_id", chatId);
+        if (caption) {
+          form.append("caption", caption);
+          form.append("parse_mode", "HTML");
+        }
+        form.append("document", blob, filename);
+        const res = await fetch(`https://api.telegram.org/bot${token}/sendDocument`, {
+          method: "POST",
+          body: form,
+        });
+        if (!res.ok) {
+          console.error("[notify] sendDocument failed:", chatId, res.status, await res.text());
+        }
+      } catch (err) {
+        console.error("[notify] sendDocument error:", chatId, err);
+      }
+    }),
+  );
 }
 
 /**

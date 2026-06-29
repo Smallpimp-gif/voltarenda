@@ -69,7 +69,6 @@ function tenantMessage(name, amount, days) {
 
 async function runReminders(env) {
   const token = env.TELEGRAM_BOT_TOKEN;
-  const owner = env.TELEGRAM_CHAT_ID;
   if (!token) return { error: "no token" };
 
   const tenants = (await env.DATA.get("bot/tenants", "json")) ?? [];
@@ -87,6 +86,21 @@ async function runReminders(env) {
   const chatFor = (t) =>
     chatByTenant[t.id] ??
     (t.telegramUsername ? tgChats[String(t.telegramUsername).toLowerCase()] : undefined);
+
+  // Все chat_id владельцев (для дайджеста): TELEGRAM_CHAT_ID + OWNER_TELEGRAM_IDS
+  // + по OWNER_TELEGRAM_USERNAMES через карту /start (bot/tg-chats).
+  const admins = new Set();
+  const addAdmin = (v) => {
+    const s = String(v ?? "").trim();
+    if (s) admins.add(s);
+  };
+  addAdmin(env.TELEGRAM_CHAT_ID);
+  (env.OWNER_TELEGRAM_IDS || "").split(",").forEach(addAdmin);
+  (env.OWNER_TELEGRAM_USERNAMES || "")
+    .split(",")
+    .map((u) => u.trim().replace(/^@/, "").toLowerCase())
+    .filter(Boolean)
+    .forEach((u) => addAdmin(tgChats[u]));
 
   const today = mskDayNum();
   const dueToday = []; // для дайджеста владельцу
@@ -116,17 +130,14 @@ async function runReminders(env) {
     if (days === 0) dueToday.push({ name: t.name, amount });
   }
 
-  // Дайджест владельцу за сегодня.
-  if (owner && dueToday.length) {
+  // Дайджест всем владельцам за сегодня.
+  if (admins.size && dueToday.length) {
     const lines = dueToday
       .sort((a, b) => b.amount - a.amount)
       .map((d) => `• ${d.name} — ${money(d.amount)}`);
     const total = dueToday.reduce((s, d) => s + d.amount, 0);
-    await tg(
-      token,
-      owner,
-      `💰 <b>Сегодня платят (${dueToday.length})</b>\n${lines.join("\n")}\n\nИтого: ${money(total)}`,
-    );
+    const text = `💰 <b>Сегодня платят (${dueToday.length})</b>\n${lines.join("\n")}\n\nИтого: ${money(total)}`;
+    for (const chat of admins) await tg(token, chat, text);
   }
 
   return { ok: true, today, dueToday: dueToday.length, sentTenant };
