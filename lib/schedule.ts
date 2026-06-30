@@ -304,12 +304,12 @@ export function buildSchedule(
 // --- Статус оплат (для кабинета владельца) ----------------------------
 // Учитывает фактически отмеченные оплаты (paidThrough из lib/payments).
 
-export type PayKind = "overdue" | "today" | "upcoming" | "done";
+export type PayKind = "overdue" | "partial" | "today" | "upcoming" | "done";
 
 export type PaymentState = {
   paidThrough: number; // сколько платежей подтверждено
   totalWeeks: number | null; // для выкупа — всего недель
-  overdueCount: number; // сколько просроченных неоплаченных платежей
+  overdueCount: number; // сколько ПОЛНОСТЬЮ неоплаченных просроченных платежей
   overdueAmount: number;
   completed: boolean; // выкуп выплачен полностью
   // следующий НЕоплаченный платёж (если не завершён)
@@ -321,15 +321,19 @@ export type PaymentState = {
   kind: PayKind;
   paused: boolean; // выкуп на паузе (график заморожен)
   pauseFee: number; // плата за паузу в месяц (PAUSE_FEE_MONTHLY)
+  partialPaid: number; // внесено за текущую неделю (₽), но недостаточно для полной
+  partialDebt: number; // недоплата за текущую неделю (₽) — мягкий долг
 };
 
 export function paymentState(
   tenant: Tenant,
   paidThrough: number,
   todayNum = mskDayNum(),
+  partialPaid = 0,
 ): PaymentState {
   const startNum = accrualStartNum(tenant, todayNum);
   const total = tenant.buyoutWeeks ?? Infinity;
+  const weekly = effectiveWeekly(tenant);
 
   // Платежи со сроком СТРОГО до сегодня (платёж «на сегодня» ещё не просрочен).
   const pastDue =
@@ -339,7 +343,12 @@ export function paymentState(
   const paid = Math.max(0, Math.min(paidThrough, total === Infinity ? paidThrough : total));
   const completed = tenant.buyoutWeeks ? paid >= tenant.buyoutWeeks : false;
 
-  const overdueCount = Math.max(0, dueCount - paid);
+  // Частичная оплата идёт в текущую неделю (paid+1). Если эта неделя уже
+  // наступила — она НЕ критична (мягкая недоплата), а не красная просрочка.
+  const partial = completed ? 0 : Math.max(0, partialPaid);
+  const partialDebt = partial > 0 ? Math.max(0, weekly - partial) : 0;
+  const partialCoversDue = partial > 0 && pastDue >= paid + 1;
+  const overdueCount = Math.max(0, dueCount - paid - (partialCoversDue ? 1 : 0));
 
   let nextNumber: number | null = null;
   let nextDate: string | null = null;
@@ -356,9 +365,8 @@ export function paymentState(
   let kind: PayKind = "upcoming";
   if (completed) kind = "done";
   else if (overdueCount > 0) kind = "overdue";
+  else if (partial > 0) kind = "partial";
   else if (nextDaysUntil === 0) kind = "today";
-
-  const weekly = effectiveWeekly(tenant);
 
   return {
     paidThrough: paid,
@@ -374,5 +382,7 @@ export function paymentState(
     kind,
     paused: Boolean(tenant.pausedSince),
     pauseFee: PAUSE_FEE_MONTHLY,
+    partialPaid: partial,
+    partialDebt,
   };
 }

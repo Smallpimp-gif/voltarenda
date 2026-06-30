@@ -9,7 +9,7 @@ import {
   DepositsPanel,
   type DepositRow,
 } from "@/components/cabinet/owner/deposits-panel";
-import { loadPaidMap } from "@/lib/payments";
+import { loadPaymentMap } from "@/lib/payments";
 import {
   loadLedger,
   cassaTotal,
@@ -114,10 +114,10 @@ export default async function OwnerPage({
     : cu.user.email;
 
   const sp = await searchParams;
-  const [tenants, bikes, paidMap, ledger] = await Promise.all([
+  const [tenants, bikes, payMap, ledger] = await Promise.all([
     loadTenants(),
     getAvailableBikes(),
-    loadPaidMap(),
+    loadPaymentMap(),
     loadLedger(),
   ]);
   const cassaSum = cassaTotal(ledger);
@@ -138,11 +138,12 @@ export default async function OwnerPage({
     .map((t) => ({ id: t.id, name: t.name, deposit: depositOf(t) }))
     .sort((a, b) => b.deposit - a.deposit || a.name.localeCompare(b.name, "ru"));
   const editTenant = sp.edit ? tenants.find((t) => t.id === sp.edit) : undefined;
-  const editPaidThrough = editTenant ? (paidMap[editTenant.id] ?? 0) : 0;
+  const editPaidThrough = editTenant ? (payMap[editTenant.id]?.paidThrough ?? 0) : 0;
 
   // Строки таблицы со статусом оплат (учёт отметок владельца).
   const rows: TenantRow[] = tenants.map((t) => {
-    const ps = paymentState(t, paidMap[t.id] ?? 0);
+    const rec = payMap[t.id];
+    const ps = paymentState(t, rec?.paidThrough ?? 0, undefined, rec?.partialPaid ?? 0);
     return {
       id: t.id,
       name: t.name,
@@ -160,6 +161,7 @@ export default async function OwnerPage({
       kind: ps.kind,
       paused: ps.paused,
       pauseFee: ps.pauseFee,
+      partialDebt: ps.partialDebt,
     };
   });
 

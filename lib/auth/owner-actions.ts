@@ -16,7 +16,7 @@ import {
   type TenantInput,
 } from "@/lib/auth/tenants";
 import { setAvailableBikes } from "@/lib/settings";
-import { getPaidThrough, setPaidThrough } from "@/lib/payments";
+import { getPaidThrough, setPaidThrough, getPayment, setPayment } from "@/lib/payments";
 import {
   addLedgerEntry,
   removeLastLedgerEntry,
@@ -50,10 +50,25 @@ export async function markPaidAction(formData: FormData): Promise<void> {
   const t = await getTenantById(id);
   if (!t) return;
   const ew = effectiveWeekly(t); // фактический платёж (с доп. позициями)
-  if (dir === "catchup") {
-    const ps = paymentState(t, await getPaidThrough(id));
+  const { paidThrough, partialPaid } = await getPayment(id);
+
+  if (dir === "partial") {
+    // Частичная оплата: вносим произвольную сумму. Копится в текущую неделю;
+    // как наберётся на полную (или несколько) — закрываются недели.
+    const amount = Math.max(0, Math.round((Number(formData.get("amount")) || 0) * 100) / 100);
+    if (amount > 0 && ew > 0) {
+      const totalPartial = partialPaid + amount;
+      const weeks = Math.floor(totalPartial / ew);
+      await setPayment(id, {
+        paidThrough: paidThrough + weeks,
+        partialPaid: totalPartial - weeks * ew,
+      });
+      await addLedgerEntry({ tenantId: id, name: t.name, amount, weeks, kind: "weekly" });
+    }
+  } else if (dir === "catchup") {
+    const ps = paymentState(t, paidThrough, mskDayNum(), partialPaid);
     if (ps.overdueCount > 0) {
-      await setPaidThrough(id, ps.paidThrough + ps.overdueCount); // = все просроченные
+      await setPayment(id, { paidThrough: paidThrough + ps.overdueCount, partialPaid });
       await addLedgerEntry({
         tenantId: id,
         name: t.name,
@@ -63,19 +78,18 @@ export async function markPaidAction(formData: FormData): Promise<void> {
       });
     }
   } else if (dir === "dec") {
-    const cur = await getPaidThrough(id);
-    await setPaidThrough(id, cur - 1);
-    await removeLastLedgerEntry(id); // откатываем последнюю запись кассы
+    // Откат: сначала отменяем частичную (если есть), иначе −1 неделя.
+    if (partialPaid > 0) {
+      await setPayment(id, { paidThrough, partialPaid: 0 });
+    } else {
+      await setPayment(id, { paidThrough: Math.max(0, paidThrough - 1), partialPaid: 0 });
+    }
+    await removeLastLedgerEntry(id);
   } else {
-    const cur = await getPaidThrough(id);
-    await setPaidThrough(id, cur + 1);
-    await addLedgerEntry({
-      tenantId: id,
-      name: t.name,
-      amount: ew,
-      weeks: 1,
-      kind: "weekly",
-    });
+    // «Оплатил» — закрываем текущую неделю целиком (с учётом уже внесённого).
+    const due = Math.max(0, ew - partialPaid);
+    await setPayment(id, { paidThrough: paidThrough + 1, partialPaid: 0 });
+    await addLedgerEntry({ tenantId: id, name: t.name, amount: due, weeks: 1, kind: "weekly" });
   }
   revalidatePath("/cabinet/owner");
 }

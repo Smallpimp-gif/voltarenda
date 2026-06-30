@@ -14,7 +14,7 @@ const rub = new Intl.NumberFormat("ru-RU");
 const money = (n: number) => `${rub.format(n)} ₽`;
 const capFirst = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
-export type PayKind = "overdue" | "today" | "upcoming" | "done";
+export type PayKind = "overdue" | "partial" | "today" | "upcoming" | "done";
 
 export type TenantRow = {
   id: string;
@@ -33,6 +33,7 @@ export type TenantRow = {
   kind: PayKind;
   paused: boolean;
   pauseFee: number;
+  partialDebt: number; // мягкая недоплата за текущую неделю
 };
 
 type Filter = "all" | "overdue" | "today" | "buyout" | "rent";
@@ -54,6 +55,8 @@ function statusText(r: TenantRow): { label: string; cls: string } {
       return { label: "Оплачено", cls: "border border-[var(--line-strong)] text-mute" };
     case "overdue":
       return { label: `Просрочено · ${r.overdueCount}`, cls: "bg-danger/15 text-danger" };
+    case "partial":
+      return { label: `Недоплата ${money(r.partialDebt)}`, cls: "bg-[#FEF3C7] text-[#92400E]" };
     case "today":
       return { label: "Сегодня", cls: "bg-volt text-ink" };
     default: {
@@ -99,6 +102,7 @@ function PaidControls({ row }: { row: TenantRow }) {
           Оплатил
         </button>
       </form>
+      <PartialControl row={row} />
       {row.overdueCount > 1 && (
         <form action={markPaidAction} title="Отметить все просроченные оплаченными">
           <input type="hidden" name="id" value={row.id} />
@@ -118,6 +122,44 @@ function PaidControls({ row }: { row: TenantRow }) {
         </form>
       )}
     </div>
+  );
+}
+
+// Частичная оплата: вводим произвольную сумму, копится в текущую неделю.
+function PartialControl({ row }: { row: TenantRow }) {
+  const [open, setOpen] = useState(false);
+  if (!open) {
+    return (
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="text-caption text-mute transition-colors duration-quick hover:text-[var(--text)]"
+      >
+        Частично
+      </button>
+    );
+  }
+  return (
+    <form action={markPaidAction} onSubmit={() => setOpen(false)} className="flex items-center gap-1.5">
+      <input type="hidden" name="id" value={row.id} />
+      <input type="hidden" name="dir" value="partial" />
+      <input
+        name="amount"
+        type="number"
+        min={1}
+        step="0.01"
+        inputMode="decimal"
+        autoFocus
+        placeholder="сумма ₽"
+        className="w-24 rounded-lg border border-[var(--line-strong)] bg-[var(--bg)] px-2 py-1 text-caption text-[var(--text)] outline-none focus:border-volt"
+      />
+      <button type="submit" className="rounded-pill bg-volt px-2.5 py-1 text-caption font-medium text-ink">
+        Внести
+      </button>
+      <button type="button" onClick={() => setOpen(false)} className="text-caption text-mute">
+        ✕
+      </button>
+    </form>
   );
 }
 
@@ -168,6 +210,7 @@ function RowActions({ row }: { row: TenantRow }) {
 function urgency(r: TenantRow): number {
   if (r.paused) return 5e8; // на паузе — внизу, но выше завершённых
   if (r.kind === "overdue") return -1000 - r.overdueCount;
+  if (r.kind === "partial") return -500; // недоплата — после просрочки
   if (r.kind === "done") return 1e9;
   return r.nextDaysUntil ?? 0;
 }
@@ -192,7 +235,7 @@ export function TenantsTable({ rows }: { rows: TenantRow[] }) {
       if (q && !`${row.name} ${row.contract}`.toLowerCase().includes(q)) return false;
       switch (filter) {
         case "overdue":
-          return row.kind === "overdue";
+          return row.kind === "overdue" || row.kind === "partial";
         case "today":
           return row.kind === "today";
         case "buyout":
