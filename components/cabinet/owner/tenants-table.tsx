@@ -207,9 +207,28 @@ function ReferralControl({ row }: { row: TenantRow }) {
   );
 }
 
+function MobileActions({ row }: { row: TenantRow }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="flex items-center justify-between gap-3">
+        <PaidControls row={row} />
+        <button
+          type="button"
+          onClick={() => setOpen((o) => !o)}
+          className="shrink-0 rounded-pill border border-[var(--line-strong)] px-3.5 py-1.5 text-caption text-mute transition-colors duration-quick active:scale-95"
+        >
+          {open ? "Скрыть" : "Ещё"}
+        </button>
+      </div>
+      {open && <RowActions row={row} />}
+    </div>
+  );
+}
+
 function RowActions({ row }: { row: TenantRow }) {
   return (
-    <div className="flex items-center gap-4 text-caption text-mute">
+    <div className="flex flex-wrap items-center gap-x-4 gap-y-2.5 text-caption text-mute">
       <ReferralControl row={row} />
       <PauseControl row={row} />
       {row.telegramUsername && (
@@ -360,10 +379,7 @@ export function TenantsTable({ rows }: { rows: TenantRow[] }) {
                     {st.label}
                   </span>
                 </div>
-                <div className="flex items-center justify-between gap-3">
-                  <PaidControls row={row} />
-                  <RowActions row={row} />
-                </div>
+                <MobileActions row={row} />
               </div>
 
               {/* Десктопная строка */}
