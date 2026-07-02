@@ -162,6 +162,7 @@ export default async function OwnerPage({
       paused: ps.paused,
       pauseFee: ps.pauseFee,
       partialDebt: ps.partialDebt,
+      referralWeeks: rec?.referralWeeks ?? 0,
     };
   });
 

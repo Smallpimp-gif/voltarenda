@@ -50,9 +50,25 @@ export async function markPaidAction(formData: FormData): Promise<void> {
   const t = await getTenantById(id);
   if (!t) return;
   const ew = effectiveWeekly(t); // фактический платёж (с доп. позициями)
-  const { paidThrough, partialPaid } = await getPayment(id);
+  const { paidThrough, partialPaid, referralWeeks } = await getPayment(id);
 
-  if (dir === "partial") {
+  if (dir === "referral") {
+    // Привёл друга под выкуп → минус неделя. Прогресс +1, но денег НЕТ
+    // (в кассу/доход не идёт — это бонус).
+    await setPayment(id, {
+      paidThrough: paidThrough + 1,
+      partialPaid,
+      referralWeeks: referralWeeks + 1,
+    });
+  } else if (dir === "referral-dec") {
+    if (referralWeeks > 0) {
+      await setPayment(id, {
+        paidThrough: Math.max(0, paidThrough - 1),
+        partialPaid,
+        referralWeeks: referralWeeks - 1,
+      });
+    }
+  } else if (dir === "partial") {
     // Частичная оплата: вносим произвольную сумму. Копится в текущую неделю;
     // как наберётся на полную (или несколько) — закрываются недели.
     const amount = Math.max(0, Math.round((Number(formData.get("amount")) || 0) * 100) / 100);

@@ -34,6 +34,7 @@ export type TenantRow = {
   paused: boolean;
   pauseFee: number;
   partialDebt: number; // мягкая недоплата за текущую неделю
+  referralWeeks: number; // недель зачтено за друзей (бонус)
 };
 
 type Filter = "all" | "overdue" | "today" | "buyout" | "rent";
@@ -182,9 +183,34 @@ function PauseControl({ row }: { row: TenantRow }) {
   );
 }
 
+// «Привёл друга» — минус неделя (без денег). Показывает счётчик 🎁 с отменой.
+function ReferralControl({ row }: { row: TenantRow }) {
+  return (
+    <div className="flex items-center gap-1.5">
+      <form action={markPaidAction} title="Привёл друга под выкуп — минус неделя (в кассу не идёт)">
+        <input type="hidden" name="id" value={row.id} />
+        <input type="hidden" name="dir" value="referral" />
+        <button type="submit" className="transition-colors duration-quick hover:text-[var(--text)]">
+          + друг
+        </button>
+      </form>
+      {row.referralWeeks > 0 && (
+        <form action={markPaidAction} title="Отменить реферальную неделю">
+          <input type="hidden" name="id" value={row.id} />
+          <input type="hidden" name="dir" value="referral-dec" />
+          <button type="submit" className="rounded-pill bg-volt/25 px-1.5 text-[var(--text)]">
+            🎁{row.referralWeeks} ✕
+          </button>
+        </form>
+      )}
+    </div>
+  );
+}
+
 function RowActions({ row }: { row: TenantRow }) {
   return (
     <div className="flex items-center gap-4 text-caption text-mute">
+      <ReferralControl row={row} />
       <PauseControl row={row} />
       {row.telegramUsername && (
         <a
