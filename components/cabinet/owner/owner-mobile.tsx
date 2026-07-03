@@ -14,7 +14,8 @@ import { TenantsTable, type TenantRow } from "./tenants-table";
 import { LedgerPanel, type LedgerRow } from "./ledger-panel";
 import { IncomeReport } from "./income-report";
 import { DepositsPanel, type DepositRow } from "./deposits-panel";
-import type { Tenant } from "@/lib/schedule";
+import { ForecastPanel } from "./forecast-panel";
+import type { Tenant, PaymentEvent } from "@/lib/schedule";
 import type { MonthIncome, TenantIncome } from "@/lib/ledger";
 
 const rub = new Intl.NumberFormat("ru-RU");
@@ -37,6 +38,10 @@ export function OwnerMobile({
   incomeMonths,
   incomeTenants,
   depositRows,
+  monthlyIncome,
+  paymentEvents,
+  todayISO,
+  monthEndISO,
 }: {
   email: string;
   rows: TenantRow[];
@@ -52,6 +57,10 @@ export function OwnerMobile({
   incomeMonths: MonthIncome[];
   incomeTenants: TenantIncome[];
   depositRows: DepositRow[];
+  monthlyIncome: number;
+  paymentEvents: PaymentEvent[];
+  todayISO: string;
+  monthEndISO: string;
 }) {
   const [tab, setTab] = useState<Tab>("tenants");
 
@@ -108,6 +117,15 @@ export function OwnerMobile({
             <Metric label="Недельный доход" value={money(weeklyIncome)} hint="ожидается со всех активных" />
             <Metric label="Свободно велосипедов" value={String(bikes)} hint="видно на сайте" last />
           </section>
+
+          {/* Прогноз кассы: «сколько должно быть собрано к дате» */}
+          <ForecastPanel
+            events={paymentEvents}
+            collectedThisMonth={incomeThisMonth}
+            monthlyIncome={monthlyIncome}
+            todayISO={todayISO}
+            monthEndISO={monthEndISO}
+          />
 
           <button
             type="button"

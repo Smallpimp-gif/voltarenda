@@ -256,6 +256,52 @@ export function upcomingPayments(
     .sort((a, b) => a.dueNum - b.dueNum);
 }
 
+// --- Прогноз поступлений (для кабинета владельца) ----------------------
+
+// Одно запланированное недельное поступление.
+export type PaymentEvent = {
+  dateISO: string; // YYYY-MM-DD — для сравнения и <input type=date>
+  dateLabel: string; // дд.мм.гггг
+  weekday: string;
+  amount: number;
+  tenantId: string;
+  name: string;
+};
+
+// Все будущие недельные платежи на горизонте (по умолчанию ~квартал) вперёд
+// от сегодня — основа калькулятора «сколько должно быть собрано к дате».
+// На паузе и завершённые выкупы пропускаем: недельных поступлений у них нет.
+export function upcomingPaymentEvents(
+  tenants: Tenant[],
+  horizonDays = 92,
+  todayNum = mskDayNum(),
+): PaymentEvent[] {
+  const events: PaymentEvent[] = [];
+  const horizon = todayNum + horizonDays;
+  for (const t of tenants) {
+    if (t.pausedSince) continue;
+    const { dueNum, paymentNumber, completed } = nextDue(t, todayNum);
+    if (completed) continue;
+    const weekly = effectiveWeekly(t);
+    const total = t.buyoutWeeks ?? Infinity;
+    let d = dueNum;
+    let n = paymentNumber;
+    while (d <= horizon && n <= total) {
+      events.push({
+        dateISO: dayNumToIso(d),
+        dateLabel: formatDay(d),
+        weekday: weekdayOf(d),
+        amount: weekly,
+        tenantId: t.id,
+        name: t.name,
+      });
+      d += 7;
+      n += 1;
+    }
+  }
+  return events.sort((a, b) => (a.dateISO < b.dateISO ? -1 : a.dateISO > b.dateISO ? 1 : 0));
+}
+
 // --- График платежей арендатора (для личного кабинета) ----------------
 
 export type ScheduleRow = {

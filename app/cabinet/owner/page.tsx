@@ -4,7 +4,14 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { logoutAction } from "@/lib/auth/actions";
 import { loadTenants } from "@/lib/auth/tenants";
 import { getAvailableBikes } from "@/lib/settings";
-import { paymentState, effectiveWeekly, depositOf } from "@/lib/schedule";
+import {
+  paymentState,
+  effectiveWeekly,
+  depositOf,
+  upcomingPaymentEvents,
+  mskDayNum,
+  dayNumToIso,
+} from "@/lib/schedule";
 import {
   DepositsPanel,
   type DepositRow,
@@ -30,6 +37,7 @@ import {
   TenantsTable,
   type TenantRow,
 } from "@/components/cabinet/owner/tenants-table";
+import { ForecastPanel } from "@/components/cabinet/owner/forecast-panel";
 import { OwnerMobile } from "@/components/cabinet/owner/owner-mobile";
 
 const rub = new Intl.NumberFormat("ru-RU");
@@ -176,6 +184,17 @@ export default async function OwnerPage({
   const overdueRows = rows.filter((r) => r.kind === "overdue");
   const overdueCount = overdueRows.length;
   const overdueSum = overdueRows.reduce((s, r) => s + r.overdueCount * r.weekly, 0);
+  // Месячный доход ≈ недельный × 52/12 (усреднённая выручка в месяц).
+  const monthlyIncome = Math.round((weeklyIncome * 52) / 12);
+  // Прогноз кассы «к дате»: график будущих платежей + границы (сегодня,
+  // конец текущего месяца по МСК) для калькулятора.
+  const todayNum = mskDayNum();
+  const todayISO = dayNumToIso(todayNum);
+  const [ty, tm] = todayISO.split("-").map(Number);
+  const monthEndISO = dayNumToIso(
+    Math.floor(Date.UTC(ty, tm, 0) / 86400000), // день 0 след. месяца = последний день текущего
+  );
+  const paymentEvents = upcomingPaymentEvents(tenants, 92, todayNum);
 
   return (
     <>
@@ -196,6 +215,10 @@ export default async function OwnerPage({
         incomeMonths={incomeMonths}
         incomeTenants={incomeTenants}
         depositRows={depositRows}
+        monthlyIncome={monthlyIncome}
+        paymentEvents={paymentEvents}
+        todayISO={todayISO}
+        monthEndISO={monthEndISO}
       />
     </div>
 
@@ -243,6 +266,17 @@ export default async function OwnerPage({
             danger={overdueCount > 0}
           />
           <BikesForm current={bikes} variant="metric" />
+        </div>
+
+        {/* Прогноз кассы: месячный доход + «сколько должно быть к дате» */}
+        <div className="mt-6 grid gap-6 lg:grid-cols-2">
+          <ForecastPanel
+            events={paymentEvents}
+            collectedThisMonth={incomeMonth}
+            monthlyIncome={monthlyIncome}
+            todayISO={todayISO}
+            monthEndISO={monthEndISO}
+          />
         </div>
       </section>
 
