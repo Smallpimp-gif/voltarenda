@@ -1,36 +1,98 @@
 // Доходы — постоянная сводка: всего, за текущий месяц, по месяцам и по
-// арендаторам. Обнуление кассы её не сбрасывает. Без интерактива — общий
-// компонент (рендерится и на сервере, и в мобильном).
+// арендаторам. Обнуление кассы её не сбрасывает. Каждую строку месяца/
+// арендатора можно раскрыть до отдельных платежей — видно, из чего
+// складывается сумма. Раскрытие на нативном <details>, без клиента.
 
 const rub = new Intl.NumberFormat("ru-RU");
 const money = (n: number) => `${rub.format(n)} ₽`;
 
+const dateFmt = new Intl.DateTimeFormat("ru-RU", {
+  timeZone: "Europe/Moscow",
+  day: "2-digit",
+  month: "2-digit",
+  year: "numeric",
+});
+const fmtDate = (iso: string) => dateFmt.format(new Date(iso));
+
 export type MonthRow = { key: string; label: string; amount: number; weeks: number };
 export type TenantRow = { tenantId: string; name: string; amount: number; weeks: number };
+// Отдельная оплата (для раскрытия строки).
+export type Entry = { id: string; tenantId: string; name: string; amount: number; at: string };
 
 function cap(s: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
-type Item = { id: string; label: string; sub: string; amount: number };
+type Item = { id: string; label: string; sub: string; amount: number; entries: Entry[] };
 
-function Section({ title, items }: { title: string; items: Item[] }) {
+function ChevronIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="h-4 w-4 shrink-0 text-mute transition-transform duration-quick group-open:rotate-180"
+      aria-hidden
+    >
+      <path d="m6 9 6 6 6-6" />
+    </svg>
+  );
+}
+
+// Одна раскрываемая строка: заголовок (месяц/арендатор) + вложенный список
+// платежей. `detail` — как подписать каждую оплату (для месяца — фамилия,
+// для арендатора — месяц/дата).
+function Row({ it, detail }: { it: Item; detail: (e: Entry) => string }) {
+  return (
+    <details className="group border-t border-[var(--line)]">
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-5 py-3.5 [&::-webkit-details-marker]:hidden">
+        <div className="min-w-0">
+          <p className="truncate text-body text-[var(--text)]">{it.label}</p>
+          <p className="mt-0.5 text-caption text-mute">{it.sub}</p>
+        </div>
+        <span className="flex shrink-0 items-center gap-2.5">
+          <span className="font-sans text-body font-medium tabular-nums text-[var(--text)]">
+            {money(it.amount)}
+          </span>
+          <ChevronIcon />
+        </span>
+      </summary>
+      <div className="bg-[var(--bg)]">
+        {it.entries.map((e) => (
+          <div
+            key={e.id}
+            className="flex items-center justify-between gap-3 border-t border-[var(--line)] py-2.5 pl-8 pr-5"
+          >
+            <span className="truncate font-mono text-caption uppercase text-mute">
+              {detail(e)}
+            </span>
+            <span className="shrink-0 font-sans text-caption tabular-nums text-[var(--text)]">
+              {money(e.amount)}
+            </span>
+          </div>
+        ))}
+      </div>
+    </details>
+  );
+}
+
+function Section({
+  title,
+  items,
+  detail,
+}: {
+  title: string;
+  items: Item[];
+  detail: (e: Entry) => string;
+}) {
   return (
     <div>
       <p className="bg-[var(--bg)] px-5 py-2.5 text-caption font-medium text-mute">{title}</p>
       {items.map((it) => (
-        <div
-          key={it.id}
-          className="flex items-center justify-between gap-3 border-t border-[var(--line)] px-5 py-3.5"
-        >
-          <div className="min-w-0">
-            <p className="truncate text-body text-[var(--text)]">{it.label}</p>
-            <p className="mt-0.5 text-caption text-mute">{it.sub}</p>
-          </div>
-          <span className="shrink-0 font-sans text-body font-medium tabular-nums text-[var(--text)]">
-            {money(it.amount)}
-          </span>
-        </div>
+        <Row key={it.id} it={it} detail={detail} />
       ))}
     </div>
   );
@@ -41,12 +103,30 @@ export function IncomeReport({
   thisMonth,
   months,
   tenants,
+  entries,
 }: {
   total: number;
   thisMonth: number;
   months: MonthRow[];
   tenants: TenantRow[];
+  entries: Entry[];
 }) {
+  // Раскладка платежей по месяцу и по арендатору (новые сверху).
+  const byMonth = new Map<string, Entry[]>();
+  const byTenant = new Map<string, Entry[]>();
+  const monthKey = (at: string) =>
+    new Intl.DateTimeFormat("en-CA", {
+      timeZone: "Europe/Moscow",
+      year: "numeric",
+      month: "2-digit",
+    }).format(new Date(at));
+  for (const e of [...entries].sort((a, b) => (a.at < b.at ? 1 : -1))) {
+    const mk = monthKey(e.at);
+    (byMonth.get(mk) ?? byMonth.set(mk, []).get(mk)!).push(e);
+    const tk = e.tenantId || e.name;
+    (byTenant.get(tk) ?? byTenant.set(tk, []).get(tk)!).push(e);
+  }
+
   return (
     <div className="overflow-hidden rounded-[28px] border border-[var(--line)] bg-[var(--bg-2)]">
       <div className="p-5">
@@ -66,22 +146,26 @@ export function IncomeReport({
       ) : (
         <div className="border-t border-[var(--line)]">
           <Section
-            title="По месяцам"
+            title="По месяцам · нажмите, чтобы раскрыть"
+            detail={(e) => `${fmtDate(e.at)} · ${e.name}`}
             items={months.map((m) => ({
               id: m.key,
               label: cap(m.label),
               sub: `${m.weeks} ${plural(m.weeks, "оплата", "оплаты", "оплат")}`,
               amount: m.amount,
+              entries: byMonth.get(m.key) ?? [],
             }))}
           />
           <div className="border-t border-[var(--line)]">
             <Section
-              title="По арендаторам"
+              title="По арендаторам · нажмите, чтобы раскрыть"
+              detail={(e) => fmtDate(e.at)}
               items={tenants.map((t) => ({
                 id: t.tenantId || t.name,
                 label: t.name,
                 sub: `${t.weeks} ${plural(t.weeks, "оплата", "оплаты", "оплат")}`,
                 amount: t.amount,
+                entries: byTenant.get(t.tenantId || t.name) ?? [],
               }))}
             />
           </div>

@@ -25,6 +25,7 @@ import {
   incomeThisMonth,
   incomeByMonth,
   incomeByTenant,
+  incomeEntries,
 } from "@/lib/ledger";
 import {
   LedgerPanel,
@@ -141,6 +142,14 @@ export default async function OwnerPage({
   const incomeMonth = incomeThisMonth(ledger);
   const incomeMonths = incomeByMonth(ledger);
   const incomeTenants = incomeByTenant(ledger);
+  // Отдельные оплаты — для раскрытия строк в отчёте «Доходы».
+  const incomeRows = incomeEntries(ledger).map((e) => ({
+    id: e.id,
+    tenantId: e.tenantId,
+    name: e.name,
+    amount: e.amount,
+    at: e.at,
+  }));
   // Залоги — по убыванию (с залогом сверху).
   const depositRows: DepositRow[] = tenants
     .map((t) => ({ id: t.id, name: t.name, deposit: depositOf(t) }))
@@ -214,6 +223,7 @@ export default async function OwnerPage({
         incomeThisMonth={incomeMonth}
         incomeMonths={incomeMonths}
         incomeTenants={incomeTenants}
+        incomeRows={incomeRows}
         depositRows={depositRows}
         monthlyIncome={monthlyIncome}
         paymentEvents={paymentEvents}
@@ -352,6 +362,7 @@ export default async function OwnerPage({
             thisMonth={incomeMonth}
             months={incomeMonths}
             tenants={incomeTenants}
+            entries={incomeRows}
           />
         </div>
       </section>

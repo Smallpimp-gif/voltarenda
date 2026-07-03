@@ -12,7 +12,7 @@ import { BikesForm } from "./bikes-form";
 import { TenantForm } from "./tenant-form";
 import { TenantsTable, type TenantRow } from "./tenants-table";
 import { LedgerPanel, type LedgerRow } from "./ledger-panel";
-import { IncomeReport } from "./income-report";
+import { IncomeReport, type Entry as IncomeEntry } from "./income-report";
 import { DepositsPanel, type DepositRow } from "./deposits-panel";
 import { ForecastPanel } from "./forecast-panel";
 import type { Tenant, PaymentEvent } from "@/lib/schedule";
@@ -37,6 +37,7 @@ export function OwnerMobile({
   incomeThisMonth,
   incomeMonths,
   incomeTenants,
+  incomeRows,
   depositRows,
   monthlyIncome,
   paymentEvents,
@@ -56,6 +57,7 @@ export function OwnerMobile({
   incomeThisMonth: number;
   incomeMonths: MonthIncome[];
   incomeTenants: TenantIncome[];
+  incomeRows: IncomeEntry[];
   depositRows: DepositRow[];
   monthlyIncome: number;
   paymentEvents: PaymentEvent[];
@@ -183,6 +185,7 @@ export function OwnerMobile({
               thisMonth={incomeThisMonth}
               months={incomeMonths}
               tenants={incomeTenants}
+              entries={incomeRows}
             />
           </div>
           <div>

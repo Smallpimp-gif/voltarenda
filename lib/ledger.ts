@@ -79,6 +79,18 @@ export function incomeTotal(file: LedgerFile): number {
   return file.entries.filter(isIncome).reduce((s, e) => s + e.amount, 0);
 }
 
+// Все реальные оплаты (weekly/catchup) — для детализации сумм в отчёте
+// «Доходы» (раскрытие строки месяца/арендатора до отдельных платежей).
+export function incomeEntries(file: LedgerFile): LedgerEntry[] {
+  return file.entries.filter(isIncome);
+}
+
+// Ключ месяца по МСК для записи — тот же формат, что в incomeByMonth,
+// чтобы группировка совпадала.
+export function monthKeyOf(at: string): string {
+  return monthKeyFmt.format(new Date(at));
+}
+
 // Доход за текущий месяц (по МСК) — самый рабочий показатель.
 export function incomeThisMonth(file: LedgerFile): number {
   const nowKey = monthKeyFmt.format(new Date());
