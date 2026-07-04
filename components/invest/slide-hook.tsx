@@ -43,7 +43,7 @@ export function SlideHook() {
         </Rise>
 
         {/* Лого-вордмарк бренда — родной жёлтый #EAFF02 на чёрном */}
-        <Rise delay={0.06} className="mt-6">
+        <Rise delay={0.06} className="mt-5">
           <Image
             src="/logo.svg"
             alt="Вольтаренда"
@@ -54,18 +54,18 @@ export function SlideHook() {
           />
         </Rise>
 
-        <Rise delay={0.12} blur={0} as="h1" className="mt-6 max-w-[20ch] font-sans text-display-2 text-paper sm:text-display-1">
+        <Rise delay={0.12} blur={0} as="h1" className="mt-5 max-w-[20ch] font-sans text-display-2 text-paper sm:text-display-1">
           Бренд электровелосипедов, который захватывает рынок доставки.
         </Rise>
 
-        <Rise delay={0.2} as="p" className="mt-5 max-w-[46ch] font-sans text-body-lg text-white/75">
+        <Rise delay={0.2} as="p" className="mt-4 max-w-[46ch] font-sans text-body-lg text-white/75">
           Мы не прокат. Аренда — механизм входа в&nbsp;рынок. Бренд — то, что
           закрепляет нас в&nbsp;нише навсегда.
         </Rise>
 
         {/* Цифры тяги. На телефоне выручка — на всю ширину, дарксторы и
             курьеры в 2 столбца под ней; с sm — три в ряд. */}
-        <div className="mt-8 grid grid-cols-2 gap-x-6 gap-y-7 border-t border-white/15 pt-7 sm:mt-10 sm:grid-cols-3 sm:gap-8">
+        <div className="mt-8 grid grid-cols-2 gap-x-6 gap-y-7 border-t border-white/15 pt-6 sm:grid-cols-3 sm:gap-8">
           <HookStat
             delay={0.32}
             className="col-span-2 sm:col-span-1"
@@ -84,7 +84,7 @@ export function SlideHook() {
         </div>
 
         {/* Дарксторы-партнёры — ровный ряд логотипов под цифрами */}
-        <Rise delay={0.58} className="mt-7 flex items-center gap-x-6">
+        <Rise delay={0.58} className="mt-6 flex items-center gap-x-6">
           <span className="shrink-0 font-mono text-caption uppercase tracking-[0.08em] text-white/60">
             Партнёры
           </span>
@@ -93,8 +93,14 @@ export function SlideHook() {
           <img src="/logos/ozon.svg" alt="Озон Фреш" className="h-[21px] w-auto opacity-90" style={WHITE} />
         </Rise>
 
-        {/* Свежая тяга — мандат Самоката = прямой поток клиентов */}
-        <Rise delay={0.64} className="mt-8 max-w-[70ch] border-l-2 border-volt pl-4 sm:pl-5">
+        {/* Свежая тяга — мандат Самоката = прямой поток клиентов.
+            На десктопе с невысоким окном врезка не помещается в экран
+            (обложка обязана влезать целиком) — прячем; факт 16/250 всё
+            равно есть в цифрах выше и на слайде клиентов. */}
+        <Rise
+          delay={0.64}
+          className="mt-6 max-w-[70ch] border-l-2 border-volt pl-4 sm:pl-5 [@media(min-width:768px)_and_(max-height:919px)]:hidden"
+        >
           <span className="font-mono text-caption uppercase tracking-[0.08em] text-volt">
             Прямой поток клиентов · свежее
           </span>
@@ -103,9 +109,6 @@ export function SlideHook() {
             <span className="font-semibold">16&nbsp;дарксторов</span>-партнёров,{" "}
             <span className="font-semibold">250&nbsp;курьеров</span> — и&nbsp;нашу
             аренду предлагают им первыми.
-          </p>
-          <p className="mt-2.5 font-mono text-caption uppercase leading-relaxed text-white/60">
-            Бренд, сайт, электронные договоры — мы строим систему, а&nbsp;не разовую перепродажу.
           </p>
         </Rise>
       </div>

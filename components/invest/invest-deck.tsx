@@ -162,13 +162,15 @@ export function InvestDeck() {
         ))}
       </nav>
 
-      {/* ── Подсказка «листай вниз» — только на первом слайде ── */}
+      {/* ── Подсказка «листай вниз» — только на первом слайде и только на
+          md+ (на телефоне обычный документный скролл, подсказка не нужна
+          и налезает на контент) ── */}
       <button
         type="button"
         onClick={() => go(active + 1)}
         data-theme={theme}
         aria-label="Следующий слайд"
-        className={`fixed bottom-5 left-1/2 z-50 -translate-x-1/2 text-[var(--text)] transition-opacity duration-base ease-out-soft ${
+        className={`fixed bottom-5 left-1/2 z-50 hidden -translate-x-1/2 text-[var(--text)] transition-opacity duration-base ease-out-soft md:block ${
           active === 0 ? "opacity-100" : "pointer-events-none opacity-0"
         }`}
       >
