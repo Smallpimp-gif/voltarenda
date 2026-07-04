@@ -54,12 +54,12 @@ export function SlideHook() {
           />
         </Rise>
 
-        <Rise delay={0.12} as="h1" className="mt-6 max-w-[20ch] font-sans text-display-2 text-paper">
+        <Rise delay={0.12} blur={0} as="h1" className="mt-6 max-w-[20ch] font-sans text-display-2 text-paper sm:text-display-1">
           Бренд электровелосипедов, который захватывает рынок доставки.
         </Rise>
 
         <Rise delay={0.2} as="p" className="mt-5 max-w-[46ch] font-sans text-body-lg text-white/75">
-          Мы не прокат. Аренда — механизм захвата рынка. Бренд — то, что
+          Мы не прокат. Аренда — механизм входа в&nbsp;рынок. Бренд — то, что
           закрепляет нас в&nbsp;нише навсегда.
         </Rise>
 
@@ -79,13 +79,13 @@ export function SlideHook() {
             }
             label={<>живой поток&nbsp;— 19 велосипедов уже приносят деньги</>}
           />
-          <HookStat delay={0.42} value={<CountUp to={17} />} label={<>дарксторов-партнёров<br className="hidden sm:block" /> уже подключены</>} />
-          <HookStat delay={0.52} value={<><span className="text-mute">~</span><CountUp to={275} /></>} label={<>курьеров в досягаемости<br className="hidden sm:block" /> через одного партнёра</>} />
+          <HookStat delay={0.42} value={<CountUp to={16} />} label={<>дарксторов-партнёров<br className="hidden sm:block" /> уже подключены</>} />
+          <HookStat delay={0.52} value={<><span className="text-mute">~</span><CountUp to={250} /></>} label={<>курьеров в досягаемости<br className="hidden sm:block" /> через одного партнёра</>} />
         </div>
 
         {/* Дарксторы-партнёры — ровный ряд логотипов под цифрами */}
         <Rise delay={0.58} className="mt-7 flex items-center gap-x-6">
-          <span className="shrink-0 font-mono text-caption uppercase tracking-[0.08em] text-white/40">
+          <span className="shrink-0 font-mono text-caption uppercase tracking-[0.08em] text-white/60">
             Партнёры
           </span>
           <span aria-hidden className="h-5 w-px bg-white/15" />
@@ -94,17 +94,17 @@ export function SlideHook() {
         </Rise>
 
         {/* Свежая тяга — мандат Самоката = прямой поток клиентов */}
-        <Rise delay={0.2} className="mt-8 max-w-[70ch] border-l-2 border-volt pl-4 sm:pl-5">
+        <Rise delay={0.64} className="mt-8 max-w-[70ch] border-l-2 border-volt pl-4 sm:pl-5">
           <span className="font-mono text-caption uppercase tracking-[0.08em] text-volt">
             Прямой поток клиентов · свежее
           </span>
           <p className="mt-2 font-sans text-body-lg leading-snug text-paper">
             Самокат пересаживает всех курьеров на электровелосипеды:{" "}
-            <span className="font-semibold">16&nbsp;складов</span>-партнёров,{" "}
+            <span className="font-semibold">16&nbsp;дарксторов</span>-партнёров,{" "}
             <span className="font-semibold">250&nbsp;курьеров</span> — и&nbsp;нашу
             аренду предлагают им первыми.
           </p>
-          <p className="mt-2.5 font-mono text-caption uppercase leading-relaxed text-white/45">
+          <p className="mt-2.5 font-mono text-caption uppercase leading-relaxed text-white/60">
             Бренд, сайт, электронные договоры — мы строим систему, а&nbsp;не разовую перепродажу.
           </p>
         </Rise>
@@ -129,7 +129,7 @@ function HookStat({
       <span className="font-mono tnum text-[clamp(38px,9vw,62px)] leading-[0.85] tracking-tight text-volt">
         {value}
       </span>
-      <span className="mt-2.5 font-mono text-[11px] uppercase leading-relaxed tracking-[0.06em] text-white/60">
+      <span className="mt-2.5 font-mono text-caption uppercase leading-relaxed tracking-[0.06em] text-white/70">
         {label}
       </span>
     </Rise>

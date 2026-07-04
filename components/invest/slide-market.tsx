@@ -17,9 +17,9 @@ export function SlideMarket() {
   return (
     <Slide id="market" theme="light">
       <Rise>
-        <Eyebrow index="01">Окно возможности</Eyebrow>
+        <Eyebrow index="02">Окно возможности</Eyebrow>
       </Rise>
-      <Rise delay={0.05} as="h2" className="mt-6 max-w-[20ch] font-sans text-display-2">
+      <Rise delay={0.05} blur={0} as="h2" className="mt-6 max-w-[20ch] font-sans text-display-2">
         Рынок курьеров взрывается. Окно&nbsp;— сейчас.
       </Rise>
 
@@ -47,7 +47,7 @@ export function SlideMarket() {
         </div>
 
         {/* ПРАВО: 4 плашки-цифры */}
-        <div className="grid grid-cols-2 gap-6">
+        <div className="grid grid-cols-2 gap-4 sm:gap-6">
           <StatPlate value="1,5 млн" label={<>курьеров — и&nbsp;не хватает ещё ~200&nbsp;тыс.</>} delay={0.12} accent />
           <StatPlate value={<>+60%</>} label={<>экспресс-доставка → 470&nbsp;млрд&nbsp;<R /> в&nbsp;2024</>} delay={0.18} />
           <StatPlate value={<>+87%</>} label={<>оборот доставки, лето&nbsp;2025 к&nbsp;году</>} delay={0.24} />
@@ -55,23 +55,25 @@ export function SlideMarket() {
         </div>
       </div>
 
-        {/* Ценовое преимущество — горизонтальная полоса, 3 равных сегмента */}
+        {/* Ценовое преимущество — на мобиле сравнение цен в одну строку, вывод ниже */}
         <Rise delay={0.1}>
-          <div className="flex flex-col gap-6 rounded-lg bg-ink p-6 text-paper sm:flex-row sm:items-center sm:justify-between sm:p-8">
-          <div className="flex items-baseline gap-3">
-            <span className="font-mono tnum text-[clamp(38px,4.6vw,60px)] leading-none text-volt">
-              5 000&nbsp;<R />
-            </span>
-            <span className="font-mono text-caption uppercase leading-tight text-white/55">
-              наша&nbsp;цена<br />в&nbsp;неделю
-            </span>
-          </div>
+          <div className="flex flex-col gap-5 rounded-lg bg-ink p-5 text-paper sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:p-8">
+          <div className="flex items-baseline justify-between gap-4 sm:contents">
+            <div className="flex items-baseline gap-3">
+              <span className="font-mono tnum text-[clamp(38px,4.6vw,60px)] leading-none text-volt">
+                5 000&nbsp;<R />
+              </span>
+              <span className="font-mono text-caption uppercase leading-tight text-white/60">
+                наша&nbsp;цена<br />в&nbsp;неделю
+              </span>
+            </div>
 
-          <div className="flex items-baseline gap-3">
-            <span className="font-mono tnum text-[clamp(20px,2.4vw,28px)] leading-none text-white/40 line-through">
-              6 500–7 500&nbsp;<R />
-            </span>
-            <span className="font-mono text-caption uppercase text-white/40">у&nbsp;конкурентов</span>
+            <div className="flex items-baseline gap-3">
+              <span className="font-mono tnum text-[clamp(20px,2.4vw,28px)] leading-none text-white/55 line-through decoration-1">
+                6 500–7 500&nbsp;<R />
+              </span>
+              <span className="font-mono text-caption uppercase text-white/60">у&nbsp;конкурентов</span>
+            </div>
           </div>
 
           <p className="font-sans text-body-lg text-white/85 sm:max-w-[20ch] sm:text-right">
@@ -79,18 +81,18 @@ export function SlideMarket() {
           </p>
           </div>
         </Rise>
-      </SlideBody>
 
-      {/* Удар-фраза + источники — низ слайда */}
-      <div className="mt-10">
-        <Punch className="max-w-[56ch] !text-h3">
-          Рынок растёт до&nbsp;2030. Серьёзного бренда в&nbsp;нише нет. Через год это
-          место будет занято — вопрос только, кем.
-        </Punch>
-        <Rise delay={0.1} as="p" className="mt-6 font-mono text-[10px] uppercase leading-relaxed tracking-[0.06em] text-mute">
-          Источники: Минпромторг / ТАСС · Росстат · TADviser · BusinesStat · ЮKassa · ВТБ · Mordor Intelligence
-        </Rise>
-      </div>
+        {/* Удар-фраза + источники — прижаты к низу слайда */}
+        <div className="mt-auto pt-2">
+          <Punch className="max-w-[56ch]">
+            Рынок растёт до&nbsp;2030. Серьёзного бренда в&nbsp;нише нет. Через год это
+            место будет занято — вопрос только, кем.
+          </Punch>
+          <Rise delay={0.1} as="p" className="mt-6 font-mono text-[10px] uppercase leading-relaxed tracking-[0.06em] text-mute">
+            Источники: Минпромторг / ТАСС · Росстат · TADviser · BusinesStat · ЮKassa · ВТБ · Mordor Intelligence
+          </Rise>
+        </div>
+      </SlideBody>
     </Slide>
   );
 }
@@ -110,7 +112,7 @@ function StatPlate({
 }) {
   return (
     <Rise delay={delay}>
-      <Plate accent={accent} className="flex h-full flex-col justify-between gap-8 !p-6">
+      <Plate accent={accent} className="flex h-full flex-col justify-between gap-6 !p-5 sm:!p-6">
         <div className="flex items-baseline gap-1.5">
           <span className={`font-mono tnum text-[clamp(28px,3.6vw,44px)] leading-none tracking-tight ${accent ? "text-[var(--acc)]" : "text-[var(--text)]"}`}>
             {value}

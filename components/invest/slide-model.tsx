@@ -1,6 +1,6 @@
 "use client";
 
-// СЛАЙД 3 — КАК МЫ ДЕЛАЕМ ДЕНЬГИ.
+// СЛАЙД 4 — КАК МЫ ДЕЛАЕМ ДЕНЬГИ.
 // Цель: простая прибыльная экономика + инфраструктура и связи.
 // Тёмный слайд — прибыль/цифры светятся volt'ом. Цифры из финмодели.
 
@@ -11,35 +11,31 @@ export function SlideModel() {
   return (
     <Slide id="model" theme="dark">
       <Rise>
-        <Eyebrow index="03">Юнит-экономика</Eyebrow>
+        <Eyebrow index="04">Юнит-экономика</Eyebrow>
       </Rise>
-      <Rise delay={0.05} as="h2" className="mt-6 font-sans text-display-2">
+      <Rise delay={0.05} blur={0} as="h2" className="mt-6 font-sans text-display-2">
         Простая модель. Быстрые деньги.
       </Rise>
 
-      {/* Живая тяга — это не теория: вот текущая выручка. */}
+      {/* Живая тяга — это не теория: вот текущая выручка. Числа нейтральные,
+          единственный крупный volt-акцент слайда — маржа ниже. */}
       <Rise delay={0.08} className="mt-6">
-        <div className="flex flex-wrap items-center gap-x-7 gap-y-3 rounded-lg border border-volt/40 bg-[var(--bg-2)] px-5 py-4 sm:px-6">
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-3 rounded-lg border border-volt/40 bg-[var(--bg-2)] px-5 py-4 sm:px-6">
           <span className="shrink-0 font-mono text-caption uppercase text-volt">Уже работает</span>
           <TractionNum value="19" unit="велосипедов сдано" />
           <TractionNum value={<>108 250&nbsp;<R /></>} unit="в неделю" />
-          <TractionNum value={<>~470 000&nbsp;<R /></>} unit="в месяц" accent />
-          <span className="ml-auto font-mono text-caption uppercase text-mute">деньги вперёд · залог</span>
+          <TractionNum value={<>~470 000&nbsp;<R /></>} unit="в месяц" />
+          <span className="w-full font-mono text-caption uppercase text-mute sm:ml-auto sm:w-auto">деньги вперёд · залог</span>
         </div>
       </Rise>
 
       <SlideBody className="mt-6 gap-6">
-        {/* Две модели */}
-        <div className="grid items-start gap-6 md:grid-cols-2">
+        {/* Две модели — симметричные шапки, равная высота */}
+        <div className="grid gap-6 md:grid-cols-2">
         {/* Выкуп — основа, accent */}
-        <Rise delay={0.1}>
-          <div className="flex flex-col rounded-lg border border-volt/40 bg-[var(--bg-2)] p-5 sm:p-6">
-            <div className="flex items-center justify-between">
-              <span className="font-mono text-caption uppercase text-mute">Основа</span>
-              <span className="rounded-pill bg-volt px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.08em] text-ink">
-                выкуп в рассрочку
-              </span>
-            </div>
+        <Rise delay={0.1} className="h-full">
+          <div className="flex h-full flex-col rounded-lg border border-volt/40 bg-[var(--bg-2)] p-5 sm:p-6">
+            <span className="font-mono text-caption uppercase text-volt">Основа</span>
             <h3 className="mt-4 font-sans text-h3">Выкуп в рассрочку</h3>
 
             {/* мини-поток */}
@@ -49,7 +45,7 @@ export function SlideModel() {
               <FlowRow k="Выкуп за ~10 мес" v={<>~210–231&nbsp;тыс.&nbsp;<R /></>} />
             </div>
 
-            <div className="mt-6">
+            <div className="mt-auto pt-6">
               <span className="font-mono text-caption uppercase text-mute">Маржа с договора</span>
               <div className="mt-1 font-mono tnum text-[clamp(30px,4vw,50px)] leading-none tracking-tight text-volt">
                 ~120 000&nbsp;<R />
@@ -59,8 +55,8 @@ export function SlideModel() {
         </Rise>
 
         {/* Аренда — вторичная */}
-        <Rise delay={0.16}>
-          <div className="flex flex-col rounded-lg border border-[var(--line)] bg-[var(--bg-2)] p-5 sm:p-6">
+        <Rise delay={0.16} className="h-full">
+          <div className="flex h-full flex-col rounded-lg border border-[var(--line)] bg-[var(--bg-2)] p-5 sm:p-6">
             <span className="font-mono text-caption uppercase text-mute">Альтернатива</span>
             <h3 className="mt-4 font-sans text-h3">Аренда</h3>
             <ul className="mt-5 flex flex-col gap-3 font-sans text-body text-mute">
@@ -68,7 +64,7 @@ export function SlideModel() {
               <Bullet>Стабильный недельный поток</Bullet>
               <Bullet>Актив на балансе компании</Bullet>
             </ul>
-            <p className="mt-5 font-mono text-caption uppercase leading-relaxed text-mute">
+            <p className="mt-auto pt-5 font-mono text-caption uppercase leading-relaxed text-mute">
               Покупаем велосипеды под реального арендатора — капитал не&nbsp;простаивает.
             </p>
           </div>
@@ -87,13 +83,13 @@ export function SlideModel() {
         className="mt-6 flex flex-wrap gap-x-8 gap-y-2 border-t border-[var(--line)] pt-5 font-mono text-caption uppercase leading-relaxed text-mute"
       >
         <span>
-          <span className="text-volt">Связи</span>&nbsp;— директора складов, Самокат первым
+          <span className="font-semibold text-[var(--text)]">Связи</span>&nbsp;— директора складов, Самокат первым
         </span>
         <span>
-          <span className="text-volt">Лучшая цена</span>&nbsp;— 5 000&nbsp;<R /> против 6 500–7 500
+          <span className="font-semibold text-[var(--text)]">Лучшая цена</span>&nbsp;— 5 000&nbsp;<R /> против 6 500–7 500
         </span>
         <span>
-          <span className="text-volt">Инфраструктура</span>&nbsp;— бренд, сайт, e-договоры
+          <span className="font-semibold text-[var(--text)]">Инфраструктура</span>&nbsp;— бренд, сайт, e-договоры
         </span>
       </Rise>
     </Slide>
@@ -126,14 +122,14 @@ function ReinvestCycle() {
       </div>
 
       {/* двухсегментная полоса-таймлайн: время вшито в подписи сегментов */}
-      <div className="mt-2 flex h-10 w-full gap-1">
-        <div className="flex w-[46%] items-center justify-center rounded-md bg-[var(--line-strong)] px-3">
-          <span className="text-center font-mono text-[10px] uppercase leading-tight tracking-[0.04em] text-[var(--text)]">
+      <div className="mt-2 flex h-11 w-full gap-1 sm:h-10">
+        <div className="flex w-[46%] items-center justify-center rounded-md bg-[var(--line-strong)] px-2 sm:px-3">
+          <span className="text-center font-mono text-[10px] uppercase leading-[1.15] tracking-[0.04em] text-[var(--text)]">
             возврат тела · ~4–5&nbsp;мес
           </span>
         </div>
-        <div className="flex flex-1 items-center justify-center rounded-md bg-volt px-3">
-          <span className="text-center font-mono text-[10px] uppercase leading-tight tracking-[0.04em] text-ink">
+        <div className="flex flex-1 items-center justify-center rounded-md bg-volt px-2 sm:px-3">
+          <span className="text-center font-mono text-[10px] uppercase leading-[1.15] tracking-[0.04em] text-ink">
             чистая прибыль · ещё&nbsp;~5&nbsp;мес
           </span>
         </div>
@@ -146,13 +142,10 @@ function ReinvestCycle() {
         <span className="text-[var(--text)]">купили велосипед №2</span>
         <Arrow />
         <span className="text-volt">парк растёт&nbsp;↻</span>
-        <span className="ml-auto font-sans text-[13px] normal-case tracking-normal text-mute">
-          а&nbsp;старый ещё ~5&nbsp;мес платит прибыль
-        </span>
       </div>
 
       {/* честная подпись-защита: рост под спрос, доходность — в сценариях */}
-      <p className="mt-2 max-w-[82ch] font-sans text-[13px] leading-snug text-mute">
+      <p className="mt-3 max-w-[56ch] font-sans text-[13px] leading-snug text-mute">
         Парк растёт под реальный спрос — велосипед покупаем под арендатора.
         Итоговая доходность инвестора — в&nbsp;сценариях далее.
       </p>

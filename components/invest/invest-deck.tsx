@@ -8,6 +8,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
+import styles from "./invest.module.css";
 import { SlideHook } from "./slide-hook";
 import { SlideMarket } from "./slide-market";
 import { SlideClients } from "./slide-clients";
@@ -224,7 +225,7 @@ export function InvestDeck() {
 
 function ChevronDown() {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 animate-bounce">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className={`h-4 w-4 ${styles.nudge}`}>
       <path d="m6 9 6 6 6-6" />
     </svg>
   );

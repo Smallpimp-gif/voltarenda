@@ -41,15 +41,24 @@ const RENTER_LOGOS: { slug: string; alt: string; h: string }[] = [
 ];
 
 const WHITE = { filter: "brightness(0) invert(1)" };
-const INK = { filter: "brightness(0)" };
+
+// Мини-стат для панели «уже с нами»: крупная моно-цифра + подпись.
+function ClientStat({ value, unit }: { value: string; unit: string }) {
+  return (
+    <div className="flex items-baseline gap-2">
+      <span className="font-mono tnum text-h3 leading-none text-[var(--text)]">{value}</span>
+      <span className="font-mono text-caption uppercase text-mute">{unit}</span>
+    </div>
+  );
+}
 
 export function SlideClients() {
   return (
     <Slide id="clients" theme="dark">
       <Rise>
-        <Eyebrow index="02">Пищевая цепочка</Eyebrow>
+        <Eyebrow index="03">Пищевая цепочка</Eyebrow>
       </Rise>
-      <Rise delay={0.05} as="h2" className="mt-6 max-w-[24ch] font-sans text-display-2">
+      <Rise delay={0.05} blur={0} as="h2" className="mt-6 max-w-[24ch] font-sans text-display-2">
         Курьеры — только вход. Дальше — вся доставка.
       </Rise>
       <Rise delay={0.1} as="p" className="mt-5 max-w-[60ch] font-sans text-body-lg text-mute">
@@ -57,7 +66,7 @@ export function SlideClients() {
         курьер едет на&nbsp;нашем велосипеде.
       </Rise>
 
-      <SlideBody className="mt-9">
+      <SlideBody className="mt-10">
         <div className="grid gap-9 lg:grid-cols-[1.05fr_1fr] lg:gap-12">
           {/* ЛЕВО: пищевая цепочка — 3 слоя, наш в основании (volt) */}
           <div className="flex flex-col">
@@ -66,13 +75,13 @@ export function SlideClients() {
               {LAYERS.map((l, i) => (
                 <Rise key={l.title} delay={0.12 + i * 0.08}>
                   <div
-                    className={`flex items-start gap-5 rounded-lg border p-5 ${
+                    className={`flex items-start gap-5 rounded-lg border p-5 sm:p-6 ${
                       l.ours ? "border-volt bg-volt text-ink" : "border-[var(--line)] bg-[var(--bg-2)]"
                     }`}
                   >
                     <span
-                      className={`mt-1 w-[4.5rem] shrink-0 font-mono text-caption uppercase ${
-                        l.ours ? "text-ink/60" : "text-mute"
+                      className={`mt-1 w-20 shrink-0 whitespace-nowrap font-mono text-caption uppercase ${
+                        l.ours ? "text-ink/70" : "text-mute"
                       }`}
                     >
                       {l.tag}
@@ -94,31 +103,37 @@ export function SlideClients() {
             <div className="flex h-full flex-col">
               <span className="font-mono text-caption uppercase text-mute">Уже с нами</span>
 
-              {/* Самокат — канал-партнёр, лого на volt-плашке */}
-              <div className="mt-4 rounded-lg border border-volt bg-volt p-5 text-ink sm:p-6">
+              {/* Самокат — канал-партнёр. Тёмная карточка с volt-рамкой:
+                  единственная сплошная volt-заливка слайда — наш слой слева. */}
+              <div className="mt-4 rounded-lg border border-volt/50 bg-[var(--bg-2)] p-5 text-[var(--text)] sm:p-6">
                 <div className="flex items-center justify-between gap-4">
-                  <img src="/logos/samokat.svg" alt="Самокат" className="h-8 w-auto sm:h-9" style={INK} />
-                  <span className="shrink-0 font-mono text-caption uppercase text-ink/60">канал-партнёр</span>
+                  <img src="/logos/samokat.svg" alt="Самокат" className="h-8 w-auto sm:h-9" style={WHITE} />
+                  <span className="shrink-0 font-mono text-caption uppercase text-mute">канал-партнёр</span>
                 </div>
-                <p className="mt-4 font-mono text-caption uppercase leading-relaxed text-ink/75">
-                  16 дарксторов · 250 курьеров · нашу аренду предлагают первой
+                <div className="mt-5 flex items-center gap-8 border-t border-[var(--line)] pt-4">
+                  <ClientStat value="16" unit="дарксторов" />
+                  <ClientStat value="250" unit="курьеров" />
+                </div>
+                <p className="mt-3 font-mono text-caption uppercase leading-relaxed text-mute">
+                  нашу аренду предлагают первой
                 </p>
               </div>
 
               {/* Лого-ряд — курьеры этих сервисов наши арендаторы */}
-              <div className="mt-7">
+              <div className="mt-auto pt-8">
                 <span className="font-mono text-caption uppercase text-mute">
                   Курьеры этих сервисов — наши арендаторы
                 </span>
-                <div className="mt-5 flex flex-wrap items-center gap-x-8 gap-y-5">
+                <div className="mt-5 grid grid-cols-2 items-center gap-x-6 gap-y-6 sm:grid-cols-4">
                   {RENTER_LOGOS.map((l) => (
-                    <img
-                      key={l.slug}
-                      src={`/logos/${l.slug}.svg`}
-                      alt={l.alt}
-                      className={`${l.h} w-auto opacity-90`}
-                      style={WHITE}
-                    />
+                    <span key={l.slug} className="flex h-7 items-center">
+                      <img
+                        src={`/logos/${l.slug}.svg`}
+                        alt={l.alt}
+                        className={`${l.h} w-auto opacity-90`}
+                        style={WHITE}
+                      />
+                    </span>
                   ))}
                 </div>
               </div>
@@ -127,7 +142,7 @@ export function SlideClients() {
         </div>
       </SlideBody>
 
-      <Punch className="mt-9 max-w-[64ch]">
+      <Punch className="mt-10 max-w-[64ch]">
         Золотая лихорадка идёт — <span className="text-volt">а&nbsp;мы продаём лопаты</span>.
         Без&nbsp;колёс не&nbsp;едет ни&nbsp;одна платформа.
       </Punch>

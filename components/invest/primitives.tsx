@@ -117,18 +117,23 @@ export function Rise({
   children,
   delay = 0,
   y,
+  blur,
   className = "",
   as = "div",
 }: {
   children: ReactNode;
   delay?: number;
   y?: number;
+  /** Стартовый blur входа, px. Крупным display-заголовкам задаём 0 —
+      чтобы кириллица не «шиммерила» на входе. По умолчанию 5px (CSS). */
+  blur?: number;
   className?: string;
   as?: RiseTag;
 }) {
   const style: CSSProperties = {};
   if (delay) style.animationDelay = `${delay}s`;
   if (y != null) (style as Record<string, string>)["--rise-y"] = `${y}px`;
+  if (blur != null) (style as Record<string, string>)["--rise-blur"] = `${blur}px`;
   return createElement(
     as,
     { className: `${styles.rise} ${className}`, style },
@@ -159,6 +164,17 @@ export function CountUp({
   );
 
   useEffect(() => {
+    // Уважаем prefers-reduced-motion: не «набегаем», сразу конечное число.
+    let reduce = false;
+    try {
+      reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    } catch {
+      reduce = false;
+    }
+    if (reduce) {
+      mv.set(to);
+      return;
+    }
     const controls = animate(mv, to, { duration, delay, ease: EASE });
     return controls.stop;
   }, [to, duration, delay, mv]);
