@@ -33,46 +33,34 @@ export function InvestDeck() {
   const containerRef = useRef<HTMLDivElement>(null);
   const [active, setActive] = useState(0);
 
-  // Активный слайд — тот, чей верх ближе всего к верху вьюпорта.
-  // Считаем по viewport-relative rect.top (а не по clientHeight/innerHeight —
-  // они в части окружений плывут). Работает независимо от того, скроллится
-  // контейнер или окно: scroll слушаем в фазе capture (scroll не всплывает).
+  // Активный слайд — тот, чей верх пересёк «триггер-линию» на ~40% высоты
+  // вьюпорта (слайд, занимающий верх экрана). Стабильнее, чем «ближайший
+  // верх». Скроллится либо контейнер (десктоп, md:overflow-auto), либо окно
+  // (телефон — документный скролл) — слушаем оба.
   useEffect(() => {
     const root = containerRef.current;
-    if (!root) return;
-    let ticking = false;
     const measure = () => {
       const slides = Array.from(
         document.querySelectorAll<HTMLElement>("[data-invest-slide]")
       );
+      if (!slides.length) return;
+      const trigger = window.innerHeight * 0.4;
       let best = 0;
-      let bestTop = Infinity;
       slides.forEach((el, i) => {
-        const top = Math.abs(el.getBoundingClientRect().top);
-        if (top < bestTop) {
-          bestTop = top;
-          best = i;
-        }
+        if (el.getBoundingClientRect().top <= trigger) best = i;
       });
       setActive(best);
     };
-    const onScroll = () => {
-      if (ticking) return;
-      ticking = true;
-      requestAnimationFrame(() => {
-        ticking = false;
-        measure();
-      });
-    };
+    // Прямой вызов measure() на scroll: 7 getBoundingClientRect дёшевы, а
+    // rAF-троттлинг в части окружений «залипает» (rAF не тикает на idle) и
+    // measure перестаёт вызываться. passive-слушатель не блокирует скролл.
+    const onScroll = () => measure();
     measure();
-    // Скроллится контейнер (на проде) либо окно (если dvh-контейнер «схлопнут»
-    // в окружении) — слушаем оба. scroll не всплывает, поэтому вешаем прямо
-    // на контейнер; window — на случай оконного скролла.
-    root.addEventListener("scroll", onScroll, { passive: true });
+    root?.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", onScroll);
     return () => {
-      root.removeEventListener("scroll", onScroll);
+      root?.removeEventListener("scroll", onScroll);
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onScroll);
     };
@@ -207,9 +195,11 @@ export function InvestDeck() {
       </button>
 
       {/* ── Скролл-контейнер слайдов ── */}
+      {/* Телефон: обычный скролл страницы (контейнер по высоте контента, без
+          снапа). md+: полноэкранный снап-скроллер. */}
       <div
         ref={containerRef}
-        className="h-[100svh] snap-y snap-proximity overflow-y-auto overflow-x-hidden scroll-smooth"
+        className="overflow-x-hidden md:h-[100svh] md:snap-y md:snap-proximity md:overflow-y-auto md:scroll-smooth"
       >
         <SlideHook />
         <SlideMarket />

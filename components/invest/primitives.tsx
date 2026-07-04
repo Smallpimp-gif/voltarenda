@@ -52,15 +52,18 @@ export function Slide({
       // (читаемый) на светлых. Заливки (bg-volt, ценовая полоса) используют
       // volt напрямую и не зависят от этой переменной.
       style={{ ["--acc"]: theme === "dark" ? "#E5FF00" : "#5c6e00" } as CSSProperties}
-      className={`invest-slide relative flex min-h-[100svh] w-full snap-start flex-col overflow-hidden bg-[var(--bg)] text-[var(--text)] ${center ? "justify-center" : "justify-start"} ${className}`}
+      // На телефоне — обычный вертикальный документ: без scroll-snap и без
+      // принудительной высоты в 100svh (иначе плотные слайды превращаются в
+      // «простыни» под снапом, скролл дёргается). Полноэкранные слайды со
+      // снапом — только с md (десктоп/планшет).
+      className={`invest-slide relative flex w-full flex-col overflow-hidden bg-[var(--bg)] text-[var(--text)] md:min-h-[100svh] md:snap-start ${center ? "md:justify-center" : "justify-start"} ${className}`}
     >
-      {/* Единый safe-area фрейм (одинаковые поля со всех сторон). Враппер
-          растягивается на всю высоту слайда (flex-1), поэтому заголовок
-          стоит у верхнего поля, а <SlideBody> центрируется в остатке —
-          слайд всегда сбалансирован, без «прижатого верха» и пустого низа. */}
+      {/* Единый safe-area фрейм. На md растягивается на высоту слайда (flex-1),
+          заголовок у верхнего поля, <SlideBody> центрируется в остатке. На
+          телефоне — компактные поля, естественный поток сверху вниз. */}
       <div
-        className={`invest-safe mx-auto flex w-full max-w-[1560px] flex-1 flex-col px-gutter pt-[11vh] pb-[6vh] ${
-          center ? "justify-center" : "justify-start"
+        className={`invest-safe mx-auto flex w-full max-w-[1560px] flex-col px-gutter pt-24 pb-16 md:flex-1 md:pt-[11vh] md:pb-[6vh] ${
+          center ? "md:justify-center" : "justify-start"
         } ${contentClassName}`}
       >
         {children}
@@ -80,7 +83,7 @@ export function SlideBody({
   className?: string;
 }) {
   return (
-    <div className={`flex flex-1 flex-col justify-center ${className}`}>
+    <div className={`flex flex-col justify-start md:flex-1 md:justify-center ${className}`}>
       {children}
     </div>
   );

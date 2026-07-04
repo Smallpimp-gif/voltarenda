@@ -55,10 +55,10 @@ export function SlideMarket() {
         </div>
       </div>
 
-        {/* Ценовое преимущество — на мобиле сравнение цен в одну строку, вывод ниже */}
+        {/* Ценовое преимущество: на мобиле — вертикальный стек (цена / зачёркнутая
+            цена конкурентов / вывод), на sm+ — три сегмента в строку. */}
         <Rise delay={0.1}>
-          <div className="flex flex-col gap-5 rounded-lg bg-ink p-5 text-paper sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:p-8">
-          <div className="flex items-baseline justify-between gap-4 sm:contents">
+          <div className="flex flex-col gap-4 rounded-lg bg-ink p-5 text-paper sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:p-8">
             <div className="flex items-baseline gap-3">
               <span className="font-mono tnum text-[clamp(38px,4.6vw,60px)] leading-none text-volt">
                 5 000&nbsp;<R />
@@ -74,11 +74,10 @@ export function SlideMarket() {
               </span>
               <span className="font-mono text-caption uppercase text-white/60">у&nbsp;конкурентов</span>
             </div>
-          </div>
 
-          <p className="font-sans text-body-lg text-white/85 sm:max-w-[20ch] sm:text-right">
-            Дешевле всех — и&nbsp;при этом в&nbsp;плюсе.
-          </p>
+            <p className="font-sans text-body-lg text-white/85 sm:max-w-[20ch] sm:text-right">
+              Дешевле всех — и&nbsp;при этом в&nbsp;плюсе.
+            </p>
           </div>
         </Rise>
 
