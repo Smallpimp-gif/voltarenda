@@ -116,7 +116,7 @@ export function InvestDeck() {
       {/* ── Фикс-хедер: лого + счётчик. Тема под активный слайд. ── */}
       <div
         data-theme={theme}
-        className="pointer-events-none fixed inset-x-0 top-0 z-50 text-[var(--text)] transition-colors duration-base ease-out-soft"
+        className="pointer-events-none fixed inset-x-0 top-0 z-50 bg-gradient-to-b from-[var(--bg)] from-[62%] to-transparent pb-8 text-[var(--text)] transition-colors duration-base ease-out-soft"
       >
         <div className="mx-auto flex max-w-[1560px] items-center justify-between px-gutter pt-[5.6vh] pb-6">
           {/* На обложке (слайд 1) лого скрыто — там есть крупный вордмарк. */}

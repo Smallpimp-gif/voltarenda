@@ -63,19 +63,21 @@ export function SlideHook() {
           закрепляет нас в&nbsp;нише навсегда.
         </Rise>
 
-        {/* 3 цифры — бизнес уже живой */}
-        <div className="mt-10 grid grid-cols-3 gap-6 border-t border-white/15 pt-8 sm:gap-8">
+        {/* Цифры тяги. На телефоне выручка — на всю ширину, дарксторы и
+            курьеры в 2 столбца под ней; с sm — три в ряд. */}
+        <div className="mt-8 grid grid-cols-2 gap-x-6 gap-y-7 border-t border-white/15 pt-7 sm:mt-10 sm:grid-cols-3 sm:gap-8">
           <HookStat
             delay={0.32}
+            className="col-span-2 sm:col-span-1"
             value={
               <>
                 ~<CountUp to={470000} format={fmtRu} />
-                <span className="ml-1 align-baseline font-sans text-[0.3em] font-normal tracking-normal text-white/55">
+                <span className="ml-1 align-baseline font-sans text-[0.32em] font-normal tracking-normal text-white/55">
                   <R />/мес
                 </span>
               </>
             }
-            label={<>живой поток&nbsp;— 19 велосипедов<br className="hidden sm:block" /> уже приносят деньги</>}
+            label={<>живой поток&nbsp;— 19 велосипедов уже приносят деньги</>}
           />
           <HookStat delay={0.42} value={<CountUp to={17} />} label={<>дарксторов-партнёров<br className="hidden sm:block" /> уже подключены</>} />
           <HookStat delay={0.52} value={<><span className="text-mute">~</span><CountUp to={275} /></>} label={<>курьеров в досягаемости<br className="hidden sm:block" /> через одного партнёра</>} />
@@ -111,10 +113,20 @@ export function SlideHook() {
   );
 }
 
-function HookStat({ value, label, delay = 0 }: { value: ReactNode; label: ReactNode; delay?: number }) {
+function HookStat({
+  value,
+  label,
+  delay = 0,
+  className = "",
+}: {
+  value: ReactNode;
+  label: ReactNode;
+  delay?: number;
+  className?: string;
+}) {
   return (
-    <Rise as="div" y={20} delay={delay} className="flex flex-col">
-      <span className="font-mono tnum text-[clamp(34px,5vw,62px)] leading-[0.85] tracking-tight text-volt">
+    <Rise as="div" y={20} delay={delay} className={`flex flex-col ${className}`}>
+      <span className="font-mono tnum text-[clamp(38px,9vw,62px)] leading-[0.85] tracking-tight text-volt">
         {value}
       </span>
       <span className="mt-2.5 font-mono text-[11px] uppercase leading-relaxed tracking-[0.06em] text-white/60">
