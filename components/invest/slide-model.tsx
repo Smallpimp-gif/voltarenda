@@ -17,6 +17,17 @@ export function SlideModel() {
         Простая модель. Быстрые деньги.
       </Rise>
 
+      {/* Живая тяга — это не теория: вот текущая выручка. */}
+      <Rise delay={0.08} className="mt-6">
+        <div className="flex flex-wrap items-center gap-x-7 gap-y-3 rounded-lg border border-volt/40 bg-[var(--bg-2)] px-5 py-4 sm:px-6">
+          <span className="shrink-0 font-mono text-caption uppercase text-volt">Уже работает</span>
+          <TractionNum value="19" unit="велосипедов сдано" />
+          <TractionNum value={<>108 250&nbsp;<R /></>} unit="в неделю" />
+          <TractionNum value={<>~470 000&nbsp;<R /></>} unit="в месяц" accent />
+          <span className="ml-auto font-mono text-caption uppercase text-mute">деньги вперёд · залог</span>
+        </div>
+      </Rise>
+
       <SlideBody className="mt-6 gap-6">
         {/* Две модели */}
         <div className="grid items-start gap-6 md:grid-cols-2">
@@ -70,27 +81,21 @@ export function SlideModel() {
         </Rise>
       </SlideBody>
 
-      {/* Наши преимущества — низ слайда */}
-      <div className="mt-6 grid gap-8 sm:grid-cols-3">
-        <Adv
-          delay={0.1}
-          icon={<NetworkIcon />}
-          title="Связи и каналы"
-          desc={<>Прямой выход через директоров складов. Самокат переводит всех курьеров на электровелосипеды — наша аренда у&nbsp;них первая.</>}
-        />
-        <Adv
-          delay={0.16}
-          icon={<TagIcon />}
-          title="Лучшая цена на рынке"
-          desc={<>5 000 против 6 500–7 500&nbsp;<R /> у&nbsp;конкурентов. Заходим ценой.</>}
-        />
-        <Adv
-          delay={0.22}
-          icon={<StackIcon />}
-          title="Готовая инфраструктура"
-          desc={<>Бренд, сайт, электронные договоры — подключение клиента быстрое и&nbsp;масштабируемое.</>}
-        />
-      </div>
+      {/* Преимущества — компактной строкой (подробнее на слайдах рынка/клиентов) */}
+      <Rise
+        delay={0.1}
+        className="mt-6 flex flex-wrap gap-x-8 gap-y-2 border-t border-[var(--line)] pt-5 font-mono text-caption uppercase leading-relaxed text-mute"
+      >
+        <span>
+          <span className="text-volt">Связи</span>&nbsp;— директора складов, Самокат первым
+        </span>
+        <span>
+          <span className="text-volt">Лучшая цена</span>&nbsp;— 5 000&nbsp;<R /> против 6 500–7 500
+        </span>
+        <span>
+          <span className="text-volt">Инфраструктура</span>&nbsp;— бренд, сайт, e-договоры
+        </span>
+      </Rise>
     </Slide>
   );
 }
@@ -163,6 +168,29 @@ function Arrow() {
   );
 }
 
+function TractionNum({
+  value,
+  unit,
+  accent = false,
+}: {
+  value: ReactNode;
+  unit: string;
+  accent?: boolean;
+}) {
+  return (
+    <div className="flex items-baseline gap-2">
+      <span
+        className={`font-mono tnum text-[clamp(20px,2.4vw,30px)] leading-none tracking-tight ${
+          accent ? "text-volt" : "text-[var(--text)]"
+        }`}
+      >
+        {value}
+      </span>
+      <span className="font-mono text-[10px] uppercase tracking-[0.04em] text-mute">{unit}</span>
+    </div>
+  );
+}
+
 function FlowRow({ k, v }: { k: ReactNode; v: ReactNode }) {
   return (
     <div className="flex items-baseline justify-between gap-4 border-b border-[var(--line)] pb-1.5 last:border-0">
@@ -181,63 +209,3 @@ function Bullet({ children }: { children: ReactNode }) {
   );
 }
 
-function Adv({
-  icon,
-  title,
-  desc,
-  delay = 0,
-}: {
-  icon: ReactNode;
-  title: string;
-  desc: ReactNode;
-  delay?: number;
-}) {
-  return (
-    <Rise delay={delay}>
-      <div className="flex flex-col">
-        <span className="flex h-7 w-7 items-center justify-center text-volt">{icon}</span>
-        <h3 className="mt-2.5 font-sans text-[clamp(17px,1.9vw,22px)] font-semibold leading-tight">{title}</h3>
-        <p className="mt-1.5 font-sans text-[13px] leading-snug text-mute">{desc}</p>
-      </div>
-    </Rise>
-  );
-}
-
-const iconProps = {
-  viewBox: "0 0 24 24",
-  fill: "none",
-  stroke: "currentColor",
-  strokeWidth: 1.8,
-  strokeLinecap: "round" as const,
-  strokeLinejoin: "round" as const,
-  className: "h-6 w-6",
-};
-
-function NetworkIcon() {
-  return (
-    <svg {...iconProps}>
-      <circle cx="12" cy="5" r="2.5" />
-      <circle cx="5" cy="19" r="2.5" />
-      <circle cx="19" cy="19" r="2.5" />
-      <path d="M12 7.5 6.5 17M12 7.5 17.5 17M7.5 19h9" />
-    </svg>
-  );
-}
-
-function TagIcon() {
-  return (
-    <svg {...iconProps}>
-      <path d="M3 7v5.3a2 2 0 0 0 .6 1.4l7 7a2 2 0 0 0 2.8 0l5.3-5.3a2 2 0 0 0 0-2.8l-7-7A2 2 0 0 0 12.3 5H7a4 4 0 0 0-4 4Z" />
-      <circle cx="8" cy="9" r="1.3" />
-    </svg>
-  );
-}
-
-function StackIcon() {
-  return (
-    <svg {...iconProps}>
-      <path d="m12 3 9 5-9 5-9-5 9-5Z" />
-      <path d="m3 13 9 5 9-5" />
-    </svg>
-  );
-}

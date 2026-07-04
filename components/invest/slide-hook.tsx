@@ -7,7 +7,7 @@
 
 import type { ReactNode } from "react";
 import Image from "next/image";
-import { CountUp, Rise, Slide } from "./primitives";
+import { CountUp, Rise, Slide, R, fmtRu } from "./primitives";
 
 // Логотипы партнёров в моно-белый под тёмную обложку (filter поверх фирменного цвета).
 const WHITE = { filter: "brightness(0) invert(1)" };
@@ -65,8 +65,19 @@ export function SlideHook() {
 
         {/* 3 цифры — бизнес уже живой */}
         <div className="mt-10 grid grid-cols-3 gap-6 border-t border-white/15 pt-8 sm:gap-8">
-          <HookStat delay={0.32} value={<CountUp to={17} />} label={<>дарксторов-партнёров<br className="hidden sm:block" /> уже подключены</>} />
-          <HookStat delay={0.42} value={<CountUp to={11} />} label={<>велосипедов уже сдано<br className="hidden sm:block" /> и приносят деньги</>} />
+          <HookStat
+            delay={0.32}
+            value={
+              <>
+                ~<CountUp to={470000} format={fmtRu} />
+                <span className="ml-1 align-baseline font-sans text-[0.3em] font-normal tracking-normal text-white/55">
+                  <R />/мес
+                </span>
+              </>
+            }
+            label={<>живой поток&nbsp;— 19 велосипедов<br className="hidden sm:block" /> уже приносят деньги</>}
+          />
+          <HookStat delay={0.42} value={<CountUp to={17} />} label={<>дарксторов-партнёров<br className="hidden sm:block" /> уже подключены</>} />
           <HookStat delay={0.52} value={<><span className="text-mute">~</span><CountUp to={275} /></>} label={<>курьеров в досягаемости<br className="hidden sm:block" /> через одного партнёра</>} />
         </div>
 
