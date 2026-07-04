@@ -33,6 +33,9 @@ export function SlideHook() {
         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/55 to-black/20" />
         <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/25 to-transparent" />
         <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black to-transparent" />
+        {/* На телефоне кадр узкий — курьер по центру, текст ложится прямо на
+            яркую куртку. Доп. ровное затемнение только на мобиле. */}
+        <div className="absolute inset-0 bg-black/35 md:hidden" />
       </div>
 
       <div className="relative z-10">
@@ -83,14 +86,16 @@ export function SlideHook() {
           <HookStat delay={0.52} value={<><span className="text-mute">~</span><CountUp to={250} /></>} label={<>курьеров в досягаемости<br className="hidden sm:block" /> через одного партнёра</>} />
         </div>
 
-        {/* Дарксторы-партнёры — ровный ряд логотипов под цифрами */}
-        <Rise delay={0.58} className="mt-6 flex items-center gap-x-6">
+        {/* Дарксторы-партнёры — ровный ряд логотипов под цифрами.
+            На мобиле лого мельче и без разделителя — ряд обязан влезать
+            в 375px без обрезки (OZON резался краем экрана). */}
+        <Rise delay={0.58} className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-3 sm:gap-x-6">
           <span className="shrink-0 font-mono text-caption uppercase tracking-[0.08em] text-white/60">
             Партнёры
           </span>
-          <span aria-hidden className="h-5 w-px bg-white/15" />
-          <img src="/logos/samokat.svg" alt="Самокат" className="h-[28px] w-auto opacity-90" style={WHITE} />
-          <img src="/logos/ozon.svg" alt="Озон Фреш" className="h-[21px] w-auto opacity-90" style={WHITE} />
+          <span aria-hidden className="hidden h-5 w-px bg-white/15 sm:block" />
+          <img src="/logos/samokat.svg" alt="Самокат" className="h-[21px] w-auto opacity-90 sm:h-[28px]" style={WHITE} />
+          <img src="/logos/ozon.svg" alt="Озон Фреш" className="h-4 w-auto opacity-90 sm:h-[21px]" style={WHITE} />
         </Rise>
 
         {/* Свежая тяга — мандат Самоката = прямой поток клиентов.
