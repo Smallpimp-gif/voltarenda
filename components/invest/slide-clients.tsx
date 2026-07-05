@@ -119,6 +119,19 @@ export function SlideClients() {
                 </p>
               </div>
 
+              {/* Диверсификация: дарксторы — ускоритель, не единственный
+                  источник заявок. Де-риск для инвестора. */}
+              <div className="mt-4 rounded-lg border border-[var(--line)] bg-[var(--bg-2)] p-5">
+                <span className="font-mono text-caption uppercase text-mute">
+                  канал — не единственный
+                </span>
+                <p className="mt-2 font-sans text-body leading-snug text-mute">
+                  Заявки идут и напрямую — сайт, Telegram-бот, рекомендации
+                  курьеров. Просядет один канал —{" "}
+                  <span className="font-semibold text-[var(--text)]">поток останется</span>.
+                </p>
+              </div>
+
               {/* Лого-ряд — курьеры этих сервисов наши арендаторы */}
               <div className="mt-auto pt-5">
                 <span className="font-mono text-caption uppercase text-mute">
