@@ -330,7 +330,7 @@ export function GrowthChart() {
         <span className="text-[var(--acc)]">+46% за&nbsp;4&nbsp;года</span>
       </div>
 
-      <div className="mt-4 flex h-[clamp(96px,13vh,150px)] items-end gap-3 sm:gap-5">
+      <div className="mt-4 flex h-[clamp(92px,12vh,140px)] items-end gap-3 sm:gap-5">
         {BARS.map((bar, i) => (
           <div
             key={bar.year}

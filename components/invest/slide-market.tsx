@@ -9,8 +9,9 @@ import { Eyebrow, GrowthChart, Plate, Punch, R, Rise, Slide, SlideBody } from ".
 
 const DRIVERS: { n: string; title: string; desc: ReactNode }[] = [
   { n: "01", title: "Онлайн-торговля растёт", desc: <>доставке нужны руки и&nbsp;колёса</> },
-  { n: "02", title: "Курьер — выгодная профессия", desc: <>медиана ~150&nbsp;000&nbsp;<R />/мес, +100% за&nbsp;4&nbsp;года</> },
-  { n: "03", title: "Структурный дефицит", desc: <>не хватает 200&nbsp;тыс. — поток новичков растёт</> },
+  { n: "02", title: "Курьер — выгодная профессия", desc: <>медиана ~150&nbsp;тыс.&nbsp;<R />/мес — ×2 за&nbsp;4&nbsp;года</> },
+  { n: "03", title: "Люди идут в доставку", desc: <>из других профессий — дефицит ~200&nbsp;тыс.</> },
+  { n: "04", title: "Новые сервисы", desc: <>Купер вышел на рынок — мест только больше</> },
 ];
 
 export function SlideMarket() {
@@ -27,7 +28,7 @@ export function SlideMarket() {
         <span className="block pl-[10%] sm:pl-[16%]">Окно&nbsp;— сейчас.</span>
       </Rise>
 
-      <SlideBody className="mt-6 gap-6">
+      <SlideBody className="mt-6 gap-5">
         <div className="grid gap-8 lg:grid-cols-2 lg:gap-14">
         {/* ЛЕВО: график роста + драйверы */}
         <div className="flex flex-col gap-6">
@@ -36,7 +37,7 @@ export function SlideMarket() {
           </Rise>
 
           <Rise delay={0.16}>
-            <div className="flex flex-col gap-3 border-t border-[var(--line)] pt-5">
+            <div className="flex flex-col gap-2.5 border-t border-[var(--line)] pt-3">
               {DRIVERS.map((d) => (
                 <div key={d.n} className="flex gap-3">
                   <span className="font-mono tnum text-caption text-[var(--acc)]">{d.n}</span>
@@ -54,7 +55,18 @@ export function SlideMarket() {
         <div className="grid grid-cols-2 gap-4 sm:gap-6">
           <StatPlate value="1,5 млн" label={<>курьеров — и&nbsp;не хватает ещё ~200&nbsp;тыс.</>} delay={0.12} accent />
           <StatPlate value={<>+60%</>} label={<>экспресс-доставка → 470&nbsp;млрд&nbsp;<R /> в&nbsp;2024</>} delay={0.18} />
-          <StatPlate value={<>+87%</>} label={<>оборот доставки, лето&nbsp;2025 к&nbsp;году</>} delay={0.24} />
+          {/* Живая история вместо третьей цифры роста: слышим такие от
+              арендаторов постоянно — экономика реально ведёт людей в доставку. */}
+          <Rise delay={0.24}>
+            <Plate className="flex h-full flex-col justify-between gap-4 !p-5">
+              <p className="font-sans text-[15px] font-medium leading-snug text-[var(--text)]">
+                «20 лет работал поваром — теперь курьер: выходит больше».
+              </p>
+              <p className="font-mono text-[10px] uppercase leading-relaxed tracking-[0.04em] text-mute">
+                арендатор Вольтаренды · слышим такие каждую неделю
+              </p>
+            </Plate>
+          </Rise>
           <StatPlate value={<>35 трлн</>} unit={<R />} label={<>e-commerce России к&nbsp;2030&nbsp;году</>} delay={0.3} />
         </div>
       </div>
@@ -62,7 +74,7 @@ export function SlideMarket() {
         {/* Ценовое преимущество: на мобиле — вертикальный стек (цена / зачёркнутая
             цена конкурентов / вывод), на sm+ — три сегмента в строку. */}
         <Rise delay={0.1}>
-          <div className="flex flex-col gap-4 rounded-lg bg-ink p-5 text-paper sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:p-6">
+          <div className="flex flex-col gap-4 rounded-lg bg-ink p-5 text-paper sm:flex-row sm:items-center sm:justify-between sm:gap-6">
             <div className="flex items-baseline gap-3">
               <span className="font-mono tnum text-[clamp(34px,4vw,52px)] leading-none text-volt">
                 5 000&nbsp;<R />
