@@ -15,6 +15,7 @@ import { SlideClients } from "./slide-clients";
 import { SlideModel } from "./slide-model";
 import { SlideRisks } from "./slide-risks";
 import { SlideStrategy } from "./slide-strategy";
+import { SlideTeam } from "./slide-team";
 import { SlideCta } from "./slide-cta";
 
 const SLIDES = [
@@ -24,6 +25,7 @@ const SLIDES = [
   { id: "model", theme: "dark", label: "Экономика" },
   { id: "risks", theme: "light", label: "Риски" },
   { id: "strategy", theme: "dark", label: "Стратегия" },
+  { id: "team", theme: "light", label: "Команда" },
   { id: "cta", theme: "dark", label: "Заход" },
 ] as const;
 
@@ -209,6 +211,7 @@ export function InvestDeck() {
         <SlideModel />
         <SlideRisks />
         <SlideStrategy />
+        <SlideTeam />
         <SlideCta />
       </div>
     </div>

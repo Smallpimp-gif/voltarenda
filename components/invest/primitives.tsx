@@ -62,7 +62,7 @@ export function Slide({
           заголовок у верхнего поля, <SlideBody> центрируется в остатке. На
           телефоне — компактные поля, естественный поток сверху вниз. */}
       <div
-        className={`invest-safe mx-auto flex w-full max-w-[1560px] flex-col px-gutter pt-24 pb-16 md:flex-1 md:pt-[11vh] md:pb-[6vh] ${
+        className={`invest-safe mx-auto flex w-full max-w-[1560px] flex-col px-gutter pt-14 pb-8 md:flex-1 md:pt-[11vh] md:pb-[6vh] ${
           center ? "md:justify-center" : "justify-start"
         } ${contentClassName}`}
       >
@@ -316,7 +316,7 @@ export function GrowthChart() {
         <span className="text-[var(--acc)]">+46% за&nbsp;4&nbsp;года</span>
       </div>
 
-      <div className="mt-4 flex h-[clamp(104px,17vh,170px)] items-end gap-3 sm:gap-5">
+      <div className="mt-4 flex h-[clamp(96px,13vh,150px)] items-end gap-3 sm:gap-5">
         {BARS.map((bar, i) => (
           <div
             key={bar.year}

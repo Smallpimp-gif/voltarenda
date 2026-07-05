@@ -38,7 +38,9 @@ export function SlideHook() {
         <div className="absolute inset-0 bg-black/35 md:hidden" />
       </div>
 
-      <div className="relative z-10">
+      {/* pt-10 на мобиле — зазор под фикс-хедер (общий mobile-pt слайдов
+          ужат до шва, а обложке нужен полный отступ сверху). */}
+      <div className="relative z-10 pt-10 md:pt-0">
         <Rise>
           <span className="font-mono text-caption uppercase tracking-[0.08em] text-white/70">
             Инвестиционное предложение · 2026

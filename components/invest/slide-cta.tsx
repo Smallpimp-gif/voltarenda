@@ -1,6 +1,6 @@
 "use client";
 
-// СЛАЙД 6 — ЗАХОДИ СЕЙЧАС (условия + потенциал + срочность).
+// СЛАЙД 8 — ЗАХОДИ СЕЙЧАС (условия + потенциал + срочность).
 // Цель: конвертировать в действие. Тёмный слайд с volt-CTA — эхо
 // футера сайта. Высокий потенциал — ТОЛЬКО как верхний сценарий.
 
@@ -23,7 +23,7 @@ export function SlideCta() {
   return (
     <Slide id="cta" theme="dark">
       <Rise>
-        <Eyebrow index="07">Условия захода</Eyebrow>
+        <Eyebrow index="08">Условия захода</Eyebrow>
       </Rise>
       <Rise delay={0.05} blur={0} as="h2" className="mt-6 font-sans text-display-1">
         Заходи сейчас.

@@ -23,16 +23,16 @@ export function SlideMarket() {
         Рынок курьеров взрывается. Окно&nbsp;— сейчас.
       </Rise>
 
-      <SlideBody className="mt-10 gap-10">
-        <div className="grid gap-10 lg:grid-cols-2 lg:gap-14">
+      <SlideBody className="mt-6 gap-7">
+        <div className="grid gap-8 lg:grid-cols-2 lg:gap-14">
         {/* ЛЕВО: график роста + драйверы */}
-        <div className="flex flex-col gap-8">
+        <div className="flex flex-col gap-6">
           <Rise delay={0.1}>
             <GrowthChart />
           </Rise>
 
           <Rise delay={0.16}>
-            <div className="flex flex-col gap-4 border-t border-[var(--line)] pt-8">
+            <div className="flex flex-col gap-3 border-t border-[var(--line)] pt-6">
               {DRIVERS.map((d) => (
                 <div key={d.n} className="flex gap-3">
                   <span className="font-mono tnum text-caption text-[var(--acc)]">{d.n}</span>
@@ -58,9 +58,9 @@ export function SlideMarket() {
         {/* Ценовое преимущество: на мобиле — вертикальный стек (цена / зачёркнутая
             цена конкурентов / вывод), на sm+ — три сегмента в строку. */}
         <Rise delay={0.1}>
-          <div className="flex flex-col gap-4 rounded-lg bg-ink p-5 text-paper sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:p-8">
+          <div className="flex flex-col gap-4 rounded-lg bg-ink p-5 text-paper sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:p-6">
             <div className="flex items-baseline gap-3">
-              <span className="font-mono tnum text-[clamp(38px,4.6vw,60px)] leading-none text-volt">
+              <span className="font-mono tnum text-[clamp(34px,4vw,52px)] leading-none text-volt">
                 5 000&nbsp;<R />
               </span>
               <span className="font-mono text-caption uppercase leading-tight text-white/60">
@@ -87,7 +87,7 @@ export function SlideMarket() {
             Рынок растёт до&nbsp;2030. Серьёзного бренда в&nbsp;нише нет. Через год это
             место будет занято — вопрос только, кем.
           </Punch>
-          <Rise delay={0.1} as="p" className="mt-6 font-mono text-[10px] uppercase leading-relaxed tracking-[0.06em] text-mute">
+          <Rise delay={0.1} as="p" className="mt-3 font-mono text-[10px] uppercase leading-relaxed tracking-[0.06em] text-mute">
             Источники: Минпромторг / ТАСС · Росстат · TADviser · BusinesStat · ЮKassa · ВТБ · Mordor Intelligence
           </Rise>
         </div>
@@ -111,7 +111,7 @@ function StatPlate({
 }) {
   return (
     <Rise delay={delay}>
-      <Plate accent={accent} className="flex h-full flex-col justify-between gap-6 !p-5 sm:!p-6">
+      <Plate accent={accent} className="flex h-full flex-col justify-between gap-5 !p-5">
         <div className="flex items-baseline gap-1.5">
           <span className={`font-mono tnum text-[clamp(28px,3.6vw,44px)] leading-none tracking-tight ${accent ? "text-[var(--acc)]" : "text-[var(--text)]"}`}>
             {value}

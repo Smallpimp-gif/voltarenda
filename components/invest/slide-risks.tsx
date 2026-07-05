@@ -51,11 +51,11 @@ export function SlideRisks() {
         Четыре главных страха инвестора — и почему каждый закрыт структурно, а&nbsp;не на&nbsp;словах.
       </Rise>
 
-      <SlideBody className="mt-8 sm:mt-12">
-        <div className="grid gap-4 sm:grid-cols-2 sm:gap-8">
+      <SlideBody className="mt-8">
+        <div className="grid gap-4 sm:grid-cols-2 sm:gap-6">
           {RISKS.map((r, i) => (
           <Rise key={r.n} delay={0.1 + i * 0.07}>
-            <div className="flex h-full flex-col rounded-lg border border-[var(--line)] bg-[var(--bg-2)] p-6 sm:p-8">
+            <div className="flex h-full flex-col rounded-lg border border-[var(--line)] bg-[var(--bg-2)] p-6">
               <div className="flex items-center justify-between">
                 <span className="font-mono text-caption uppercase text-mute">
                   Угроза / {r.n}
@@ -86,7 +86,7 @@ export function SlideRisks() {
         </div>
       </SlideBody>
 
-      <Punch className="mt-8 max-w-[40ch] sm:mt-12">
+      <Punch className="mt-8 max-w-[40ch] sm:mt-10">
         Деньги — вперёд, актив — под контролем. Дефолтов почти нет.
       </Punch>
     </Slide>

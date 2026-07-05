@@ -36,10 +36,10 @@ export function SlideStrategy() {
         Аренда/выкуп — не конечная цель, а&nbsp;быстрый способ зайти и&nbsp;набрать базу.
       </Rise>
 
-      <SlideBody className="mt-8 gap-8">
+      <SlideBody className="mt-6 gap-6">
         {/* Восходящая лестница */}
         <Rise delay={0.14}>
-        <div className="flex h-[clamp(92px,14vh,164px)] items-end gap-3 sm:gap-4">
+        <div className="flex h-[clamp(84px,12vh,150px)] items-end gap-3 sm:gap-4">
           {STEPS.map((s, i) => (
             <div key={s.n} className="flex h-full flex-1 flex-col justify-end">
               {s.pivot && (
@@ -58,7 +58,7 @@ export function SlideStrategy() {
         </div>
 
         {/* подписи ступеней */}
-        <div className="mt-6 grid grid-cols-5 gap-2 sm:gap-4">
+        <div className="mt-5 grid grid-cols-5 gap-2 sm:gap-4">
           {STEPS.map((s) => (
             <div key={s.n} className="flex flex-col">
               <span className={`font-mono tnum text-caption ${s.pivot ? "text-volt" : "text-mute"}`}>{s.n}</span>
@@ -75,7 +75,7 @@ export function SlideStrategy() {
 
         {/* Китай — переломный момент, с цифрами */}
         <Rise delay={0.12}>
-          <div className="rounded-lg border border-volt/40 bg-[var(--bg-2)] p-6 sm:p-8">
+          <div className="rounded-lg border border-volt/40 bg-[var(--bg-2)] p-6">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
             <h3 className="flex items-center gap-2.5 font-sans text-h3 text-[var(--text)]">
               <span aria-hidden className="inline-block h-2 w-2 shrink-0 bg-volt" />
@@ -86,7 +86,7 @@ export function SlideStrategy() {
             </span>
           </div>
 
-          <div className="mt-6 grid gap-6 sm:grid-cols-3">
+          <div className="mt-5 grid gap-6 sm:grid-cols-3">
             <Delta k="Себестоимость" from={<>110 000&nbsp;<R /></>} to={<>60–65 тыс.&nbsp;<R /></>} />
             <Delta k="Маржа с договора" from={<>120 000&nbsp;<R /></>} to={<>~160 000&nbsp;<R /></>} badge="+30–37%" accent />
             <Delta k="Цена выкупа клиенту" from={<>~210–231 тыс.</>} to={<>та же</>} note="зарабатываем кратно больше" />
@@ -95,7 +95,7 @@ export function SlideStrategy() {
         </Rise>
       </SlideBody>
 
-      <Punch className="mt-10 max-w-[56ch]">
+      <Punch className="mt-8 max-w-[56ch]">
         Схему легко скопировать. Бренд с&nbsp;лучшей ценой и&nbsp;своим производством — нет.
         Именно это закрывает нишу навсегда.
       </Punch>

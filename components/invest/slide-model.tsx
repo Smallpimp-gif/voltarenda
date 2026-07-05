@@ -20,7 +20,7 @@ export function SlideModel() {
       {/* Живая тяга — это не теория: вот текущая выручка. Числа нейтральные,
           единственный крупный volt-акцент слайда — маржа ниже. */}
       <Rise delay={0.08} className="mt-6">
-        <div className="flex flex-wrap items-center gap-x-5 gap-y-3 rounded-lg border border-volt/40 bg-[var(--bg-2)] px-5 py-4 sm:px-6">
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-3 rounded-lg border border-volt/40 bg-[var(--bg-2)] px-5 py-3.5 sm:px-6">
           <span className="shrink-0 font-mono text-caption uppercase text-volt">Уже работает</span>
           <TractionNum value="19" unit="велосипедов сдано" />
           <TractionNum value={<>108 250&nbsp;<R /></>} unit="в неделю" />
@@ -29,12 +29,12 @@ export function SlideModel() {
         </div>
       </Rise>
 
-      <SlideBody className="mt-6 gap-6">
+      <SlideBody className="mt-5 gap-5">
         {/* Две модели — симметричные шапки, равная высота */}
         <div className="grid gap-6 md:grid-cols-2">
         {/* Выкуп — основа, accent */}
         <Rise delay={0.1} className="h-full">
-          <div className="flex h-full flex-col rounded-lg border border-volt/40 bg-[var(--bg-2)] p-5 sm:p-6">
+          <div className="flex h-full flex-col rounded-lg border border-volt/40 bg-[var(--bg-2)] p-5">
             <span className="font-mono text-caption uppercase text-volt">Основа</span>
             <h3 className="mt-4 font-sans text-h3">Выкуп в рассрочку</h3>
 
@@ -47,7 +47,7 @@ export function SlideModel() {
 
             <div className="mt-auto pt-6">
               <span className="font-mono text-caption uppercase text-mute">Маржа с договора</span>
-              <div className="mt-1 font-mono tnum text-[clamp(30px,4vw,50px)] leading-none tracking-tight text-volt">
+              <div className="mt-1 font-mono tnum text-[clamp(28px,3.4vw,44px)] leading-none tracking-tight text-volt">
                 ~120 000&nbsp;<R />
               </div>
             </div>
@@ -56,7 +56,7 @@ export function SlideModel() {
 
         {/* Аренда — вторичная */}
         <Rise delay={0.16} className="h-full">
-          <div className="flex h-full flex-col rounded-lg border border-[var(--line)] bg-[var(--bg-2)] p-5 sm:p-6">
+          <div className="flex h-full flex-col rounded-lg border border-[var(--line)] bg-[var(--bg-2)] p-5">
             <span className="font-mono text-caption uppercase text-mute">Альтернатива</span>
             <h3 className="mt-4 font-sans text-h3">Аренда</h3>
             <ul className="mt-5 flex flex-col gap-3 font-sans text-body text-mute">
@@ -80,13 +80,13 @@ export function SlideModel() {
       {/* Преимущества — компактной строкой (подробнее на слайдах рынка/клиентов) */}
       <Rise
         delay={0.1}
-        className="mt-6 flex flex-wrap gap-x-8 gap-y-2 border-t border-[var(--line)] pt-5 font-mono text-caption uppercase leading-relaxed text-mute"
+        className="mt-5 flex flex-wrap gap-x-8 gap-y-2 border-t border-[var(--line)] pt-4 font-mono text-caption uppercase leading-relaxed text-mute [@media(min-width:768px)_and_(max-height:979px)]:hidden"
       >
         <span>
           <span className="font-semibold text-[var(--text)]">Связи</span>&nbsp;— директора складов, Самокат первым
         </span>
         <span>
-          <span className="font-semibold text-[var(--text)]">Лучшая цена</span>&nbsp;— 5 000&nbsp;<R /> против 6 500–7 500
+          <span className="font-semibold text-[var(--text)]">Лучшая цена</span>&nbsp;— 5&nbsp;000&nbsp;<R /> против 6&nbsp;500–7&nbsp;500
         </span>
         <span>
           <span className="font-semibold text-[var(--text)]">Инфраструктура</span>&nbsp;— бренд, сайт, e-договоры
@@ -102,7 +102,7 @@ export function SlideModel() {
 // итоговая доходность инвестора заявлена сценариями на слайде 6.
 function ReinvestCycle() {
   return (
-    <div className="rounded-lg border border-volt/40 bg-[var(--bg-2)] p-5 sm:p-6">
+    <div className="rounded-lg border border-volt/40 bg-[var(--bg-2)] p-5">
       {/* заголовок блока */}
       <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
         <h3 className="font-sans text-h3">Как капитал множится</h3>
@@ -112,12 +112,12 @@ function ReinvestCycle() {
       </div>
 
       {/* верхние метки сумм: вложили → вернул вдвое */}
-      <div className="mt-5 flex items-baseline justify-between font-mono text-caption uppercase">
+      <div className="mt-4 flex flex-col gap-1 font-mono text-caption uppercase sm:flex-row sm:items-baseline sm:justify-between">
         <span className="text-mute">
-          вложили <span className="tnum text-[var(--text)]">110к&nbsp;<R /></span>
+          вложили <span className="tnum text-[var(--text)]">110 000&nbsp;<R /></span>
         </span>
         <span className="text-mute">
-          вернул <span className="tnum text-volt">~220к&nbsp;<R /></span> · 2×
+          вернул <span className="tnum text-volt">~220 000&nbsp;<R /></span> · 2×
         </span>
       </div>
 

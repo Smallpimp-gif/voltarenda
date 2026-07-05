@@ -66,7 +66,7 @@ export function SlideClients() {
         курьер едет на&nbsp;нашем велосипеде.
       </Rise>
 
-      <SlideBody className="mt-10">
+      <SlideBody className="mt-6">
         <div className="grid gap-9 lg:grid-cols-[1.05fr_1fr] lg:gap-12">
           {/* ЛЕВО: пищевая цепочка — 3 слоя, наш в основании (volt) */}
           <div className="flex flex-col">
@@ -75,7 +75,7 @@ export function SlideClients() {
               {LAYERS.map((l, i) => (
                 <Rise key={l.title} delay={0.12 + i * 0.08}>
                   <div
-                    className={`flex items-start gap-5 rounded-lg border p-5 sm:p-6 ${
+                    className={`flex items-start gap-5 rounded-lg border p-5 ${
                       l.ours ? "border-volt bg-volt text-ink" : "border-[var(--line)] bg-[var(--bg-2)]"
                     }`}
                   >
@@ -105,12 +105,12 @@ export function SlideClients() {
 
               {/* Самокат — канал-партнёр. Тёмная карточка с volt-рамкой:
                   единственная сплошная volt-заливка слайда — наш слой слева. */}
-              <div className="mt-4 rounded-lg border border-volt/50 bg-[var(--bg-2)] p-5 text-[var(--text)] sm:p-6">
-                <div className="flex items-center justify-between gap-4">
-                  <img src="/logos/samokat.svg" alt="Самокат" className="h-8 w-auto sm:h-9" style={WHITE} />
+              <div className="mt-4 rounded-lg border border-volt/50 bg-[var(--bg-2)] p-5 text-[var(--text)]">
+                <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+                  <img src="/logos/samokat.svg" alt="Самокат" className="h-7 w-auto sm:h-8" style={WHITE} />
                   <span className="shrink-0 font-mono text-caption uppercase text-mute">канал-партнёр</span>
                 </div>
-                <div className="mt-5 flex items-center gap-8 border-t border-[var(--line)] pt-4">
+                <div className="mt-4 flex items-center gap-8 border-t border-[var(--line)] pt-3">
                   <ClientStat value="16" unit="дарксторов" />
                   <ClientStat value="250" unit="курьеров" />
                 </div>
@@ -120,7 +120,7 @@ export function SlideClients() {
               </div>
 
               {/* Лого-ряд — курьеры этих сервисов наши арендаторы */}
-              <div className="mt-auto pt-8">
+              <div className="mt-auto pt-5">
                 <span className="font-mono text-caption uppercase text-mute">
                   Курьеры этих сервисов — наши арендаторы
                 </span>
@@ -142,9 +142,8 @@ export function SlideClients() {
         </div>
       </SlideBody>
 
-      <Punch className="mt-10 max-w-[64ch]">
+      <Punch className="mt-8 max-w-[64ch]">
         Золотая лихорадка идёт — <span className="text-volt">а&nbsp;мы продаём лопаты</span>.
-        Без&nbsp;колёс не&nbsp;едет ни&nbsp;одна платформа.
       </Punch>
     </Slide>
   );
