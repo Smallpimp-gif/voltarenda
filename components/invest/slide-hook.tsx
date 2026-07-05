@@ -48,7 +48,7 @@ export function SlideHook() {
         </Rise>
 
         {/* Лого-вордмарк бренда — родной жёлтый #EAFF02 на чёрном */}
-        <Rise delay={0.06} className="mt-5">
+        <Rise delay={0.06} className="mt-6">
           <Image
             src="/logo.svg"
             alt="Вольтаренда"
@@ -59,21 +59,56 @@ export function SlideHook() {
           />
         </Rise>
 
-        <Rise delay={0.12} blur={0} as="h1" className="mt-5 max-w-[20ch] font-sans text-display-2 text-paper sm:text-display-1">
+        <Rise delay={0.12} blur={0} as="h1" className="mt-6 max-w-[20ch] font-sans text-display-2 text-paper sm:text-display-1">
           Бренд электровелосипедов, который захватывает рынок доставки.
         </Rise>
 
-        <Rise delay={0.2} as="p" className="mt-4 max-w-[46ch] font-sans text-body-lg text-white/75">
+        <Rise delay={0.2} as="p" className="mt-5 max-w-[46ch] font-sans text-body-lg text-white/75">
           Мы не прокат. Аренда — механизм входа в&nbsp;рынок. Бренд — то, что
           закрепляет нас в&nbsp;нише навсегда.
         </Rise>
 
-        {/* Цифры тяги. На телефоне выручка — на всю ширину, дарксторы и
-            курьеры в 2 столбца под ней; с sm — три в ряд. */}
-        <div className="mt-8 grid grid-cols-2 gap-x-6 gap-y-7 border-t border-white/15 pt-6 sm:grid-cols-3 sm:gap-8">
+        {/* Цифры тяги. Мобила: строки-таблица с хайрлайнами (число слева,
+            подпись справа) — жёсткая сетка и воздух вместо ломаных колонок.
+            С sm — прежние три в ряд. */}
+        <div className="mt-9 flex flex-col border-t border-white/15 sm:hidden">
+          {[
+            {
+              d: 0.32,
+              v: (
+                <>
+                  ~<CountUp to={470000} format={fmtRu} />
+                  <span className="ml-1 font-sans text-[15px] font-normal tracking-normal text-white/55">
+                    <R />/мес
+                  </span>
+                </>
+              ),
+              l: <>живой поток<br />с 19 велосипедов</>,
+            },
+            { d: 0.42, v: <CountUp to={16} />, l: <>дарксторов-партнёров<br />подключены</> },
+            {
+              d: 0.52,
+              v: (
+                <>
+                  <span className="text-white/45">~</span>
+                  <CountUp to={250} />
+                </>
+              ),
+              l: <>курьеров через<br />одного партнёра</>,
+            },
+          ].map((st, i) => (
+            <Rise key={i} delay={st.d} className="flex items-center justify-between gap-6 border-b border-white/15 py-4">
+              <span className="font-mono tnum text-[34px] leading-none tracking-tight text-volt">{st.v}</span>
+              <span className="text-right font-mono text-[11px] uppercase leading-relaxed tracking-[0.06em] text-white/70">
+                {st.l}
+              </span>
+            </Rise>
+          ))}
+        </div>
+
+        <div className="mt-8 hidden border-t border-white/15 pt-6 sm:grid sm:grid-cols-3 sm:gap-8">
           <HookStat
             delay={0.32}
-            className="col-span-2 sm:col-span-1"
             value={
               <>
                 ~<CountUp to={470000} format={fmtRu} />
@@ -91,7 +126,7 @@ export function SlideHook() {
         {/* Дарксторы-партнёры — ровный ряд логотипов под цифрами.
             На мобиле лого мельче и без разделителя — ряд обязан влезать
             в 375px без обрезки (OZON резался краем экрана). */}
-        <Rise delay={0.58} className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-3 sm:gap-x-6">
+        <Rise delay={0.58} className="mt-8 flex flex-wrap items-center gap-x-4 gap-y-3 sm:mt-7 sm:gap-x-6">
           <span className="shrink-0 font-mono text-caption uppercase tracking-[0.08em] text-white/60">
             Партнёры
           </span>
@@ -106,7 +141,7 @@ export function SlideHook() {
             равно есть в цифрах выше и на слайде клиентов. */}
         <Rise
           delay={0.64}
-          className="mt-6 max-w-[70ch] border-l-2 border-volt pl-4 sm:pl-5 [@media(min-width:768px)_and_(max-height:919px)]:hidden"
+          className="mt-7 hidden max-w-[70ch] border-l-2 border-volt pl-4 sm:pl-5 [@media(min-width:768px)_and_(min-height:920px)]:block"
         >
           <span className="font-mono text-caption uppercase tracking-[0.08em] text-volt">
             Прямой поток клиентов · свежее
