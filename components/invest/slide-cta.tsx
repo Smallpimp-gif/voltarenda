@@ -37,12 +37,14 @@ export function SlideCta() {
         <Offer value={<>~2 000 000&nbsp;<R /></>} label="основатель вложил сам" />
       </Rise>
 
-      <Rise delay={0.14} as="p" className="mt-4 font-mono text-caption uppercase text-mute">
-        Рискуем вместе с&nbsp;тобой — у&nbsp;основателя свои деньги в&nbsp;деле.
+      {/* Гибкость формата сделки — снимает барьер «только доля». */}
+      <Rise delay={0.14} as="p" className="mt-4 max-w-[72ch] font-mono text-caption uppercase leading-relaxed text-mute">
+        Рассмотрим любой формат — <span className="text-[var(--text)]">доля, займ или смешанная схема</span>.
+        Рискуем вместе: у&nbsp;основателя свои деньги в&nbsp;деле.
       </Rise>
 
       {/* 3 сценария доходности по нарастающей */}
-      <div className="mt-10 grid gap-4 sm:grid-cols-3 sm:gap-6">
+      <div className="mt-8 grid gap-4 sm:grid-cols-3 sm:gap-6">
         {SCENARIOS.map((s, i) => {
           const peak = s.tone === "peak";
           const rise = s.tone === "rise";
