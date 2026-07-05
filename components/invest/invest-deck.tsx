@@ -132,7 +132,14 @@ export function InvestDeck() {
             <span className="tnum text-[var(--text)]">
               {String(active + 1).padStart(2, "0")}
             </span>
-            <span className="text-mute">—</span>
+            {/* Кинетический трек прогресса: сегмент скользит при смене слайда.
+                Цвет — var(--text) (volt на белом хедере невидим). */}
+            <span className="relative h-[3px] w-10 overflow-hidden rounded-pill bg-[var(--line-strong)]">
+              <span
+                className="absolute inset-y-0 left-0 rounded-pill bg-[var(--text)] transition-transform duration-base ease-out-soft"
+                style={{ width: `${100 / TOTAL}%`, transform: `translateX(${active * 100}%)` }}
+              />
+            </span>
             <span className="tnum text-mute">{String(TOTAL).padStart(2, "0")}</span>
           </div>
         </div>
@@ -156,7 +163,7 @@ export function InvestDeck() {
             <span
               className={`rounded-pill transition-all duration-base ease-out-soft ${
                 i === active
-                  ? "h-6 w-1.5 bg-volt"
+                  ? `h-6 w-1.5 ${theme === "dark" ? "bg-volt" : "bg-ink"}`
                   : "h-1.5 w-1.5 bg-[var(--line-strong)] group-hover:bg-[var(--text)]"
               }`}
             />

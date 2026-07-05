@@ -58,6 +58,14 @@ export function Slide({
       // снапом — только с md (десктоп/планшет).
       className={`invest-slide relative flex w-full flex-col overflow-hidden bg-[var(--bg)] text-[var(--text)] md:min-h-[100svh] md:snap-start ${center ? "md:justify-center" : "justify-start"} ${className}`}
     >
+      {/* Реперы модульной сетки — нижняя пара «+» на углах фрейма (bottom
+          совпадает с pb-[6vh] .invest-safe). Верхнюю пару не ставим: попадает
+          в градиент фикс-хедера. Только md+. */}
+      <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-[6vh] z-0 mx-auto hidden w-full max-w-[1560px] md:block">
+        <span className="absolute left-gutter top-0 -translate-x-1/2 translate-y-1/2 font-mono text-[10px] leading-none text-mute/50">+</span>
+        <span className="absolute right-gutter top-0 translate-x-1/2 translate-y-1/2 font-mono text-[10px] leading-none text-mute/50">+</span>
+      </div>
+
       {/* Единый safe-area фрейм. На md растягивается на высоту слайда (flex-1),
           заголовок у верхнего поля, <SlideBody> центрируется в остатке. На
           телефоне — компактные поля, естественный поток сверху вниз. */}
@@ -269,16 +277,22 @@ export function Plate({
 export function Punch({
   children,
   className = "",
+  marker = "вывод",
 }: {
   children: ReactNode;
   className?: string;
+  /** Mono-маркер в левой колонке (техно-подпись вывода). */
+  marker?: string;
 }) {
   return (
-    <Rise
-      as="p"
-      className={`border-l-2 border-[var(--acc)] pl-4 font-sans text-h3 leading-[1.2] sm:pl-5 ${className}`}
-    >
-      {children}
+    <Rise as="div" className={`border-t border-[var(--line)] pt-4 ${className}`}>
+      <div className="grid gap-2 md:grid-cols-[140px_1fr] md:gap-8">
+        <span className="flex items-start gap-2 font-mono text-caption uppercase text-mute">
+          <span aria-hidden className="mt-1 h-1.5 w-1.5 shrink-0 bg-[var(--acc)]" />
+          {marker}
+        </span>
+        <p className="max-w-[56ch] font-sans text-h3 leading-[1.2]">{children}</p>
+      </div>
     </Rise>
   );
 }
@@ -335,10 +349,21 @@ export function GrowthChart() {
 
             {/* столбец */}
             <div
-              style={{ height: `${bar.pct}%`, animationDelay: `${0.2 + i * 0.12}s` }}
+              style={{
+                height: `${bar.pct}%`,
+                animationDelay: `${0.2 + i * 0.12}s`,
+                // Прогноз — диагональная штриховка (чертёжная конвенция
+                // «не факт»), а не пунктирная рамка.
+                ...(bar.projected
+                  ? {
+                      backgroundImage:
+                        "repeating-linear-gradient(-45deg, transparent 0 5px, color-mix(in srgb, var(--acc) 45%, transparent) 5px 6px)",
+                    }
+                  : {}),
+              }}
               className={`${styles.bar} w-full rounded-t-sm ${
                 bar.projected
-                  ? "border-2 border-dashed border-[var(--acc)]"
+                  ? "border border-[var(--acc)]/60"
                   : bar.accent
                   ? "bg-volt"
                   : "bg-[var(--line-strong)]"

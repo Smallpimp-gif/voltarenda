@@ -53,10 +53,34 @@
   animation: investNudge 1.8s cubic-bezier(0.22, 1, 0.36, 1) infinite;
 }
 
+/* Типографическое зачёркивание угрозы на слайде рисков: линия --acc
+   рисуется slide-in на mount (короткий каскад по карточкам). */
+@keyframes investStrike {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+.strike {
+  position: absolute;
+  left: -2%;
+  right: -2%;
+  top: 54%;
+  height: 2px;
+  background: var(--acc);
+  transform-origin: left;
+  transform: scaleX(0);
+  animation: investStrike 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .rise,
   .bar,
-  .nudge {
+  .nudge,
+  .strike {
     animation: none;
     opacity: 1;
     transform: none;

@@ -19,11 +19,15 @@ export function SlideMarket() {
       <Rise>
         <Eyebrow index="02">Окно возможности</Eyebrow>
       </Rise>
-      <Rise delay={0.05} blur={0} as="h2" className="mt-6 max-w-[20ch] font-sans text-display-2">
-        Рынок курьеров взрывается. Окно&nbsp;— сейчас.
+      {/* Лесенка: сдвиг второй строки создаёт композиционное напряжение
+          (и буквально изображает «окно»). Без цветного слова — acc на слайде
+          уже занят графиком и плашкой. */}
+      <Rise delay={0.05} blur={0} as="h2" className="mt-6 font-sans text-display-2">
+        <span className="block">Рынок курьеров взрывается.</span>
+        <span className="block pl-[10%] sm:pl-[16%]">Окно&nbsp;— сейчас.</span>
       </Rise>
 
-      <SlideBody className="mt-6 gap-7">
+      <SlideBody className="mt-6 gap-6">
         <div className="grid gap-8 lg:grid-cols-2 lg:gap-14">
         {/* ЛЕВО: график роста + драйверы */}
         <div className="flex flex-col gap-6">
@@ -32,7 +36,7 @@ export function SlideMarket() {
           </Rise>
 
           <Rise delay={0.16}>
-            <div className="flex flex-col gap-3 border-t border-[var(--line)] pt-6">
+            <div className="flex flex-col gap-3 border-t border-[var(--line)] pt-5">
               {DRIVERS.map((d) => (
                 <div key={d.n} className="flex gap-3">
                   <span className="font-mono tnum text-caption text-[var(--acc)]">{d.n}</span>
@@ -82,12 +86,12 @@ export function SlideMarket() {
         </Rise>
 
         {/* Удар-фраза + источники — прижаты к низу слайда */}
-        <div className="mt-auto pt-2">
-          <Punch className="max-w-[56ch]">
+        <div className="mt-auto">
+          <Punch>
             Рынок растёт до&nbsp;2030. Серьёзного бренда в&nbsp;нише нет. Через год это
             место будет занято — вопрос только, кем.
           </Punch>
-          <Rise delay={0.1} as="p" className="mt-3 font-mono text-[10px] uppercase leading-relaxed tracking-[0.06em] text-mute">
+          <Rise delay={0.1} as="p" className="mt-2 font-mono text-[10px] uppercase leading-relaxed tracking-[0.06em] text-mute">
             Источники: Минпромторг / ТАСС · Росстат · TADviser · BusinesStat · ЮKassa · ВТБ · Mordor Intelligence
           </Rise>
         </div>

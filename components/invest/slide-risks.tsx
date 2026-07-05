@@ -6,6 +6,7 @@
 
 import type { ReactNode } from "react";
 import { Eyebrow, Punch, Rise, Slide, SlideBody } from "./primitives";
+import styles from "./invest.module.css";
 
 const RISKS: { n: string; threat: string; answer: ReactNode }[] = [
   {
@@ -56,17 +57,15 @@ export function SlideRisks() {
           {RISKS.map((r, i) => (
           <Rise key={r.n} delay={0.1 + i * 0.07}>
             <div className="flex h-full flex-col rounded-lg border border-[var(--line)] bg-[var(--bg-2)] p-6">
-              <div className="flex items-center justify-between">
-                <span className="font-mono text-caption uppercase text-mute">
-                  Угроза / {r.n}
-                </span>
-                <span aria-hidden className="text-mute/70">
-                  <CrossIcon />
-                </span>
-              </div>
+              <span className="font-mono text-caption uppercase text-mute">
+                Угроза / {r.n}
+              </span>
 
-              <h3 className="mt-4 font-sans text-h3 text-[var(--text)]">
+              {/* Зачёркивание рассказывает «угроза снята» без чтения —
+                  типографика как сторителлинг. w-fit: линия по слову. */}
+              <h3 className="relative mt-4 w-fit font-sans text-h3 text-[var(--text)]">
                 {r.threat}
+                <span aria-hidden className={styles.strike} style={{ animationDelay: `${0.5 + i * 0.12}s` }} />
               </h3>
 
               <div className="mt-auto flex items-start gap-3 border-t border-[var(--line)] pt-5">
@@ -86,7 +85,7 @@ export function SlideRisks() {
         </div>
       </SlideBody>
 
-      <Punch className="mt-8 max-w-[40ch] sm:mt-10">
+      <Punch className="mt-6 sm:mt-8" marker="итог">
         Деньги — вперёд, актив — под контролем. Дефолтов почти нет.
       </Punch>
     </Slide>
@@ -102,14 +101,6 @@ const iconProps = {
   strokeLinejoin: "round" as const,
   className: "h-5 w-5",
 };
-
-function CrossIcon() {
-  return (
-    <svg {...iconProps}>
-      <path d="M18 6 6 18M6 6l12 12" />
-    </svg>
-  );
-}
 
 function ShieldIcon() {
   return (

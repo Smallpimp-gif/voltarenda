@@ -26,7 +26,7 @@ export function SlideCta() {
         <Eyebrow index="08">Условия захода</Eyebrow>
       </Rise>
       <Rise delay={0.05} blur={0} as="h2" className="mt-6 font-sans text-display-1">
-        Заходи сейчас.
+        Заходи сейчас<span className="text-volt">.</span>
       </Rise>
 
       <SlideBody className="mt-10">

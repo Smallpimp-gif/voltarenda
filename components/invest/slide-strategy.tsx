@@ -95,7 +95,7 @@ export function SlideStrategy() {
         </Rise>
       </SlideBody>
 
-      <Punch className="mt-8 max-w-[56ch]">
+      <Punch className="mt-6" marker="защита">
         Схему легко скопировать. Бренд с&nbsp;лучшей ценой и&nbsp;своим производством — нет.
         Именно это закрывает нишу навсегда.
       </Punch>

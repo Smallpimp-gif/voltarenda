@@ -61,7 +61,7 @@ export function SlideClients() {
       <Rise delay={0.05} blur={0} as="h2" className="mt-6 max-w-[24ch] font-sans text-display-2">
         Курьеры — только вход. Дальше — вся доставка.
       </Rise>
-      <Rise delay={0.1} as="p" className="mt-5 max-w-[60ch] font-sans text-body-lg text-mute">
+      <Rise delay={0.1} as="p" className="mt-4 max-w-[60ch] font-sans text-body-lg text-mute">
         Мы не ставим на&nbsp;одну платформу. Кто&nbsp;бы ни&nbsp;выиграл войну за&nbsp;доставку —
         курьер едет на&nbsp;нашем велосипеде.
       </Rise>
@@ -75,7 +75,7 @@ export function SlideClients() {
               {LAYERS.map((l, i) => (
                 <Rise key={l.title} delay={0.12 + i * 0.08}>
                   <div
-                    className={`flex items-start gap-5 rounded-lg border p-5 ${
+                    className={`flex items-start gap-5 rounded-lg border px-5 py-4 ${
                       l.ours ? "border-volt bg-volt text-ink" : "border-[var(--line)] bg-[var(--bg-2)]"
                     }`}
                   >
@@ -110,7 +110,7 @@ export function SlideClients() {
                   <img src="/logos/samokat.svg" alt="Самокат" className="h-7 w-auto sm:h-8" style={WHITE} />
                   <span className="shrink-0 font-mono text-caption uppercase text-mute">канал-партнёр</span>
                 </div>
-                <div className="mt-4 flex items-center gap-8 border-t border-[var(--line)] pt-3">
+                <div className="mt-3 flex items-center gap-8 border-t border-[var(--line)] pt-3">
                   <ClientStat value="16" unit="дарксторов" />
                   <ClientStat value="250" unit="курьеров" />
                 </div>
@@ -121,7 +121,7 @@ export function SlideClients() {
 
               {/* Диверсификация: дарксторы — ускоритель, не единственный
                   источник заявок. Де-риск для инвестора. */}
-              <div className="mt-4 rounded-lg border border-[var(--line)] bg-[var(--bg-2)] p-5">
+              <div className="mt-3 rounded-lg border border-[var(--line)] bg-[var(--bg-2)] p-5">
                 <span className="font-mono text-caption uppercase text-mute">
                   канал — не единственный
                 </span>
@@ -133,7 +133,7 @@ export function SlideClients() {
               </div>
 
               {/* Лого-ряд — курьеры этих сервисов наши арендаторы */}
-              <div className="mt-auto pt-5">
+              <div className="mt-auto pt-4">
                 <span className="font-mono text-caption uppercase text-mute">
                   Курьеры этих сервисов — наши арендаторы
                 </span>
@@ -155,7 +155,7 @@ export function SlideClients() {
         </div>
       </SlideBody>
 
-      <Punch className="mt-8 max-w-[64ch]">
+      <Punch className="mt-5" marker="pick & shovel">
         Золотая лихорадка идёт — <span className="text-volt">а&nbsp;мы продаём лопаты</span>.
       </Punch>
     </Slide>

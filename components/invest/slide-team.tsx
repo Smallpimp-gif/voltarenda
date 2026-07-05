@@ -58,13 +58,18 @@ export function SlideTeam() {
       </Rise>
 
       <SlideBody className="mt-8">
-        <div className="grid gap-4 sm:grid-cols-2 sm:gap-6">
+        {/* Editorial index-list вместо сетки карточек: слайды 05 и 07 оба были
+            светлыми 2×2-сетками — дек монотонил. Призрачный крупный номер —
+            осознанный ghost-приём, паттерн «номер+текст» уже есть на 02/06. */}
+        <div className="flex flex-col border-b border-[var(--line)]">
           {PILLARS.map((p, i) => (
             <Rise key={p.n} delay={0.1 + i * 0.07}>
-              <div className="flex h-full flex-col rounded-lg border border-[var(--line)] bg-[var(--bg-2)] p-6">
-                <span className="font-mono tnum text-caption text-[var(--acc)]">{p.n}</span>
-                <h3 className="mt-2.5 font-sans text-h3 leading-tight">{p.title}</h3>
-                <p className="mt-2.5 font-sans text-body leading-relaxed text-mute">
+              <div className="grid gap-2 border-t border-[var(--line)] py-5 md:grid-cols-[88px_minmax(200px,240px)_1fr] md:items-start md:gap-8">
+                <span className="font-mono tnum text-[clamp(24px,2.6vw,36px)] leading-none text-[var(--line-strong)]">
+                  {p.n}
+                </span>
+                <h3 className="font-sans text-h3 leading-tight">{p.title}</h3>
+                <p className="max-w-[52ch] font-sans text-body leading-relaxed text-mute">
                   {p.desc}
                 </p>
               </div>
@@ -73,7 +78,7 @@ export function SlideTeam() {
         </div>
       </SlideBody>
 
-      <Punch className="mt-8 max-w-[56ch] sm:mt-10">
+      <Punch className="mt-6 sm:mt-8">
         Деньги инвестора идут в&nbsp;масштаб, а&nbsp;не в&nbsp;эксперименты — система
         уже построена и&nbsp;приносит выручку.
       </Punch>
