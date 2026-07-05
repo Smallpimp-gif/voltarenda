@@ -7,16 +7,19 @@
 import type { ReactNode } from "react";
 import { CountUp, Eyebrow, R, Rise, Slide, SlideBody } from "./primitives";
 
+// five — множитель капитала за 5 лет: сложный процент от ставки сценария
+// (1.4^5 ≈ ×5, 1.75^5 ≈ ×16, 2.2^5 ≈ ×50) при реинвесте.
 const SCENARIOS: {
   tier: string;
   to: number;
   suffix?: string;
+  five: string;
   desc: ReactNode;
   tone: "base" | "rise" | "peak";
 }[] = [
-  { tier: "Гарантия", to: 40, desc: <>даже если просто продолжаем как есть</>, tone: "base" },
-  { tier: "База", to: 75, desc: <>при полном развороте модели</>, tone: "rise" },
-  { tier: "Апсайд", to: 120, suffix: "+", desc: <>с Китаем, брендом и&nbsp;новыми городами</>, tone: "peak" },
+  { tier: "Гарантия", to: 40, five: "×5", desc: <>даже если просто продолжаем как есть</>, tone: "base" },
+  { tier: "База", to: 75, five: "×16", desc: <>при полном развороте модели</>, tone: "rise" },
+  { tier: "Апсайд", to: 120, suffix: "+", five: "×50+", desc: <>Китай, бренд&nbsp;№1 в&nbsp;СНГ, новые города</>, tone: "peak" },
 ];
 
 export function SlideCta() {
@@ -51,7 +54,7 @@ export function SlideCta() {
           return (
             <Rise key={s.tier} delay={0.12 + i * 0.08}>
               <div
-                className={`flex h-full flex-col rounded-lg border p-6 sm:p-8 ${
+                className={`flex h-full flex-col rounded-lg border p-6 sm:p-7 ${
                   peak
                     ? "border-volt bg-volt text-ink"
                     : rise
@@ -70,9 +73,17 @@ export function SlideCta() {
                     годовых
                   </span>
                 </div>
-                <p className={`mt-3 font-sans text-body leading-snug ${peak ? "text-ink/80" : "text-mute"}`}>
+                <p className={`mt-3 flex-1 font-sans text-body leading-snug ${peak ? "text-ink/80" : "text-mute"}`}>
                   {s.desc}
                 </p>
+                <div className={`mt-4 flex items-baseline justify-between gap-3 border-t pt-3 ${peak ? "border-ink/20" : "border-[var(--line)]"}`}>
+                  <span className={`font-mono text-[10px] uppercase tracking-[0.06em] ${peak ? "text-ink/70" : "text-mute"}`}>
+                    горизонт 5 лет
+                  </span>
+                  <span className={`font-mono tnum text-[clamp(20px,2vw,26px)] leading-none ${peak ? "text-ink" : rise ? "text-volt" : "text-[var(--text)]"}`}>
+                    {s.five}
+                  </span>
+                </div>
               </div>
             </Rise>
           );
@@ -80,22 +91,22 @@ export function SlideCta() {
       </div>
 
       {/* Главный посыл + честная формулировка про потенциал */}
-      <div className="mt-10 grid gap-6 lg:grid-cols-[1.1fr_1fr] lg:items-center">
+      <div className="mt-8 grid gap-6 lg:grid-cols-[1.1fr_1fr] lg:items-center">
         <Rise>
           <p className="border-l-2 border-volt pl-5 font-sans text-h3 leading-[1.2]">
             Нижняя граница — около&nbsp;40% годовых. Это пол, а&nbsp;не потолок.
           </p>
         </Rise>
         <Rise delay={0.08} as="p" className="font-sans text-body leading-snug text-mute">
-          При сильном маркетинге, своём производстве в&nbsp;Китае и&nbsp;удачном раскладе
-          доходность может быть кратно выше базовой. Это верхний сценарий —
-          не&nbsp;гарантия, но реальный потенциал ниши, где мы заходим первыми.
+          Множители — сложный процент за&nbsp;5&nbsp;лет при реинвесте. Верхний
+          сценарий — Китай и&nbsp;бренд&nbsp;№1 в&nbsp;СНГ: не&nbsp;гарантия, но реальный
+          потенциал ниши, где мы заходим первыми.
         </Rise>
       </div>
       </SlideBody>
 
       {/* Срочность — финальная фраза, низ слайда */}
-      <Rise delay={0.1} className="mt-10 border-t border-[var(--line)] pt-8 sm:mt-12">
+      <Rise delay={0.1} className="mt-8 border-t border-[var(--line)] pt-8 sm:mt-10">
         <p className="max-w-[60ch] font-sans text-h3 leading-[1.2]">
           Окно открыто сейчас. Через год ниша будет занята.{" "}
           <span className="text-volt">Заходи, пока место свободно.</span>
