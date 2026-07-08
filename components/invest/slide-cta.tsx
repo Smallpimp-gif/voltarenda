@@ -36,7 +36,7 @@ export function SlideCta() {
         {/* Предложение крупно — отдельная строка с воздухом */}
         <Rise delay={0.1} className="flex flex-wrap items-baseline gap-x-6 gap-y-6 sm:gap-x-12">
         <Offer value={<>10 000 000&nbsp;<R /></>} label="привлекаем" big />
-        <Offer value={<>30%</>} label="доля · 3 года" />
+        <Offer value={<>20%</>} label="доля · 3 года" />
         <Offer value={<>2 200 000&nbsp;<R /></>} label="основатель вложил сам" />
       </Rise>
 

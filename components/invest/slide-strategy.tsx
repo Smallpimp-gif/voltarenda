@@ -5,7 +5,7 @@
 // то, что взрывает прибыль. Тёмный слайд, азарт и масштаб.
 
 import type { ReactNode } from "react";
-import { Eyebrow, Punch, R, Rise, Slide, SlideBody } from "./primitives";
+import { Eyebrow, Punch, Rise, Slide, SlideBody } from "./primitives";
 import styles from "./invest.module.css";
 
 const STEPS: {
@@ -73,24 +73,27 @@ export function SlideStrategy() {
         </div>
       </Rise>
 
-        {/* Китай — переломный момент, с цифрами */}
+        {/* Китай — переломный момент. Конкретные схемы и цифры маржи
+            намеренно не раскрываем в деке — обозначаем, что рычаги есть,
+            детали обсуждаются лично. */}
         <Rise delay={0.12}>
           <div className="rounded-lg border border-volt/40 bg-[var(--bg-2)] p-6">
-          <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <h3 className="flex items-center gap-2.5 font-sans text-h3 text-[var(--text)]">
-              <span aria-hidden className="inline-block h-2 w-2 shrink-0 bg-volt" />
-              Китай — рычаг маржи
-            </h3>
-            <span className="font-mono text-caption uppercase text-mute">
-              OEM под своим брендом · цена клиенту та&nbsp;же
-            </span>
-          </div>
+            <div className="flex flex-wrap items-baseline justify-between gap-2">
+              <h3 className="flex items-center gap-2.5 font-sans text-h3 text-[var(--text)]">
+                <span aria-hidden className="inline-block h-2 w-2 shrink-0 bg-volt" />
+                Китай — рычаг маржи
+              </h3>
+              <span className="font-mono text-caption uppercase text-mute">
+                производство под своим брендом · цена клиенту та&nbsp;же
+              </span>
+            </div>
 
-          <div className="mt-5 grid gap-6 sm:grid-cols-3">
-            <Delta k="Себестоимость" from={<>110 000&nbsp;<R /></>} to={<>60–65 тыс.&nbsp;<R /></>} />
-            <Delta k="Маржа с договора" from={<>120 000&nbsp;<R /></>} to={<>~160 000&nbsp;<R /></>} badge="+30–37%" accent />
-            <Delta k="Цена выкупа клиенту" from={<>~210–231 тыс.</>} to={<>та же</>} note="зарабатываем кратно больше" />
-          </div>
+            <p className="mt-4 max-w-[76ch] font-sans text-body-lg leading-snug text-mute">
+              Собственное производство кратно увеличивает маржу с&nbsp;каждого
+              договора — и&nbsp;это не&nbsp;единственный рычаг: способов усилить
+              экономику несколько.{" "}
+              <span className="text-[var(--text)]">Цифры и&nbsp;схемы показываем на&nbsp;встрече.</span>
+            </p>
           </div>
         </Rise>
       </SlideBody>
@@ -103,37 +106,3 @@ export function SlideStrategy() {
   );
 }
 
-function Delta({
-  k,
-  from,
-  to,
-  badge,
-  note,
-  accent = false,
-}: {
-  k: ReactNode;
-  from: ReactNode;
-  to: ReactNode;
-  badge?: string;
-  note?: string;
-  accent?: boolean;
-}) {
-  return (
-    <div className="flex flex-col">
-      <span className="font-mono text-caption uppercase text-mute">{k}</span>
-      <div className="mt-1.5 flex items-baseline gap-2 font-mono tnum leading-none">
-        <span className="text-[clamp(14px,1.6vw,17px)] text-mute line-through decoration-1 decoration-mute/40">{from}</span>
-        <span className="text-mute">→</span>
-        <span className={`text-[clamp(20px,2.6vw,32px)] ${accent ? "text-volt" : "text-[var(--text)]"}`}>{to}</span>
-      </div>
-      {badge && (
-        <span className="mt-1.5 w-fit rounded-pill bg-volt px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.08em] text-ink">
-          {badge}
-        </span>
-      )}
-      {note && (
-        <span className="mt-1.5 font-mono text-[10px] uppercase tracking-[0.04em] text-mute">{note}</span>
-      )}
-    </div>
-  );
-}
