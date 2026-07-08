@@ -64,7 +64,7 @@ export function SlideHook() {
         </Rise>
 
         <Rise delay={0.2} as="p" className="mt-5 max-w-[46ch] font-sans text-body-lg text-white/75">
-          Мы не прокат. Аренда — механизм входа в&nbsp;рынок. Бренд — то, что
+          Мы не прокат. Аренда — механизм входа на&nbsp;рынок. Бренд — то, что
           закрепляет нас в&nbsp;нише навсегда.
         </Rise>
 
