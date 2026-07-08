@@ -41,8 +41,8 @@ export function SlideModel() {
             {/* мини-поток */}
             <div className="mt-4 flex flex-col gap-1.5 font-mono text-caption uppercase text-mute">
               <FlowRow k="Велосипед" v={<>~110&nbsp;000&nbsp;<R /></>} />
-              <FlowRow k="Платёж клиента" v={<>5 000–5 500&nbsp;<R />/нед</>} />
-              <FlowRow k="Выкуп за ~10 мес" v={<>~210–231&nbsp;тыс.&nbsp;<R /></>} />
+              <FlowRow k="Платёж клиента" v={<>5 500&nbsp;<R />/нед</>} />
+              <FlowRow k="Выкуп за ~10 мес" v={<>~220–231&nbsp;тыс.&nbsp;<R /></>} />
             </div>
 
             <div className="mt-auto pt-6">
@@ -86,7 +86,7 @@ export function SlideModel() {
           <span className="font-semibold text-[var(--text)]">Связи</span>&nbsp;— директора складов, Самокат первым
         </span>
         <span>
-          <span className="font-semibold text-[var(--text)]">Лучшая цена</span>&nbsp;— 5&nbsp;000&nbsp;<R /> против 6&nbsp;500–7&nbsp;500
+          <span className="font-semibold text-[var(--text)]">Лучшая цена</span>&nbsp;— 5&nbsp;500&nbsp;<R /> против 6&nbsp;500–7&nbsp;500
         </span>
         <span>
           <span className="font-semibold text-[var(--text)]">Инфраструктура</span>&nbsp;— бренд, сайт, e-договоры

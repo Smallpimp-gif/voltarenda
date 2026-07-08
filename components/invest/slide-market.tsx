@@ -77,7 +77,7 @@ export function SlideMarket() {
           <div className="flex flex-col gap-4 rounded-lg bg-ink p-5 text-paper sm:flex-row sm:items-center sm:justify-between sm:gap-6">
             <div className="flex items-baseline gap-3">
               <span className="font-mono tnum text-[clamp(34px,4vw,52px)] leading-none text-volt">
-                5 000&nbsp;<R />
+                5 500&nbsp;<R />
               </span>
               <span className="font-mono text-caption uppercase leading-tight text-white/60">
                 наша&nbsp;цена<br />в&nbsp;неделю
