@@ -77,13 +77,13 @@ export function SlideHook() {
               d: 0.32,
               v: (
                 <>
-                  ~<CountUp to={470000} format={fmtRu} />
+                  ~<CountUp to={520000} format={fmtRu} />
                   <span className="ml-1 font-sans text-[15px] font-normal tracking-normal text-white/55">
                     <R />/мес
                   </span>
                 </>
               ),
-              l: <>живой поток<br />с 19 велосипедов</>,
+              l: <>живой поток<br />с 21 велосипеда</>,
             },
             { d: 0.42, v: <CountUp to={16} />, l: <>дарксторов-партнёров<br />подключены</> },
             {
@@ -111,13 +111,13 @@ export function SlideHook() {
             delay={0.32}
             value={
               <>
-                ~<CountUp to={470000} format={fmtRu} />
+                ~<CountUp to={520000} format={fmtRu} />
                 <span className="ml-1 align-baseline font-sans text-[0.32em] font-normal tracking-normal text-white/55">
                   <R />/мес
                 </span>
               </>
             }
-            label={<>живой поток&nbsp;— 19 велосипедов уже приносят деньги</>}
+            label={<>живой поток&nbsp;— 21 велосипед уже приносит деньги</>}
           />
           <HookStat delay={0.42} value={<CountUp to={16} />} label={<>дарксторов-партнёров<br className="hidden sm:block" /> уже подключены</>} />
           <HookStat delay={0.52} value={<><span className="text-mute">~</span><CountUp to={250} /></>} label={<>курьеров в досягаемости<br className="hidden sm:block" /> через одного партнёра</>} />

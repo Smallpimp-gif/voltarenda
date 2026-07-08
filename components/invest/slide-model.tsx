@@ -22,9 +22,9 @@ export function SlideModel() {
       <Rise delay={0.08} className="mt-6">
         <div className="flex flex-wrap items-center gap-x-5 gap-y-3 rounded-lg border border-volt/40 bg-[var(--bg-2)] px-5 py-3.5 sm:px-6">
           <span className="shrink-0 font-mono text-caption uppercase text-volt">Уже работает</span>
-          <TractionNum value="19" unit="велосипедов сдано" />
-          <TractionNum value={<>108 250&nbsp;<R /></>} unit="в неделю" />
-          <TractionNum value={<>~470 000&nbsp;<R /></>} unit="в месяц" />
+          <TractionNum value="21" unit="велосипед сдан" />
+          <TractionNum value={<>119 750&nbsp;<R /></>} unit="в неделю" />
+          <TractionNum value={<>~520 000&nbsp;<R /></>} unit="в месяц" />
           <span className="w-full font-mono text-caption uppercase text-mute sm:ml-auto sm:w-auto">деньги вперёд · залог</span>
         </div>
       </Rise>
