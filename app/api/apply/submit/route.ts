@@ -56,11 +56,12 @@ type SubmitBody = {
   photoSelfieId: string;
 };
 
-const VALID_TARIFFS = ["three-day", "week", "month", "buyout"];
+const VALID_TARIFFS = ["three-day", "week", "month", "buyout", "unset"];
 
 // Серверный источник истины для human-read имён + цен.
 // Клиентский body не доверяем (подмена через DevTools).
 const TARIFF_META: Record<string, { name: string; price: number }> = {
+  unset: { name: "Не выбран — обсудить с клиентом", price: 0 },
   "three-day": { name: "3 дня", price: 3500 },
   week: { name: "Неделя", price: 5500 },
   month: { name: "Месяц", price: 19000 },

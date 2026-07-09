@@ -13,6 +13,7 @@ import {
   deleteTenant,
   getTenantById,
   patchTenant,
+  loadTenants,
   type TenantInput,
 } from "@/lib/auth/tenants";
 import { setAvailableBikes } from "@/lib/settings";
@@ -33,7 +34,7 @@ import {
   dayNumToIso,
   type TenantPosition,
 } from "@/lib/schedule";
-import { addDepositLogEntry } from "@/lib/deposits";
+import { addDepositLogEntry, loadDepositLog, depositAdjustmentsTotal } from "@/lib/deposits";
 
 export type ActionState = { error: string | null; ok?: boolean };
 
@@ -175,7 +176,50 @@ export async function zeroDepositAction(formData: FormData): Promise<void> {
   const amount = depositOf(t);
   if (amount <= 0) return;
   await patchTenant(id, { deposit: 0 });
-  await addDepositLogEntry({ tenantId: id, name: t.name, amount });
+  await addDepositLogEntry({ tenantId: id, name: t.name, amount, kind: "zero" });
+  revalidatePath("/cabinet/owner");
+}
+
+// Текущий итог залогов «на руках»: сумма по арендаторам + ручные
+// корректировки. Тот же принцип, что cassaTotal.
+async function depositsOnHand(): Promise<number> {
+  const [tenants, log] = await Promise.all([loadTenants(), loadDepositLog()]);
+  const tenantSum = tenants.reduce((s, t) => s + depositOf(t), 0);
+  return tenantSum + depositAdjustmentsTotal(log);
+}
+
+// Задать сумму залогов вручную (до копеек) — как в кассе: пишем
+// корректировку на разницу, история прозрачна.
+export async function setDepositsTotalAction(formData: FormData): Promise<void> {
+  await requireOwner();
+  const target = Math.max(0, Math.round(Number(formData.get("total")) * 100) / 100);
+  if (!Number.isFinite(target)) return;
+  const current = await depositsOnHand();
+  const delta = Math.round((target - current) * 100) / 100;
+  if (delta !== 0) {
+    await addDepositLogEntry({
+      tenantId: "",
+      name: "Корректировка залогов",
+      amount: delta,
+      kind: "manual",
+    });
+  }
+  revalidatePath("/cabinet/owner");
+}
+
+// Обнулить итог залогов — корректировка на −текущую сумму. Список
+// «кому какой залог вернуть» у арендаторов не трогается.
+export async function resetDepositsAction(): Promise<void> {
+  await requireOwner();
+  const current = await depositsOnHand();
+  if (current !== 0) {
+    await addDepositLogEntry({
+      tenantId: "",
+      name: "Обнуление залогов",
+      amount: -current,
+      kind: "manual",
+    });
+  }
   revalidatePath("/cabinet/owner");
 }
 

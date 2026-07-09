@@ -8,8 +8,11 @@ import { readJSON, writeJSON } from "@/lib/store";
 export type DepositLogEntry = {
   id: string;
   tenantId: string;
-  name: string; // снимок фамилии на момент обнуления
-  amount: number; // ₽ — размер обнулённого залога
+  name: string; // фамилия либо «Корректировка/Обнуление залогов»
+  // Для kind="zero" — размер обнулённого залога (показывается со знаком −).
+  // Для kind="manual" — подписанная дельта ручной корректировки (до копеек).
+  amount: number;
+  kind?: "zero" | "manual"; // старые записи без kind = zero
   at: string; // ISO
 };
 
@@ -30,7 +33,17 @@ export async function addDepositLogEntry(
   await writeJSON(KEY, file);
 }
 
-// Сколько всего залогов обнулено за историю.
+// Сколько всего залогов обнулено за историю (по арендаторам).
 export function depositLogTotal(file: DepositLogFile): number {
-  return file.entries.reduce((s, e) => s + e.amount, 0);
+  return file.entries
+    .filter((e) => (e.kind ?? "zero") === "zero")
+    .reduce((s, e) => s + e.amount, 0);
+}
+
+// Сумма ручных корректировок (подписанная) — прибавляется к сумме
+// залогов по арендаторам, давая управляемый итог «на руках», как касса.
+export function depositAdjustmentsTotal(file: DepositLogFile): number {
+  return file.entries
+    .filter((e) => e.kind === "manual")
+    .reduce((s, e) => s + e.amount, 0);
 }

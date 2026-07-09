@@ -15,7 +15,6 @@ import {
   type ReactNode,
 } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { TariffCard } from "./tariff-card";
 import { APPLE_EASE, EASE, MODAL_SPRING } from "./motion-config";
 // Куда ведёт кнопка «Написать нам» на успешном финале заявки.
 const TG_CHAT_URL = "https://t.me/voltarenda_bike";
@@ -26,31 +25,7 @@ const TG_CHAT_URL = "https://t.me/voltarenda_bike";
 
 export type TariffKey = "three-day" | "week" | "month" | "buyout";
 
-const TARIFFS: {
-  key: TariffKey;
-  index: string;
-  name: string;
-  price: string;
-  period: string;
-  accent?: boolean;
-}[] = [
-  { key: "three-day", index: "01", name: "3 дня", price: "3500", period: "3 ДНЯ" },
-  { key: "week", index: "02", name: "Неделя", price: "5500", period: "7 ДНЕЙ", accent: true },
-  { key: "month", index: "03", name: "Месяц", price: "19000", period: "30 ДНЕЙ" },
-  { key: "buyout", index: "04", name: "Выкуп", price: "6500", period: "НЕД × 26" },
-];
-
-// Value-спеки — те же что в tariffs-section.tsx на лендинге.
-const TARIFF_SPECS = [
-  { label: "ВЕЛОСИПЕД", value: "ВОЛЬТ U2" },
-  { label: "ЗАПАС ХОДА", value: "~120 КМ" },
-  { label: "АККУМУЛЯТОРЫ", value: "2 АКБ · 60+30 АЧ" },
-  { label: "ЗАРЯДКА + ЗАМОК", value: "В КОМПЛЕКТЕ" },
-  { label: "ТО И МЕХАНИК", value: "50% НА НАС" },
-];
-
 type FormData = {
-  tariff: TariffKey | null;
   firstName: string;
   lastName: string;
   middleName: string; // отчество (распознаётся с паспорта)
@@ -87,7 +62,6 @@ const EMPTY_PASSPORT: FormData["passport"] = {
 };
 
 const EMPTY_FORM: FormData = {
-  tariff: null,
   firstName: "",
   lastName: "",
   middleName: "",
@@ -104,39 +78,22 @@ const EMPTY_FORM: FormData = {
 };
 
 const STEPS = [
-  { key: "tariff", label: "Тариф" },
   { key: "contact", label: "Контакты" },
   { key: "photos", label: "Документы" },
   { key: "review", label: "Заявка" },
 ] as const;
 
 const STEP_TITLES = [
-  "Тариф",
   "Как с тобой связаться",
   "Документы · фото распознаются автоматически",
   "Проверьте и отправьте",
 ];
 
 const STEP_SUBTITLES = [
-  "Выбери период. Залог 5 000 ₽ вернём за 3 дня.",
   "Напишем в Telegram после проверки. Без спама.",
   "🔒 Сфотографируй паспорт — данные подставятся сами. Прописка и фото с паспортом в руках. Данные не передаём третьим лицам.",
-  "Проверьте данные и отправьте — оператор свяжется в течение ~15 минут.",
+  "Проверьте данные и отправьте — и сразу напиши нам в Telegram.",
 ];
-
-// Числовые цены тарифов для шага оплаты (без пробелов и ₽).
-const TARIFF_PRICES: Record<TariffKey, number> = {
-  "three-day": 3500,
-  week: 5500,
-  month: 19000,
-  buyout: 6500, // ₽/неделя × 26 недель = 169 000 ₽ за весь срок
-};
-
-const DEPOSIT_RUB = 5000;
-
-function formatRub(n: number): string {
-  return new Intl.NumberFormat("ru-RU").format(n);
-}
 
 // ============================================================
 // Analytics — Яндекс.Метрика events
@@ -179,7 +136,6 @@ export function useApply(): ApplyContextValue {
 // при восстановлении.
 function computeProgress(form: FormData): number {
   let done = 0;
-  if (form.tariff) done++;
   if (
     form.firstName.trim().length >= 2 &&
     form.lastName.trim().length >= 2 &&
@@ -269,7 +225,6 @@ export function ApplyProvider({ children }: { children: ReactNode }) {
     if (!hydrated) return;
     // Не сохраняем пустую форму (чтобы не создавать ключ зря).
     const isEmpty =
-      !form.tariff &&
       !form.firstName &&
       !form.lastName &&
       !form.phone &&
@@ -278,23 +233,17 @@ export function ApplyProvider({ children }: { children: ReactNode }) {
     persistForm(form);
   }, [form, hydrated]);
 
-  const open = useCallback((tariff?: TariffKey, _cfg?: BikeConfig) => {
-    // Смешиваем явный tariff из CTA с persisted формой и вычисляем
-    // стартовый шаг — первый НЕзаполненный. Конфиг велосипеда из
-    // лендинг-конфигуратора игнорируем: модель обсуждается при выдаче.
+  const open = useCallback((_tariff?: TariffKey, _cfg?: BikeConfig) => {
+    // Тариф и конфиг из CTA игнорируем: период и модель обсуждаются
+    // при выдаче. Стартуем с первого НЕзаполненного шага.
     setForm((prev) => {
-      const next: FormData = {
-        ...prev,
-        ...(tariff ? { tariff } : {}),
-      };
-      const progress = computeProgress(next);
-      setStepIdx(Math.min(progress, STEPS.length - 1));
-      return next;
+      setStepIdx(Math.min(computeProgress(prev), STEPS.length - 1));
+      return prev;
     });
     setSubmitting(false);
     setSubmitted(false);
     setIsOpen(true);
-    trackEvent("MODAL_OPEN", { tariff });
+    trackEvent("MODAL_OPEN");
   }, []);
 
   const close = useCallback(() => {
@@ -424,23 +373,19 @@ function validEmail(s: string): boolean {
 function validateStep(step: number, form: FormData): string | null {
   switch (step) {
     case 0:
-      if (!form.tariff) return "Выбери тариф";
-      return null;
-    case 1:
       if (form.firstName.trim().length < 2) return "Укажи имя";
       if (form.lastName.trim().length < 2) return "Укажи фамилию";
       if (phoneDigits(form.phone).length !== 10) return "Телефон в формате +7 (XXX) XXX-XX-XX";
       if (!validEmail(form.email)) return "Проверь email";
       if (form.currentAddress.trim().length < 5) return "Укажи актуальное место проживания";
       return null;
-    case 2:
+    case 1:
       if (!form.photoMain) return "Загрузи разворот паспорта с фото";
       if (!form.photoRegistration) return "Загрузи разворот с пропиской";
       if (!form.photoSelfie) return "Загрузи фото с паспортом в руках";
       return null;
-    case 3:
+    case 2:
       // Финальный шаг: проверка данных + согласие, затем отправка оператору
-      if (!form.tariff) return "Тариф не выбран";
       if (!form.agreed) return "Нужно согласие на обработку данных";
       return null;
     default:
@@ -492,19 +437,18 @@ function ApplyModal({
       await submitApplication();
       return;
     }
-    trackEvent("STEP_COMPLETE", { step: stepIdx + 1, tariff: form.tariff });
+    trackEvent("STEP_COMPLETE", { step: stepIdx + 1 });
     setStepIdx((i) => i + 1);
   };
 
   const submitApplication = async () => {
-    if (!form.tariff) return;
     setSubmitting(true);
     try {
       const res = await fetch("/api/apply/submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          tariff: form.tariff,
+          tariff: "unset",
           firstName: form.firstName,
           lastName: form.lastName,
           middleName: form.middleName,
@@ -525,7 +469,7 @@ function ApplyModal({
         setSubmitting(false);
         return;
       }
-      trackEvent("APPLICATION_SUBMIT", { tariff: form.tariff });
+      trackEvent("APPLICATION_SUBMIT");
       setSubmitted(true);
       clearPersisted();
       setSubmitting(false);
@@ -535,94 +479,6 @@ function ApplyModal({
     }
   };
 
-  const submitPayment = async () => {
-    if (!form.tariff) return;
-    setSubmitting(true);
-    try {
-      const tariffName =
-        TARIFFS.find((t) => t.key === form.tariff)?.name ?? form.tariff;
-      const tariffPrice = TARIFF_PRICES[form.tariff];
-      const total = tariffPrice + DEPOSIT_RUB;
-
-      // CloudPayments виджет — lazy-загрузка при первой оплате
-      const cp = await loadCloudPayments();
-      if (!cp) {
-        setError("Платёжный виджет не загрузился. Отключи блокировщик рекламы или попробуй другой браузер.");
-        setSubmitting(false);
-        return;
-      }
-
-      trackEvent("PAYMENT_START", { tariff: form.tariff, amount: total });
-      const widget = new cp.CloudPayments();
-      widget.pay(
-        "charge",
-        {
-          publicId:
-            process.env.NEXT_PUBLIC_CLOUDPAYMENTS_PUBLIC_ID ?? "",
-          description: `Аренда ВОЛЬТ U2 · тариф ${tariffName} + залог`,
-          amount: total,
-          currency: "RUB",
-          accountId: form.email || form.phone,
-          email: form.email,
-          data: {
-            tariff_key: form.tariff,
-            tariff_name: tariffName,
-            tariff_price: tariffPrice,
-            phone: form.phone,
-            firstName: form.firstName,
-            lastName: form.lastName,
-          },
-        },
-        {
-          // Успешная оплата — виджет вернул token, создаём подписку
-          onSuccess: async (options: any) => {
-            try {
-              await fetch("/api/cloudpayments/create-subscription", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  token: options.token,
-                  tariff: {
-                    key: form.tariff,
-                    name: tariffName,
-                    price: tariffPrice,
-                  },
-                  customer: {
-                    firstName: form.firstName,
-                    lastName: form.lastName,
-                    phone: form.phone,
-                    email: form.email,
-                  },
-                }),
-              });
-            } catch {
-              // Подписка не создалась — но первый платёж прошёл.
-              // Оператор создаст подписку вручную.
-            }
-            // Показываем success-экран
-            trackEvent("PAYMENT_SUCCESS", { tariff: form.tariff, amount: total });
-            setSubmitted(true);
-            clearPersisted();
-            setSubmitting(false);
-          },
-          onFail: (reason: string) => {
-            trackEvent("PAYMENT_FAIL", { tariff: form.tariff, reason });
-            setError(
-              `Платёж отклонён: ${reason}. Попробуй другую карту или свяжись с нами`,
-            );
-            setSubmitting(false);
-          },
-          onComplete: () => {
-            // Виджет закрыт (с любым результатом)
-          },
-        },
-      );
-      return; // Не сбрасываем submitting — виджет ещё открыт
-    } catch {
-      setError("Сеть недоступна. Проверь соединение и попробуй ещё раз");
-      setSubmitting(false);
-    }
-  };
 
   const goBack = () => {
     setError(null);
@@ -634,7 +490,7 @@ function ApplyModal({
   // шаг 3 (Фото — там input type=file), чтобы не ломать UX.
   useEffect(() => {
     if (submitted) return;
-    if (stepIdx === 0 || stepIdx === 2) return; // skip Тариф (кнопки) и Документы (file inputs)
+    if (stepIdx === 1) return; // skip Документы (file inputs)
     const t = setTimeout(() => {
       const scope = document.querySelector<HTMLElement>('[class*="z-[80]"]');
       if (!scope) return;
@@ -826,11 +682,7 @@ function ApplyModal({
 
           {/* RIGHT — active form step */}
           <div className="flex-1 overflow-y-auto px-gutter py-12 md:py-20">
-            <div
-              className={`mx-auto w-full ${
-                stepIdx === 0 ? "max-w-[880px]" : "max-w-[640px]"
-              }`}
-            >
+            <div className="mx-auto w-full max-w-[640px]">
             <AnimatePresence mode="wait">
               {submitted ? (
                 <SuccessScreen key="success" form={form} onClose={onClose} />
@@ -848,10 +700,9 @@ function ApplyModal({
                     title={STEP_TITLES[stepIdx]}
                     subtitle={STEP_SUBTITLES[stepIdx]}
                   />
-                  {stepIdx === 0 && <StepTariff form={form} setForm={setForm} />}
-                  {stepIdx === 1 && <StepContact form={form} setForm={setForm} />}
-                  {stepIdx === 2 && <StepPhotos form={form} setForm={setForm} />}
-                  {stepIdx === 3 && (
+                  {stepIdx === 0 && <StepContact form={form} setForm={setForm} />}
+                  {stepIdx === 1 && <StepPhotos form={form} setForm={setForm} />}
+                  {stepIdx === 2 && (
                     <StepPayment form={form} setForm={setForm} />
                   )}
                 </motion.div>
@@ -861,33 +712,6 @@ function ApplyModal({
           </div>
         </div>
 
-        {/* Sticky price summary — над футер-навигацией, чтобы всегда видеть
-            выбранный тариф и итоговую сумму, даже когда заполняешь паспорт
-            на шаге 3. */}
-        {!submitted && form.tariff && (
-          <div className="border-t border-[var(--line)] bg-[var(--bg-2)]/80 px-gutter py-3 backdrop-blur-sm lg:pl-[340px]">
-            <div className="mx-auto flex w-full max-w-[640px] items-center justify-between gap-4 font-mono text-caption uppercase">
-              <div className="flex items-baseline gap-3 text-mute">
-                <span className="text-[var(--text)]">
-                  {TARIFFS.find((t) => t.key === form.tariff)?.name}
-                </span>
-              </div>
-              <div className="flex items-baseline gap-3 text-mute">
-                <span className="hidden sm:inline">
-                  ШАГ {stepIdx + 1} / {STEPS.length}
-                </span>
-                <span className="hidden sm:inline">·</span>
-                <span className="tnum text-[var(--text)]">
-                  {formatRub(
-                    (form.tariff ? TARIFF_PRICES[form.tariff] : 0) +
-                      DEPOSIT_RUB,
-                  )}{" "}
-                  ₽{form.tariff === "buyout" ? " · ×26 НЕД" : ""}
-                </span>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Error message на мобиле — НАД кнопками чтобы не обрезалось */}
         {!submitted && error && (
@@ -975,55 +799,6 @@ function StepHeader({
           {subtitle}
         </p>
       )}
-    </div>
-  );
-}
-
-function StepTariff({
-  form,
-  setForm,
-}: {
-  form: FormData;
-  setForm: ModalProps["setForm"];
-}) {
-  return (
-    <div className="mt-10 flex flex-col gap-10">
-      {/* Период / тариф */}
-      <div>
-        <p className="font-mono text-caption uppercase text-mute">Период</p>
-        <div className="apply-modal-tariffs mt-3 grid grid-cols-1 gap-6 sm:grid-cols-2">
-          {TARIFFS.map((t) => {
-        const selected = form.tariff === t.key;
-        return (
-          <motion.div
-              key={t.key}
-              className="relative"
-              animate={{ scale: selected ? 1 : 1 }}
-              whileTap={{ scale: 0.97 }}
-              transition={{ duration: 0.2, ease: EASE }}
-            >
-            {selected && (
-              <motion.div
-                layoutId="tariff-select-ring"
-                className="pointer-events-none absolute -inset-[3px] z-10 rounded-lg border-2 border-volt"
-                aria-hidden
-                transition={{ type: "spring", stiffness: 400, damping: 30 }}
-              />
-            )}
-            <TariffCard
-              index={t.index}
-              name={t.name}
-              price={formatRub(TARIFF_PRICES[t.key])}
-              period={t.period}
-              specs={TARIFF_SPECS}
-              accent={t.accent}
-              onApply={() => setForm((f) => ({ ...f, tariff: t.key }))}
-            />
-          </motion.div>
-        );
-      })}
-        </div>
-      </div>
     </div>
   );
 }
@@ -1530,7 +1305,6 @@ function StepPayment({
   form: FormData;
   setForm: ModalProps["setForm"];
 }) {
-  const tariff = TARIFFS.find((t) => t.key === form.tariff);
   const p = form.passport;
   const fio = [form.lastName, form.firstName, form.middleName]
     .filter(Boolean)
@@ -1562,17 +1336,16 @@ function StepPayment({
 
       {/* Документы и тариф */}
       <div className="mt-10 border-b border-[var(--line)] pb-3">
-        <span className="font-mono text-caption uppercase text-mute">ДОКУМЕНТЫ И ТАРИФ</span>
+        <span className="font-mono text-caption uppercase text-mute">ДОКУМЕНТЫ</span>
       </div>
       <SummaryRow
         label="ФОТО"
         value={docsDone === 3 ? `3 / 3 ✓` : `${docsDone} / 3`}
       />
-      <SummaryRow label="ТАРИФ" value={(tariff?.name ?? "—").toUpperCase()} />
 
       <p className="mt-6 max-w-[46ch] font-mono text-[11px] uppercase tracking-[0.08em] text-mute">
-        Онлайн-оплаты пока нет. После отправки оператор проверит документы
-        и свяжется с вами для выдачи и оплаты.
+        Тариф и модель обсудим в переписке. После отправки сразу напиши
+        нам в Telegram — договоримся о выдаче.
       </p>
 
       {/* Согласие */}
@@ -1612,14 +1385,11 @@ function StepPayment({
 }
 
 function SuccessScreen({
-  form,
   onClose,
 }: {
   form: FormData;
   onClose: () => void;
 }) {
-  const tariff = TARIFFS.find((t) => t.key === form.tariff);
-
   return (
     <motion.div
       key="success"
@@ -1642,33 +1412,17 @@ function SuccessScreen({
       </div>
       <h3 className="mt-8 font-sans text-h2">Ты крутой!</h3>
       <p className="mx-auto mt-4 max-w-[44ch] font-sans text-body-lg text-mute">
-        Спасибо, что заполнил заявку. Оператор проверит документы и
-        свяжется в течение ~15 минут.
+        Спасибо, что заполнил заявку. Остался один шаг — напиши нам,
+        и договоримся о выдаче.
       </p>
 
-      {/* Чеклист статуса — что происходит дальше */}
       <div className="mx-auto mt-8 max-w-[400px] text-left">
-        <div className="flex flex-col gap-4 rounded-lg border border-[var(--line)] bg-[var(--bg-2)] p-5">
-          <div className="flex items-center gap-3 font-mono text-caption uppercase">
-            <span className="text-volt">✓</span>
-            <span className="text-[var(--text)]">Заявка отправлена</span>
-          </div>
-          <div className="flex items-center gap-3 font-mono text-caption uppercase">
-            <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-volt border-t-transparent" />
-            <span className="text-[var(--text)]">Проверка документов · ~15 мин</span>
-          </div>
-          <div className="flex items-center gap-3 font-mono text-caption uppercase text-mute">
-            <span>○</span>
-            <span>Готов к выдаче</span>
-          </div>
-        </div>
-
-        {/* Главное действие — написать нам в Telegram */}
+        {/* Главное действие — написать нам прямо сейчас */}
         <a
           href={TG_CHAT_URL}
           target="_blank"
           rel="noopener noreferrer"
-          className="btn-cta btn-cta-volt mt-4 flex w-full items-center justify-center gap-3 rounded-md bg-volt px-6 py-5 font-mono text-caption uppercase text-ink hover:bg-volt-hover"
+          className="btn-cta btn-cta-volt flex w-full items-center justify-center gap-3 rounded-md bg-volt px-6 py-5 font-mono text-caption uppercase text-ink hover:bg-volt-hover"
         >
           <span>Напиши нам в Telegram</span>
           <span>→</span>
@@ -1676,12 +1430,6 @@ function SuccessScreen({
         <p className="mt-2 text-center font-mono text-[11px] uppercase tracking-[0.06em] text-mute">
           @voltarenda_bike — ответим быстрее всего
         </p>
-
-        {/* Инфо о тарифе */}
-        <div className="mt-4 flex items-baseline justify-between gap-4 font-mono text-caption uppercase text-mute">
-          <span>ТАРИФ</span>
-          <span className="text-[var(--text)]">{tariff?.name ?? "—"}</span>
-        </div>
       </div>
 
       <button
@@ -1720,27 +1468,6 @@ function SummaryRow({ label, value }: { label: string; value: string }) {
   );
 }
 
-// ============================================================
-// Lazy-загрузка CloudPayments виджета.
-// Скрипт ~100KB грузится только когда пользователь дошёл до оплаты,
-// а не при первом визите на сайт.
-// ============================================================
-let cpPromise: Promise<any> | null = null;
-
-function loadCloudPayments(): Promise<any> {
-  if ((window as any).cp) return Promise.resolve((window as any).cp);
-  if (cpPromise) return cpPromise;
-
-  cpPromise = new Promise((resolve) => {
-    const script = document.createElement("script");
-    script.src = "https://widget.cloudpayments.ru/bundles/cloudpayments.js";
-    script.async = true;
-    script.onload = () => resolve((window as any).cp || null);
-    script.onerror = () => resolve(null);
-    document.head.appendChild(script);
-  });
-  return cpPromise;
-}
 
 // ============================================================
 // Сжатие фото перед загрузкой на сервер.

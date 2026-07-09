@@ -40,6 +40,7 @@ export function OwnerMobile({
   incomeRows,
   depositRows,
   depositLog,
+  depositAdjustment,
   monthlyIncome,
   paymentEvents,
   todayISO,
@@ -61,6 +62,7 @@ export function OwnerMobile({
   incomeRows: IncomeEntry[];
   depositRows: DepositRow[];
   depositLog: DepositLogRow[];
+  depositAdjustment: number;
   monthlyIncome: number;
   paymentEvents: PaymentEvent[];
   todayISO: string;
@@ -192,7 +194,7 @@ export function OwnerMobile({
           </div>
           <div>
             <h2 className="mb-3 text-h3 text-[var(--text)]">Залоги</h2>
-            <DepositsPanel rows={depositRows} log={depositLog} />
+            <DepositsPanel rows={depositRows} log={depositLog} adjustment={depositAdjustment} />
           </div>
         </div>
       )}

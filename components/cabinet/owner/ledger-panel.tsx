@@ -56,8 +56,14 @@ export function LedgerPanel({
 
         {editing ? (
           <form
-            action={setLedgerTotalAction}
-            onSubmit={() => setEditing(false)}
+            // Сериализуем FormData ДО закрытия формы: setEditing(false) в
+            // onSubmit размонтирует <form> раньше, чем React отправит action.
+            onSubmit={(e) => {
+              e.preventDefault();
+              const fd = new FormData(e.currentTarget);
+              setEditing(false);
+              void setLedgerTotalAction(fd);
+            }}
             className="mt-2 flex flex-wrap items-center gap-2"
           >
             <div className="flex items-center gap-1.5 rounded-md border border-volt bg-[var(--bg)] px-3 py-2">

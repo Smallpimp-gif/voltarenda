@@ -17,7 +17,7 @@ import {
   type DepositRow,
   type DepositLogRow,
 } from "@/components/cabinet/owner/deposits-panel";
-import { loadDepositLog } from "@/lib/deposits";
+import { loadDepositLog, depositAdjustmentsTotal } from "@/lib/deposits";
 import { loadPaymentMap } from "@/lib/payments";
 import {
   loadLedger,
@@ -157,11 +157,13 @@ export default async function OwnerPage({
   const depositRows: DepositRow[] = tenants
     .map((t) => ({ id: t.id, name: t.name, deposit: depositOf(t) }))
     .sort((a, b) => b.deposit - a.deposit || a.name.localeCompare(b.name, "ru"));
-  // Журнал обнулений залогов — новые сверху.
+  // Журнал операций по залогам — новые сверху; итог = арендаторы + корректировки.
+  const depositAdjustment = depositAdjustmentsTotal(depositLog);
   const depositLogRows: DepositLogRow[] = [...depositLog.entries].reverse().map((e) => ({
     id: e.id,
     name: e.name,
     amount: e.amount,
+    kind: e.kind,
     at: e.at,
   }));
   const editTenant = sp.edit ? tenants.find((t) => t.id === sp.edit) : undefined;
@@ -236,6 +238,7 @@ export default async function OwnerPage({
         incomeRows={incomeRows}
         depositRows={depositRows}
         depositLog={depositLogRows}
+        depositAdjustment={depositAdjustment}
         monthlyIncome={monthlyIncome}
         paymentEvents={paymentEvents}
         todayISO={todayISO}
@@ -386,7 +389,7 @@ export default async function OwnerPage({
           </span>
         </SectionHeader>
         <div className="mt-8">
-          <DepositsPanel rows={depositRows} log={depositLogRows} />
+          <DepositsPanel rows={depositRows} log={depositLogRows} adjustment={depositAdjustment} />
         </div>
       </section>
     </div>
