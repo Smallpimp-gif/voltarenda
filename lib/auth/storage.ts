@@ -12,6 +12,7 @@ export type User = {
   role: Role;
   tenantId: string | null; // ссылка на bot/tenants; null у владельца
   telegramId: string | null; // задел под Telegram-вход
+  telegramUsername?: string | null; // ник в нижнем регистре (из заявки/входа)
   createdAt: string; // ISO
   lastLoginAt: string | null;
 };
@@ -52,6 +53,17 @@ export async function findUserByTenantId(tenantId: string): Promise<User | null>
 export async function findUserByTelegramId(telegramId: string): Promise<User | null> {
   const users = await loadUsers();
   return Object.values(users).find((u) => u.telegramId === telegramId) ?? null;
+}
+
+export async function findUserByTelegramUsername(username: string): Promise<User | null> {
+  const users = await loadUsers();
+  const norm = username.trim().replace(/^@/, "").toLowerCase();
+  if (!norm) return null;
+  return (
+    Object.values(users).find(
+      (u) => (u.telegramUsername ?? "").toLowerCase() === norm,
+    ) ?? null
+  );
 }
 
 export async function getUserById(id: string): Promise<User | null> {

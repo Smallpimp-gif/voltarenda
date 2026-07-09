@@ -10,7 +10,7 @@ import { NextResponse } from "next/server";
 import { randomUUID } from "node:crypto";
 import { verifyInitData } from "@/lib/auth/telegram";
 import { isOwnerTelegramId, isOwnerTelegramUsername } from "@/lib/auth/owner";
-import { findUserByTelegramId, putUser, type User } from "@/lib/auth/storage";
+import { findUserByTelegramId, findUserByTelegramUsername, putUser, type User } from "@/lib/auth/storage";
 import { findTenantByTelegramUsername } from "@/lib/auth/tenants";
 import { createSession } from "@/lib/auth/session";
 import { isAllowedOrigin } from "@/lib/api-origin";
@@ -54,15 +54,50 @@ export async function POST(req: Request) {
     return NextResponse.json({ status: "owner", redirect: "/cabinet/owner" });
   }
 
-  // Существующий пользователь по telegram-id.
+  // Существующий пользователь по telegram-id. Если договора ещё не было,
+  // а владелец уже вписал этот ник арендатору — привязываем на входе.
   const user = await findUserByTelegramId(tid);
   if (user) {
-    await putUser({ ...user, lastLoginAt: new Date().toISOString() });
+    let tenantId = user.tenantId;
+    if (!tenantId && tg.username) {
+      const tenant = await findTenantByTelegramUsername(tg.username);
+      if (tenant) tenantId = tenant.id;
+    }
+    await putUser({
+      ...user,
+      tenantId,
+      telegramUsername: tg.username?.toLowerCase() ?? user.telegramUsername ?? null,
+      lastLoginAt: new Date().toISOString(),
+    });
     await createSession(user.id);
     return NextResponse.json({
-      status: user.tenantId ? "tenant" : "user",
-      redirect: user.tenantId ? "/cabinet" : "/cabinet/register",
+      status: tenantId ? "tenant" : "user",
+      redirect: tenantId ? "/cabinet" : "/cabinet/register",
     });
+  }
+
+  // Кабинет, созданный при заявке с сайта (по нику): привязываем telegramId
+  // на первом входе — дальше человек узнаётся по id, напоминания доходят.
+  if (tg.username) {
+    const byUsername = await findUserByTelegramUsername(tg.username);
+    if (byUsername) {
+      let tenantId = byUsername.tenantId;
+      if (!tenantId) {
+        const tenant = await findTenantByTelegramUsername(tg.username);
+        if (tenant) tenantId = tenant.id;
+      }
+      await putUser({
+        ...byUsername,
+        telegramId: tid,
+        tenantId,
+        lastLoginAt: new Date().toISOString(),
+      });
+      await createSession(byUsername.id);
+      return NextResponse.json({
+        status: tenantId ? "tenant" : "user",
+        redirect: tenantId ? "/cabinet" : "/cabinet/register",
+      });
+    }
   }
 
   // Авто-привязка по Telegram-нику: если владелец вписал ник в карточке

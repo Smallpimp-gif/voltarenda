@@ -14,6 +14,13 @@ import {
 } from "@/lib/notify";
 import { isAllowedOrigin } from "@/lib/api-origin";
 import { writeJSON } from "@/lib/store";
+import {
+  findUserByEmail,
+  findUserByTelegramUsername,
+  putUser,
+  type User,
+} from "@/lib/auth/storage";
+import { findTenantByTelegramUsername } from "@/lib/auth/tenants";
 import { nextContractNumber } from "@/lib/contract-number";
 import { generateContractBlob } from "@/lib/contract";
 
@@ -127,6 +134,39 @@ export async function POST(req: Request) {
     };
 
     await writeJSON(`applications/${applicationId}`, application);
+
+    // Личный кабинет, привязанный к Telegram-аккаунту заявителя.
+    // Создаём сразу при заявке: когда человек откроет Mini App (/app),
+    // вход по нику привяжет telegramId — дойдут и кабинет, и напоминания.
+    // Best-effort: ошибка не валит заявку.
+    try {
+      const uname = application.customer.telegram.toLowerCase();
+      if (uname) {
+        const byUsername = await findUserByTelegramUsername(uname);
+        const byEmail = await findUserByEmail(application.customer.email);
+        const existing = byUsername ?? byEmail;
+        if (!existing) {
+          // Если владелец уже завёл договор с этим ником — привязываем сразу.
+          const tenant = await findTenantByTelegramUsername(uname);
+          const user: User = {
+            id: applicationId, // тот же id — удобно матчить с заявкой
+            email: application.customer.email,
+            passwordHash: "",
+            role: "tenant",
+            tenantId: tenant?.id ?? null,
+            telegramId: null,
+            telegramUsername: uname,
+            createdAt: new Date().toISOString(),
+            lastLoginAt: null,
+          };
+          await putUser(user);
+        } else if (!existing.telegramUsername) {
+          await putUser({ ...existing, telegramUsername: uname });
+        }
+      }
+    } catch (e) {
+      console.error("[apply/submit] cabinet create failed:", e);
+    }
 
     // Fire-and-forget уведомление оператору в Telegram. Если бот не
     // настроен (нет env) или сеть упала — submit всё равно считается

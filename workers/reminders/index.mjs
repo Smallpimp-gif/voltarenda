@@ -126,15 +126,15 @@ async function runReminders(env) {
       if (ok) sentTenant++;
     }
 
-    // Владельцу — только в день оплаты.
-    if (days === 0) dueToday.push({ name: t.name, amount });
+    // Владельцу — только в день оплаты (с ником, чтобы сразу написать).
+    if (days === 0) dueToday.push({ name: t.name, amount, username: t.telegramUsername || "" });
   }
 
   // Дайджест всем владельцам за сегодня.
   if (admins.size && dueToday.length) {
     const lines = dueToday
       .sort((a, b) => b.amount - a.amount)
-      .map((d) => `• ${d.name} — ${money(d.amount)}`);
+      .map((d) => `• ${d.name}${d.username ? ` — @${d.username}` : ""} — ${money(d.amount)}`);
     const total = dueToday.reduce((s, d) => s + d.amount, 0);
     const text = `💰 <b>Сегодня платят (${dueToday.length})</b>\n${lines.join("\n")}\n\nИтого: ${money(total)}`;
     for (const chat of admins) await tg(token, chat, text);

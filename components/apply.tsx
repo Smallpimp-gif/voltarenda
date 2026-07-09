@@ -17,16 +17,8 @@ import {
 import { AnimatePresence, motion } from "framer-motion";
 import { TariffCard } from "./tariff-card";
 import { APPLE_EASE, EASE, MODAL_SPRING } from "./motion-config";
-import { VK_URL, TELEGRAM_URL } from "@/lib/contacts";
-import { BikePicker } from "./bike-picker";
-import {
-  DEFAULT_MODEL,
-  DEFAULT_BATTERY,
-  modelName,
-  batteryLabel,
-  type BikeModelKey,
-  type BatteryKey,
-} from "@/lib/bikes";
+// Куда ведёт кнопка «Написать нам» на успешном финале заявки.
+const TG_CHAT_URL = "https://t.me/voltarenda_bike";
 
 // ============================================================
 // Типы и константы
@@ -59,8 +51,6 @@ const TARIFF_SPECS = [
 
 type FormData = {
   tariff: TariffKey | null;
-  bikeModel: BikeModelKey;
-  battery: BatteryKey;
   firstName: string;
   lastName: string;
   middleName: string; // отчество (распознаётся с паспорта)
@@ -98,8 +88,6 @@ const EMPTY_PASSPORT: FormData["passport"] = {
 
 const EMPTY_FORM: FormData = {
   tariff: null,
-  bikeModel: DEFAULT_MODEL,
-  battery: DEFAULT_BATTERY,
   firstName: "",
   lastName: "",
   middleName: "",
@@ -123,14 +111,14 @@ const STEPS = [
 ] as const;
 
 const STEP_TITLES = [
-  "Велосипед и тариф",
+  "Тариф",
   "Как с тобой связаться",
   "Документы · фото распознаются автоматически",
   "Проверьте и отправьте",
 ];
 
 const STEP_SUBTITLES = [
-  "Выбери модель, аккумуляторы и период. Залог 5 000 ₽ вернём за 3 дня.",
+  "Выбери период. Залог 5 000 ₽ вернём за 3 дня.",
   "Напишем в Telegram после проверки. Без спама.",
   "🔒 Сфотографируй паспорт — данные подставятся сами. Прописка и фото с паспортом в руках. Данные не передаём третьим лицам.",
   "Проверьте данные и отправьте — оператор свяжется в течение ~15 минут.",
@@ -166,7 +154,7 @@ function trackEvent(goal: string, params?: Record<string, unknown>) {
 // Context
 // ============================================================
 
-type BikeConfig = { bikeModel?: BikeModelKey; battery?: BatteryKey };
+type BikeConfig = { bikeModel?: string; battery?: string };
 
 type ApplyContextValue = {
   open: (tariff?: TariffKey, cfg?: BikeConfig) => void;
@@ -290,15 +278,14 @@ export function ApplyProvider({ children }: { children: ReactNode }) {
     persistForm(form);
   }, [form, hydrated]);
 
-  const open = useCallback((tariff?: TariffKey, cfg?: BikeConfig) => {
-    // Смешиваем явный tariff/конфиг из CTA с persisted формой и вычисляем
-    // стартовый шаг — первый НЕзаполненный.
+  const open = useCallback((tariff?: TariffKey, _cfg?: BikeConfig) => {
+    // Смешиваем явный tariff из CTA с persisted формой и вычисляем
+    // стартовый шаг — первый НЕзаполненный. Конфиг велосипеда из
+    // лендинг-конфигуратора игнорируем: модель обсуждается при выдаче.
     setForm((prev) => {
       const next: FormData = {
         ...prev,
         ...(tariff ? { tariff } : {}),
-        ...(cfg?.bikeModel ? { bikeModel: cfg.bikeModel } : {}),
-        ...(cfg?.battery ? { battery: cfg.battery } : {}),
       };
       const progress = computeProgress(next);
       setStepIdx(Math.min(progress, STEPS.length - 1));
@@ -518,8 +505,6 @@ function ApplyModal({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           tariff: form.tariff,
-          bikeModel: modelName(form.bikeModel),
-          battery: batteryLabel(form.battery),
           firstName: form.firstName,
           lastName: form.lastName,
           middleName: form.middleName,
@@ -886,8 +871,6 @@ function ApplyModal({
                 <span className="text-[var(--text)]">
                   {TARIFFS.find((t) => t.key === form.tariff)?.name}
                 </span>
-                <span className="hidden sm:inline">·</span>
-                <span className="hidden sm:inline">{modelName(form.bikeModel)}</span>
               </div>
               <div className="flex items-baseline gap-3 text-mute">
                 <span className="hidden sm:inline">
@@ -1005,14 +988,6 @@ function StepTariff({
 }) {
   return (
     <div className="mt-10 flex flex-col gap-10">
-      {/* Выбор велосипеда */}
-      <BikePicker
-        model={form.bikeModel}
-        battery={form.battery}
-        onModel={(m) => setForm((f) => ({ ...f, bikeModel: m }))}
-        onBattery={(b) => setForm((f) => ({ ...f, battery: b }))}
-      />
-
       {/* Период / тариф */}
       <div>
         <p className="font-mono text-caption uppercase text-mute">Период</p>
@@ -1593,8 +1568,6 @@ function StepPayment({
         label="ФОТО"
         value={docsDone === 3 ? `3 / 3 ✓` : `${docsDone} / 3`}
       />
-      <SummaryRow label="ВЕЛОСИПЕД" value={modelName(form.bikeModel).toUpperCase()} />
-      <SummaryRow label="АКБ" value={batteryLabel(form.battery).toUpperCase()} />
       <SummaryRow label="ТАРИФ" value={(tariff?.name ?? "—").toUpperCase()} />
 
       <p className="mt-6 max-w-[46ch] font-mono text-[11px] uppercase tracking-[0.08em] text-mute">
@@ -1667,10 +1640,10 @@ function SuccessScreen({
           ✓
         </motion.div>
       </div>
-      <h3 className="mt-8 font-sans text-h2">Заявка принята</h3>
+      <h3 className="mt-8 font-sans text-h2">Ты крутой!</h3>
       <p className="mx-auto mt-4 max-w-[44ch] font-sans text-body-lg text-mute">
-        Оператор проверит документы и напишет вам в Telegram в течение
-        ~15 минут.
+        Спасибо, что заполнил заявку. Оператор проверит документы и
+        свяжется в течение ~15 минут.
       </p>
 
       {/* Чеклист статуса — что происходит дальше */}
@@ -1690,45 +1663,31 @@ function SuccessScreen({
           </div>
         </div>
 
-        {/* Быстрые действия — Telegram (основной канал), ВК, маршрут */}
-        <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
-          <a
-            href={TELEGRAM_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn-cta btn-cta-outline flex items-center justify-center gap-2 rounded-md border border-[var(--line-strong)] px-4 py-4 font-mono text-caption uppercase hover:border-volt hover:text-volt"
-          >
-            Telegram
-          </a>
-          <a
-            href={VK_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn-cta btn-cta-outline flex items-center justify-center gap-2 rounded-md border border-[var(--line-strong)] px-4 py-4 font-mono text-caption uppercase hover:border-volt hover:text-volt"
-          >
-            ВКонтакте
-          </a>
-          <a
-            href="https://yandex.ru/maps/?rtext=~60.081695,30.311619&rtt=auto"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn-cta btn-cta-outline flex items-center justify-center gap-2 rounded-md border border-[var(--line-strong)] px-4 py-4 font-mono text-caption uppercase hover:border-volt hover:text-volt"
-          >
-            Маршрут
-          </a>
-        </div>
+        {/* Главное действие — написать нам в Telegram */}
+        <a
+          href={TG_CHAT_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="btn-cta btn-cta-volt mt-4 flex w-full items-center justify-center gap-3 rounded-md bg-volt px-6 py-5 font-mono text-caption uppercase text-ink hover:bg-volt-hover"
+        >
+          <span>Напиши нам в Telegram</span>
+          <span>→</span>
+        </a>
+        <p className="mt-2 text-center font-mono text-[11px] uppercase tracking-[0.06em] text-mute">
+          @voltarenda_bike — ответим быстрее всего
+        </p>
 
         {/* Инфо о тарифе */}
         <div className="mt-4 flex items-baseline justify-between gap-4 font-mono text-caption uppercase text-mute">
           <span>ТАРИФ</span>
-          <span className="text-[var(--text)]">{tariff?.name ?? "—"} · {modelName(form.bikeModel)}</span>
+          <span className="text-[var(--text)]">{tariff?.name ?? "—"}</span>
         </div>
       </div>
 
       <button
         type="button"
         onClick={onClose}
-        className="btn-cta btn-cta-volt mt-8 rounded-md bg-volt px-8 py-4 font-mono text-caption uppercase text-ink hover:bg-volt-hover"
+        className="btn-cta btn-cta-outline mt-8 rounded-md border border-[var(--line-strong)] px-8 py-4 font-mono text-caption uppercase hover:border-volt hover:text-volt"
       >
         Вернуться на сайт
       </button>
