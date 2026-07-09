@@ -13,7 +13,7 @@ import { TenantForm } from "./tenant-form";
 import { TenantsTable, type TenantRow } from "./tenants-table";
 import { LedgerPanel, type LedgerRow } from "./ledger-panel";
 import { IncomeReport, type Entry as IncomeEntry } from "./income-report";
-import { DepositsPanel, type DepositRow } from "./deposits-panel";
+import { DepositsPanel, type DepositRow, type DepositLogRow } from "./deposits-panel";
 import { ForecastPanel } from "./forecast-panel";
 import type { Tenant, PaymentEvent } from "@/lib/schedule";
 import type { MonthIncome, TenantIncome } from "@/lib/ledger";
@@ -39,6 +39,7 @@ export function OwnerMobile({
   incomeTenants,
   incomeRows,
   depositRows,
+  depositLog,
   monthlyIncome,
   paymentEvents,
   todayISO,
@@ -59,6 +60,7 @@ export function OwnerMobile({
   incomeTenants: TenantIncome[];
   incomeRows: IncomeEntry[];
   depositRows: DepositRow[];
+  depositLog: DepositLogRow[];
   monthlyIncome: number;
   paymentEvents: PaymentEvent[];
   todayISO: string;
@@ -190,7 +192,7 @@ export function OwnerMobile({
           </div>
           <div>
             <h2 className="mb-3 text-h3 text-[var(--text)]">Залоги</h2>
-            <DepositsPanel rows={depositRows} />
+            <DepositsPanel rows={depositRows} log={depositLog} />
           </div>
         </div>
       )}

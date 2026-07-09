@@ -27,11 +27,13 @@ import {
 import {
   paymentState,
   effectiveWeekly,
+  depositOf,
   mskDayNum,
   isoToDayNum,
   dayNumToIso,
   type TenantPosition,
 } from "@/lib/schedule";
+import { addDepositLogEntry } from "@/lib/deposits";
 
 export type ActionState = { error: string | null; ok?: boolean };
 
@@ -160,6 +162,21 @@ export async function togglePauseAction(formData: FormData): Promise<void> {
   }
   revalidatePath("/cabinet/owner");
   revalidatePath("/cabinet");
+}
+
+// Обнулить залог арендатора: deposit → 0 с записью в журнал (кто, сколько,
+// когда). Вернуть можно через форму редактирования (поле «Залог»).
+export async function zeroDepositAction(formData: FormData): Promise<void> {
+  await requireOwner();
+  const id = String(formData.get("id") ?? "");
+  if (!id) return;
+  const t = await getTenantById(id);
+  if (!t) return;
+  const amount = depositOf(t);
+  if (amount <= 0) return;
+  await patchTenant(id, { deposit: 0 });
+  await addDepositLogEntry({ tenantId: id, name: t.name, amount });
+  revalidatePath("/cabinet/owner");
 }
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;

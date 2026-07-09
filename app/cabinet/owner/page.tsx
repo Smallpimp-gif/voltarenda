@@ -15,7 +15,9 @@ import {
 import {
   DepositsPanel,
   type DepositRow,
+  type DepositLogRow,
 } from "@/components/cabinet/owner/deposits-panel";
+import { loadDepositLog } from "@/lib/deposits";
 import { loadPaymentMap } from "@/lib/payments";
 import {
   loadLedger,
@@ -123,11 +125,12 @@ export default async function OwnerPage({
     : cu.user.email;
 
   const sp = await searchParams;
-  const [tenants, bikes, payMap, ledger] = await Promise.all([
+  const [tenants, bikes, payMap, ledger, depositLog] = await Promise.all([
     loadTenants(),
     getAvailableBikes(),
     loadPaymentMap(),
     loadLedger(),
+    loadDepositLog(),
   ]);
   const cassaSum = cassaTotal(ledger);
   const ledgerRows: LedgerRow[] = [...cassaEntries(ledger)].reverse().map((e) => ({
@@ -154,6 +157,13 @@ export default async function OwnerPage({
   const depositRows: DepositRow[] = tenants
     .map((t) => ({ id: t.id, name: t.name, deposit: depositOf(t) }))
     .sort((a, b) => b.deposit - a.deposit || a.name.localeCompare(b.name, "ru"));
+  // Журнал обнулений залогов — новые сверху.
+  const depositLogRows: DepositLogRow[] = [...depositLog.entries].reverse().map((e) => ({
+    id: e.id,
+    name: e.name,
+    amount: e.amount,
+    at: e.at,
+  }));
   const editTenant = sp.edit ? tenants.find((t) => t.id === sp.edit) : undefined;
   const editPaidThrough = editTenant ? (payMap[editTenant.id]?.paidThrough ?? 0) : 0;
 
@@ -225,6 +235,7 @@ export default async function OwnerPage({
         incomeTenants={incomeTenants}
         incomeRows={incomeRows}
         depositRows={depositRows}
+        depositLog={depositLogRows}
         monthlyIncome={monthlyIncome}
         paymentEvents={paymentEvents}
         todayISO={todayISO}
@@ -375,7 +386,7 @@ export default async function OwnerPage({
           </span>
         </SectionHeader>
         <div className="mt-8">
-          <DepositsPanel rows={depositRows} />
+          <DepositsPanel rows={depositRows} log={depositLogRows} />
         </div>
       </section>
     </div>
