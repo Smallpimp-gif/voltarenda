@@ -34,8 +34,8 @@ const SLIDES = [
   { id: "economics", theme: "dark", label: "Экономика" },
   { id: "split", theme: "light", label: "Деньги" },
   { id: "contribution", theme: "dark", label: "Наш вклад" },
-  { id: "approach", theme: "dark", label: "Подход" },
-  { id: "terms", theme: "dark", label: "Условия" },
+  { id: "approach", theme: "light", label: "Подход" },
+  { id: "terms", theme: "light", label: "Условия" },
   { id: "cta", theme: "dark", label: "Заход" },
 ] as const;
 
@@ -190,7 +190,7 @@ export function OfferDeck() {
         <SlideEconomics index="07" />
         <SlideSplit index="08" />
         <SlideContribution index="09" />
-        <SlideApproach index="10" />
+        <SlideApproach index="10" theme="light" />
         <SlideTerms />
         <SlideCta />
       </div>

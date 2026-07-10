@@ -26,14 +26,17 @@ const PRINCIPLES: { tag: string; title: string; desc: ReactNode }[] = [
   },
 ];
 
-export function SlideApproach({ index = "07" }: { index?: string } = {}) {
+export function SlideApproach({
+  index = "07",
+  theme = "dark",
+}: { index?: string; theme?: "dark" | "light" } = {}) {
   return (
-    <Slide id="approach" theme="dark">
+    <Slide id="approach" theme={theme}>
       <Rise>
         <Eyebrow index={index}>Подход</Eyebrow>
       </Rise>
       <Rise delay={0.05} blur={0} as="h2" className="mt-6 max-w-[24ch] font-sans text-display-2">
-        Стратегия <span className="text-volt">гибкая</span> — не&nbsp;одна тропа.
+        Стратегия <span className="text-[var(--acc)]">гибкая</span> — не&nbsp;одна тропа.
       </Rise>
       <Rise delay={0.1} as="p" className="mt-5 max-w-[58ch] font-sans text-body-lg text-mute">
         Подстраиваемся под рынок, задаём свой стандарт качества и&nbsp;работаем
@@ -46,7 +49,7 @@ export function SlideApproach({ index = "07" }: { index?: string } = {}) {
           {PRINCIPLES.map((p, i) => (
             <Rise key={p.title} delay={0.12 + i * 0.06} className="h-full">
               <div className="flex h-full flex-col rounded-lg border border-[var(--line)] bg-[var(--bg-2)] p-6">
-                <span className="font-mono text-caption uppercase text-volt">{p.tag}</span>
+                <span className="font-mono text-caption uppercase text-[var(--acc)]">{p.tag}</span>
                 <h3 className="mt-3 font-sans text-h3">{p.title}</h3>
                 <p className="mt-3 font-sans text-body leading-snug text-mute">{p.desc}</p>
               </div>

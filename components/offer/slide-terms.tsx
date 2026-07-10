@@ -18,12 +18,12 @@ const FORMATS = ["Доля", "Займ", "Смешанная схема"];
 
 export function SlideTerms() {
   return (
-    <Slide id="terms" theme="dark">
+    <Slide id="terms" theme="light">
       <Rise>
         <Eyebrow index="11">Условия захода</Eyebrow>
       </Rise>
       <Rise delay={0.05} blur={0} as="h2" className="mt-6 max-w-[22ch] font-sans text-display-2">
-        Условия гибкие. <span className="text-volt">Всё обсуждаемо.</span>
+        Условия гибкие. <span className="text-[var(--acc)]">Всё обсуждаемо.</span>
       </Rise>
       <Rise delay={0.1} as="p" className="mt-5 max-w-[58ch] font-sans text-body-lg text-mute">
         Доля 20%. Заходишь на&nbsp;10&nbsp;млн сразу или тестом с&nbsp;2&nbsp;млн
@@ -37,13 +37,13 @@ export function SlideTerms() {
             const rise = t.tone === "rise";
             return (
               <Rise key={t.tag} delay={0.12 + i * 0.08}>
-                <div className={`flex h-full flex-col rounded-lg border p-6 ${peak ? "border-volt bg-volt text-ink" : rise ? "border-volt/40 bg-[var(--bg-2)]" : "border-[var(--line)] bg-[var(--bg-2)]"}`}>
+                <div className={`flex h-full flex-col rounded-lg border p-6 ${peak ? "border-volt bg-volt text-ink" : rise ? "border-acc bg-[var(--bg-2)]" : "border-[var(--line)] bg-[var(--bg-2)]"}`}>
                   <div className="flex items-baseline justify-between gap-2">
-                    <span className={`font-mono text-caption uppercase ${peak ? "text-ink/70" : rise ? "text-volt" : "text-mute"}`}>{t.tag}</span>
+                    <span className={`font-mono text-caption uppercase ${peak ? "text-ink/70" : rise ? "text-[var(--acc)]" : "text-mute"}`}>{t.tag}</span>
                     <span className={`font-mono text-[10px] uppercase tracking-[0.06em] ${peak ? "text-ink/70" : "text-mute"}`}>{t.when}</span>
                   </div>
                   <div className="mt-4 flex items-baseline gap-1.5">
-                    <span className={`font-mono tnum text-[clamp(34px,4.4vw,58px)] leading-[0.85] tracking-tight ${peak ? "text-ink" : rise ? "text-volt" : "text-[var(--text)]"}`}>{t.share}</span>
+                    <span className={`font-mono tnum text-[clamp(34px,4.4vw,58px)] leading-[0.85] tracking-tight ${peak ? "text-ink" : rise ? "text-[var(--acc)]" : "text-[var(--text)]"}`}>{t.share}</span>
                     <span className={`font-mono text-caption uppercase ${peak ? "text-ink/70" : "text-mute"}`}>доля</span>
                   </div>
                   {t.sum && <div className={`mt-3 font-mono tnum text-h3 ${peak ? "text-ink" : "text-[var(--text)]"}`}>{t.sum}</div>}
@@ -68,7 +68,7 @@ export function SlideTerms() {
 
       <Punch className="mt-6" marker="открыты">
         Цифры и&nbsp;формат — не&nbsp;ультиматум, а&nbsp;отправная точка. Всё обсуждаемо,
-        <span className="text-volt"> открыты к&nbsp;предложениям</span> — подстроимся под тебя.
+        <span className="text-[var(--acc)]"> открыты к&nbsp;предложениям</span> — подстроимся под тебя.
       </Punch>
     </Slide>
   );
