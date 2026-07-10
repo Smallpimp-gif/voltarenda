@@ -54,6 +54,16 @@ export function SlideTerms() {
           })}
         </div>
 
+        {/* Step-up: цены — при заходе сейчас; позже дороже */}
+        <Rise delay={0.13} className="rounded-lg border border-[var(--line)] bg-[var(--bg-2)] p-4 sm:p-5">
+          <p className="font-sans text-body leading-snug text-mute">
+            Это цены при заходе <span className="text-[var(--text)]">сейчас</span>, по&nbsp;оценке
+            10&nbsp;млн&nbsp;=&nbsp;20%. Стартуешь тестом и&nbsp;добираешь долю{" "}
+            <span className="text-[var(--text)]">позже — уже дороже</span>: после теста бизнес
+            доказан, оценка выше. Насколько — обсуждаем.
+          </p>
+        </Rise>
+
         {/* Форматы сделки */}
         <Rise delay={0.14} className="flex flex-wrap items-center gap-x-4 gap-y-3 border-t border-[var(--line)] pt-4">
           <span className="font-mono text-caption uppercase text-mute">Формат сделки</span>
