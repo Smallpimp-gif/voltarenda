@@ -7,11 +7,11 @@
 import type { ReactNode } from "react";
 import { Eyebrow, R, Rise, Slide, SlideBody } from "@/components/invest/primitives";
 
-export function SlideEconomics() {
+export function SlideEconomics({ index = "04" }: { index?: string } = {}) {
   return (
     <Slide id="economics" theme="dark">
       <Rise>
-        <Eyebrow index="04">Экономика</Eyebrow>
+        <Eyebrow index={index}>Экономика</Eyebrow>
       </Rise>
       <Rise delay={0.05} blur={0} as="h2" className="mt-6 font-sans text-display-2">
         Два источника денег.

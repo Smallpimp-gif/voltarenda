@@ -38,11 +38,11 @@ const BUCKETS: { tag: string; title: string; items: ReactNode[]; accent?: boolea
   },
 ];
 
-export function SlideStep() {
+export function SlideStep({ index = "01" }: { index?: string } = {}) {
   return (
     <Slide id="step" theme="light">
       <Rise>
-        <Eyebrow index="01">Первый шаг</Eyebrow>
+        <Eyebrow index={index}>Первый шаг</Eyebrow>
       </Rise>
       <Rise delay={0.05} blur={0} as="h2" className="mt-6 max-w-[24ch] font-sans text-display-2">
         2&nbsp;000&nbsp;000&nbsp;<R /> — и три актива на&nbsp;старте.

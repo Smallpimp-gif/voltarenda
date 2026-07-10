@@ -50,11 +50,11 @@ const BAR_TONE: Record<string, string> = {
   volt: "bg-volt",
 };
 
-export function SlideTimeline() {
+export function SlideTimeline({ index = "03" }: { index?: string } = {}) {
   return (
     <Slide id="timeline" theme="light">
       <Rise>
-        <Eyebrow index="03">Запуск</Eyebrow>
+        <Eyebrow index={index}>Запуск</Eyebrow>
       </Rise>
       <Rise delay={0.05} blur={0} as="h2" className="mt-6 font-sans text-display-2">
         От денег до&nbsp;потока — ~3&nbsp;недели.

@@ -27,11 +27,11 @@ const CLOSED: { q: string; a: ReactNode }[] = [
   },
 ];
 
-export function SlideSpace() {
+export function SlideSpace({ index = "02" }: { index?: string } = {}) {
   return (
     <Slide id="space" theme="dark">
       <Rise>
-        <Eyebrow index="02">Помещение</Eyebrow>
+        <Eyebrow index={index}>Помещение</Eyebrow>
       </Rise>
       <Rise delay={0.05} blur={0} as="h2" className="mt-6 max-w-[24ch] font-sans text-display-2">
         Помещение — не&nbsp;прихоть, а&nbsp;<span className="text-volt">безопасность</span>.

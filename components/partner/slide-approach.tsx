@@ -26,11 +26,11 @@ const PRINCIPLES: { tag: string; title: string; desc: ReactNode }[] = [
   },
 ];
 
-export function SlideApproach() {
+export function SlideApproach({ index = "06" }: { index?: string } = {}) {
   return (
     <Slide id="approach" theme="dark">
       <Rise>
-        <Eyebrow index="06">Подход</Eyebrow>
+        <Eyebrow index={index}>Подход</Eyebrow>
       </Rise>
       <Rise delay={0.05} blur={0} as="h2" className="mt-6 max-w-[24ch] font-sans text-display-2">
         Стратегия <span className="text-volt">гибкая</span> — не&nbsp;одна тропа.

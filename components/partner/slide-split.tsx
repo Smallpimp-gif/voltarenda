@@ -8,11 +8,11 @@
 import type { ReactNode } from "react";
 import { Eyebrow, Punch, R, Rise, Slide, SlideBody } from "@/components/invest/primitives";
 
-export function SlideSplit() {
+export function SlideSplit({ index = "05" }: { index?: string } = {}) {
   return (
     <Slide id="split" theme="light">
       <Rise>
-        <Eyebrow index="05">Деньги</Eyebrow>
+        <Eyebrow index={index}>Деньги</Eyebrow>
       </Rise>
       <Rise delay={0.05} blur={0} as="h2" className="mt-6 max-w-[22ch] font-sans text-display-2">
         Правило простое: 40&nbsp;в&nbsp;рост, 60&nbsp;делим.
