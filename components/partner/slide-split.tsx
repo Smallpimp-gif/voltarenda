@@ -58,7 +58,7 @@ export function SlideSplit({ index = "05" }: { index?: string } = {}) {
         {/* Две карточки-назначения */}
         <div className="grid gap-5 md:grid-cols-2">
           <Rise delay={0.16} className="h-full">
-            <div className="flex h-full flex-col rounded-lg border border-volt/40 bg-[var(--bg-2)] p-6">
+            <div className="flex h-full flex-col rounded-lg border border-acc bg-[var(--bg-2)] p-6">
               <span className="font-mono text-caption uppercase text-[var(--acc)]">~40% — возврат тела</span>
               <h3 className="mt-3 font-sans text-h3">Новый велик из выплат</h3>
               <p className="mt-3 font-sans text-body leading-snug text-mute">

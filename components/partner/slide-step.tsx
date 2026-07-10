@@ -58,7 +58,7 @@ export function SlideStep({ index = "01" }: { index?: string } = {}) {
             <Rise key={b.title} delay={0.12 + i * 0.06} className="h-full">
               <div
                 className={`flex h-full flex-col rounded-lg border p-6 ${
-                  b.accent ? "border-volt/40 bg-[var(--bg-2)]" : "border-[var(--line)] bg-[var(--bg-2)]"
+                  b.accent ? "border-acc bg-[var(--bg-2)]" : "border-[var(--line)] bg-[var(--bg-2)]"
                 }`}
               >
                 <span className={`font-mono text-caption uppercase ${b.accent ? "text-[var(--acc)]" : "text-mute"}`}>

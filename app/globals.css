@@ -312,3 +312,8 @@ input[type="checkbox"]:active {
 [data-invest-slide] .text-\[11px\] { font-size: 13px; }
 [data-invest-slide] .text-\[13px\] { font-size: 15px; }
 
+/* Акцентная рамка, читаемая на ОБЕИХ темах. --acc задаётся на каждом слайде
+   (volt на тёмном, тёмный шартрёз #5c6e00 на светлом — см. primitives Slide).
+   Заменяет border-volt/40, который на светлом фоне почти не виден. */
+[data-invest-slide] .border-acc { border-color: color-mix(in srgb, var(--acc) 60%, transparent); }
+

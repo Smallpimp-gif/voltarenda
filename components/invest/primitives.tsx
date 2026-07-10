@@ -224,7 +224,7 @@ export function Stat({
       <div className="flex items-baseline gap-1.5">
         <span
           className={`font-mono tnum leading-[0.85] tracking-tight ${numCls} ${
-            accent ? "text-volt" : "text-[var(--text)]"
+            accent ? "text-[var(--acc)]" : "text-[var(--text)]"
           }`}
         >
           {value}

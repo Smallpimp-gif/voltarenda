@@ -73,10 +73,10 @@ export function SlideTimeline({ index = "03" }: { index?: string } = {}) {
 
         {/* Пруф-пойнт — это уже проверено на практике, теперь условия лучше */}
         <Rise delay={0.12}>
-          <div className="rounded-lg border border-volt/40 bg-[var(--bg-2)] p-6">
+          <div className="rounded-lg border border-acc bg-[var(--bg-2)] p-6">
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <h3 className="flex items-center gap-2.5 font-sans text-h3">
-                <span aria-hidden className="inline-block h-2 w-2 shrink-0 bg-volt" />
+                <span aria-hidden className="inline-block h-2 w-2 shrink-0 bg-[var(--acc)]" />
                 Уже проверено на&nbsp;практике
               </h3>
               <span className="font-mono text-caption uppercase text-mute">

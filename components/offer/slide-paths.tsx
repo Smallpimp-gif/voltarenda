@@ -61,24 +61,26 @@ export function SlidePaths() {
             <Rise key={p.title} delay={0.12 + i * 0.08} className="h-full">
               <div
                 className={`flex h-full flex-col rounded-lg border p-6 sm:p-7 ${
-                  p.accent ? "border-volt/40 bg-[var(--bg-2)]" : "border-[var(--line)] bg-[var(--bg-2)]"
+                  p.accent ? "border-acc bg-[var(--bg-2)]" : "border-[var(--line)] bg-[var(--bg-2)]"
                 }`}
               >
                 <span className={`font-mono text-caption uppercase ${p.accent ? "text-[var(--acc)]" : "text-mute"}`}>
                   {p.tag}
                 </span>
-                <div className="mt-4 flex items-baseline justify-between gap-3">
-                  <span className="font-mono tnum text-[clamp(24px,3vw,38px)] leading-none tracking-tight text-[var(--text)]">
-                    {p.sum}
-                  </span>
-                  <span className="flex items-baseline gap-1.5">
-                    <span className="font-mono tnum text-[clamp(28px,3.4vw,46px)] leading-none tracking-tight text-[var(--acc)]">
-                      {p.share}
-                    </span>
-                    <span className="font-mono text-caption uppercase text-mute">доля</span>
+
+                {/* Сумма — герой карточки */}
+                <div className="mt-4 font-mono tnum text-[clamp(26px,3.2vw,42px)] leading-none tracking-tight text-[var(--text)]">
+                  {p.sum}
+                </div>
+                {/* Доля — акцентная строка под суммой */}
+                <div className="mt-2.5 flex items-baseline gap-2">
+                  <span className="font-mono text-caption uppercase text-mute">доля</span>
+                  <span className="font-mono tnum text-[clamp(22px,2.6vw,34px)] leading-none tracking-tight text-[var(--acc)]">
+                    {p.share}
                   </span>
                 </div>
-                <h3 className="mt-4 font-sans text-h3">{p.title}</h3>
+
+                <h3 className="mt-5 font-sans text-h3">{p.title}</h3>
                 <ul className="mt-4 flex flex-col gap-3 font-sans text-body text-mute">
                   {p.items.map((it, j) => (
                     <li key={j} className="flex items-baseline gap-3">
