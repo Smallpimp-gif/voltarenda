@@ -25,11 +25,11 @@ const TIERS: {
     tone: "base",
   },
   {
-    tag: "Добор",
+    tag: "Докуп",
     when: "после теста",
     share: <>21%</>,
-    sum: <>+5 000 000&nbsp;<R /></>,
-    note: <>7&nbsp;млн всего · та&nbsp;же цена</>,
+    sum: <>6 000 000&nbsp;<R /></>,
+    note: <>цена докупа доли</>,
     tone: "rise",
   },
   {
