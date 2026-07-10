@@ -10,7 +10,7 @@ import { Eyebrow, Punch, R, Rise, Slide, SlideBody } from "@/components/invest/p
 
 const TIERS: { tag: string; when: string; share: ReactNode; sum: ReactNode | null; note: ReactNode; tone: "base" | "rise" | "peak" }[] = [
   { tag: "Тест", when: "сейчас", share: <>~4%</>, sum: <>2 000 000&nbsp;<R /></>, note: <>10&nbsp;млн&nbsp;=&nbsp;20%</>, tone: "base" },
-  { tag: "Добор", when: "после теста", share: <>~14%</>, sum: <>+5 000 000&nbsp;<R /></>, note: <>7&nbsp;млн всего</>, tone: "rise" },
+  { tag: "Докуп", when: "после теста", share: <>~14%</>, sum: <>6 000 000&nbsp;<R /></>, note: <>цена докупа доли</>, tone: "rise" },
   { tag: "Довыкуп", when: "опция", share: <>до&nbsp;20%</>, sum: null, note: <>по повышенной оценке · чуть дороже</>, tone: "peak" },
 ];
 
