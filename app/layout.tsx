@@ -125,6 +125,11 @@ export default function RootLayout({
     <html
       lang="ru"
       className={`${generalSans.variable} ${geistMono.variable}`}
+      // Telegram WebApp SDK (telegram-web-app.js в <head>) выставляет на <html>
+      // инлайн-стиль --tg-viewport-height ДО гидрации — React видит атрибут,
+      // которого нет в его дереве, и ругается mismatch'ем. Стандартный приём
+      // для стороннего скрипта, мутирующего <html>: гасим предупреждение здесь.
+      suppressHydrationWarning
     >
       <head>
         {/* Telegram Mini App SDK — грузим РАНО, прямо в head, и сразу зовём
