@@ -20,6 +20,7 @@ import { SlideSpace } from "@/components/partner/slide-space";
 import { SlideTimeline } from "@/components/partner/slide-timeline";
 import { SlideEconomics } from "@/components/partner/slide-economics";
 import { SlideSplit } from "@/components/partner/slide-split";
+import { SlideContribution } from "@/components/partner/slide-contribution";
 import { SlideApproach } from "@/components/partner/slide-approach";
 
 const SLIDES = [
@@ -32,6 +33,7 @@ const SLIDES = [
   { id: "timeline", theme: "light", label: "Запуск" },
   { id: "economics", theme: "dark", label: "Экономика" },
   { id: "split", theme: "light", label: "Деньги" },
+  { id: "contribution", theme: "dark", label: "Наш вклад" },
   { id: "approach", theme: "dark", label: "Подход" },
   { id: "terms", theme: "dark", label: "Условия" },
   { id: "cta", theme: "dark", label: "Заход" },
@@ -187,7 +189,8 @@ export function OfferDeck() {
         <SlideTimeline index="06" />
         <SlideEconomics index="07" />
         <SlideSplit index="08" />
-        <SlideApproach index="09" />
+        <SlideContribution index="09" />
+        <SlideApproach index="10" />
         <SlideTerms />
         <SlideCta />
       </div>
