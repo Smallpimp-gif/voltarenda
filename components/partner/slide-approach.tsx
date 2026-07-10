@@ -26,7 +26,7 @@ const PRINCIPLES: { tag: string; title: string; desc: ReactNode }[] = [
   },
 ];
 
-export function SlideApproach({ index = "06" }: { index?: string } = {}) {
+export function SlideApproach({ index = "07" }: { index?: string } = {}) {
   return (
     <Slide id="approach" theme="dark">
       <Rise>

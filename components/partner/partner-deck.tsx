@@ -16,6 +16,7 @@ import { SlideSpace } from "./slide-space";
 import { SlideTimeline } from "./slide-timeline";
 import { SlideEconomics } from "./slide-economics";
 import { SlideSplit } from "./slide-split";
+import { SlideContribution } from "./slide-contribution";
 import { SlideApproach } from "./slide-approach";
 import { SlideTerms } from "./slide-terms";
 import { SlideCta } from "./slide-cta";
@@ -27,6 +28,7 @@ const SLIDES = [
   { id: "timeline", theme: "light", label: "Запуск" },
   { id: "economics", theme: "dark", label: "Экономика" },
   { id: "split", theme: "light", label: "Деньги" },
+  { id: "contribution", theme: "dark", label: "Наш вклад" },
   { id: "approach", theme: "dark", label: "Подход" },
   { id: "terms", theme: "dark", label: "Условия" },
   { id: "cta", theme: "dark", label: "Дальше" },
@@ -211,6 +213,7 @@ export function PartnerDeck() {
         <SlideTimeline />
         <SlideEconomics />
         <SlideSplit />
+        <SlideContribution />
         <SlideApproach />
         <SlideTerms />
         <SlideCta />

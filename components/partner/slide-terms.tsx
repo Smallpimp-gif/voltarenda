@@ -46,7 +46,7 @@ export function SlideTerms() {
   return (
     <Slide id="terms" theme="dark">
       <Rise>
-        <Eyebrow index="07">Условия захода</Eyebrow>
+        <Eyebrow index="08">Условия захода</Eyebrow>
       </Rise>
       <Rise delay={0.05} blur={0} as="h2" className="mt-6 max-w-[22ch] font-sans text-display-2">
         Заходишь тестом. Долю добираешь.

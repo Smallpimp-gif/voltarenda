@@ -46,7 +46,7 @@ export function SlideCta() {
       <Rise>
         <span className="flex items-center gap-3 font-mono text-caption uppercase text-mute">
           <span aria-hidden className="inline-block h-1.5 w-1.5 shrink-0 bg-volt" />
-          <span className="text-[var(--text)]">08</span>
+          <span className="text-[var(--text)]">09</span>
           <span>Дальше</span>
         </span>
       </Rise>
