@@ -24,6 +24,9 @@ export const runtime = "nodejs";
 
 type CreateSubscriptionBody = {
   token: string; // Token карты из виджета CloudPayments
+  // id арендатора — уходит в CloudPayments как AccountId и возвращается
+  // в вебхуке. Только по нему платёж связывается с договором.
+  tenantId?: string;
   // Условия сделки — те же ключи, что в форме заявки и договоре.
   mode?: "rent" | "buyout";
   buyoutConfig?: string;
@@ -142,7 +145,8 @@ export async function POST(req: Request) {
 
   const payload = {
     token: body.token,
-    accountId: body.customer.email || body.customer.phone,
+    // AccountId вернётся в вебхуке — по нему зачисляем платёж арендатору.
+    accountId: body.tenantId || body.customer.email || body.customer.phone,
     description: `${cfg.model}, ${batteryContractLine(cfg)} — ${dealName}`,
     email: body.customer.email,
     amount: trustedPrice,
