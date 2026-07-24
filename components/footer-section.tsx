@@ -29,7 +29,7 @@ import {
 const FOOTER_SECTIONS: { href: string; label: string }[] = [
   { href: "#how", label: "Как работает" },
   { href: "#bike", label: "ВОЛЬТ U2" },
-  { href: "#tariffs", label: "Тарифы" },
+  { href: "#configurator", label: "Цены" },
   { href: "#calc", label: "Калькулятор" },
   { href: "#location", label: "Точка выдачи" },
   { href: "#faq", label: "FAQ" },

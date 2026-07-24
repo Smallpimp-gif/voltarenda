@@ -16,7 +16,7 @@ type Theme = "light" | "dark";
 const NAV = [
   { href: "#how", label: "Как работает" },
   { href: "#bike", label: "Велосипед" },
-  { href: "#tariffs", label: "Тарифы" },
+  { href: "#configurator", label: "Цены" },
   { href: "#calc", label: "Калькулятор" },
   { href: "#location", label: "Точка выдачи" },
   { href: "#faq", label: "FAQ" },

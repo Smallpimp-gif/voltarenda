@@ -16,6 +16,26 @@ import {
 } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { APPLE_EASE, EASE, MODAL_SPRING } from "./motion-config";
+import {
+  BUYOUT_CONFIGS,
+  DEFAULT_BUYOUT_CONFIG,
+  getBuyoutConfig,
+  getBuyoutPlan,
+  batteryContractLine,
+  rentWeekly,
+  type BuyoutConfigKey,
+} from "@/lib/bikes";
+import {
+  validatePassport,
+  validatePersonal,
+  validatePassportFields,
+  validatePersonalFields,
+  type FieldErrors,
+  maskSeries,
+  maskNumber,
+  maskDeptCode,
+  maskDate,
+} from "@/lib/passport-validate";
 // Куда ведёт кнопка «Написать нам» на успешном финале заявки.
 const TG_CHAT_URL = "https://t.me/voltarenda_bike";
 
@@ -49,6 +69,14 @@ type FormData = {
   photoRegistration: { fileId: string; previewUrl: string } | null;
   photoSelfie: { fileId: string; previewUrl: string } | null;
   agreed: boolean;
+  // Тип сделки: аренда (понедельно, бессрочно) или выкуп (срок в неделях).
+  mode: "rent" | "buyout";
+  // Комплектация АКБ (общая для обоих типов) и срок выкупа.
+  buyoutConfig: BuyoutConfigKey;
+  buyoutWeeks: number;
+  // true, если главное фото распознано как паспорт (или OCR не настроен —
+  // тогда не блокируем). false — фото не паспорт → на след. шаг не пускаем.
+  mainPhotoRecognized: boolean;
 };
 
 const EMPTY_PASSPORT: FormData["passport"] = {
@@ -75,23 +103,30 @@ const EMPTY_FORM: FormData = {
   photoRegistration: null,
   photoSelfie: null,
   agreed: false,
+  mode: "buyout",
+  buyoutConfig: DEFAULT_BUYOUT_CONFIG,
+  buyoutWeeks: getBuyoutConfig(DEFAULT_BUYOUT_CONFIG)!.plans[0].weeks,
+  mainPhotoRecognized: false,
 };
 
 const STEPS = [
+  { key: "bike", label: "Условия" },
   { key: "contact", label: "Контакты" },
   { key: "photos", label: "Документы" },
   { key: "review", label: "Заявка" },
 ] as const;
 
 const STEP_TITLES = [
+  "Велосипед и условия",
   "Как с тобой связаться",
   "Документы · фото распознаются автоматически",
   "Проверьте и отправьте",
 ];
 
 const STEP_SUBTITLES = [
+  "Mingto U2 Pro 2000W. Выкуп или аренда, комплект АКБ и срок — цена посчитается сама.",
   "Напишем в Telegram после проверки. Без спама.",
-  "🔒 Сфотографируй паспорт — данные подставятся сами. Прописка и фото с паспортом в руках. Данные не передаём третьим лицам.",
+  "Сфотографируй паспорт — данные подставятся сами. Прописка и фото с паспортом в руках. Данные не передаём третьим лицам.",
   "Проверьте данные и отправьте — и сразу напиши нам в Telegram.",
 ];
 
@@ -111,7 +146,12 @@ function trackEvent(goal: string, params?: Record<string, unknown>) {
 // Context
 // ============================================================
 
-type BikeConfig = { bikeModel?: string; battery?: string };
+// Выбор, сделанный в конфигураторе на лендинге, переносится в форму.
+type BikeConfig = {
+  mode?: "rent" | "buyout";
+  buyoutConfig?: BuyoutConfigKey;
+  buyoutWeeks?: number;
+};
 
 type ApplyContextValue = {
   open: (tariff?: TariffKey, cfg?: BikeConfig) => void;
@@ -134,17 +174,19 @@ export function useApply(): ApplyContextValue {
 // Подсчёт сколько шагов формы уже заполнено — используется и в Resume-
 // баннере на Hero, и внутри провайдера чтобы определять стартовый stepIdx
 // при восстановлении.
+// Возвращает индекс шага, на котором стоит открыть форму при восстановлении.
+// Шаг «Выкуп» (0) имеет дефолты — его пропускаем, как только заполнены
+// контакты: contact-done → photos(2), + photos-done → review(3), иначе → 0.
 function computeProgress(form: FormData): number {
-  let done = 0;
-  if (
+  const contactDone =
     form.firstName.trim().length >= 2 &&
     form.lastName.trim().length >= 2 &&
     form.phone.length > 0 &&
-    form.email.length > 0
-  )
-    done++;
-  if (form.photoMain && form.photoRegistration && form.photoSelfie) done++;
-  return done;
+    form.email.length > 0;
+  const photosDone = !!(form.photoMain && form.photoRegistration && form.photoSelfie);
+  if (contactDone && photosDone) return 3;
+  if (contactDone) return 2;
+  return 0;
 }
 
 // ============================================================
@@ -173,7 +215,7 @@ function persistForm(form: FormData) {
   try {
     // SECURITY: НЕ сохраняем фото в localStorage.
     // Сохраняем только прогресс заполнения (тариф, контакты).
-    const { photoMain, photoRegistration, photoSelfie, ...safe } = form;
+    const { photoMain, photoRegistration, photoSelfie, mainPhotoRecognized, ...safe } = form;
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(safe));
   } catch {
     // localStorage полный или заблокирован — тихо игнорим
@@ -233,12 +275,21 @@ export function ApplyProvider({ children }: { children: ReactNode }) {
     persistForm(form);
   }, [form, hydrated]);
 
-  const open = useCallback((_tariff?: TariffKey, _cfg?: BikeConfig) => {
-    // Тариф и конфиг из CTA игнорируем: период и модель обсуждаются
-    // при выдаче. Стартуем с первого НЕзаполненного шага.
+  const open = useCallback((_tariff?: TariffKey, cfg?: BikeConfig) => {
+    // Если пришли из конфигуратора с готовым выбором — переносим его в форму
+    // и пропускаем шаг «Выкуп»: человек уже выбрал на лендинге.
     setForm((prev) => {
-      setStepIdx(Math.min(computeProgress(prev), STEPS.length - 1));
-      return prev;
+      const next: FormData = { ...prev };
+      if (cfg?.mode) next.mode = cfg.mode;
+      if (cfg?.buyoutConfig && getBuyoutConfig(cfg.buyoutConfig)) {
+        next.buyoutConfig = cfg.buyoutConfig;
+        const c = getBuyoutConfig(cfg.buyoutConfig)!;
+        const w = cfg.buyoutWeeks;
+        next.buyoutWeeks = w && c.plans.some((p) => p.weeks === w) ? w : c.plans[0].weeks;
+      }
+      const start = Math.min(computeProgress(next), STEPS.length - 1);
+      setStepIdx(cfg?.buyoutConfig ? Math.max(1, start) : start);
+      return next;
     });
     setSubmitting(false);
     setSubmitted(false);
@@ -370,22 +421,57 @@ function validEmail(s: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
 }
 
+// Ошибки текущего шага с привязкой к полю — чтобы подсветить конкретный
+// инпут, а не показывать одну строку внизу формы.
+function stepFieldErrors(step: number, form: FormData): FieldErrors {
+  if (step === 1) {
+    // Контакты: ФИО + адреса (отчество вводится на шаге паспорта) + связь.
+    const { middleName: _skip, ...rest } = validatePersonalFields(form);
+    const e: FieldErrors = { ...rest };
+    if (phoneDigits(form.phone).length !== 10) e.phone = "10 цифр: +7 (XXX) XXX-XX-XX";
+    if (!validEmail(form.email)) e.email = "Проверь адрес";
+    return e;
+  }
+  if (step === 2) {
+    const e: FieldErrors = { ...validatePassportFields(form.passport) };
+    const mid = validatePersonalFields(form).middleName;
+    if (mid) e.middleName = mid;
+    return e;
+  }
+  return {};
+}
+
 function validateStep(step: number, form: FormData): string | null {
   switch (step) {
-    case 0:
-      if (form.firstName.trim().length < 2) return "Укажи имя";
-      if (form.lastName.trim().length < 2) return "Укажи фамилию";
+    case 0: {
+      // Комплектация обязательна; срок — только для выкупа.
+      const cfg = getBuyoutConfig(form.buyoutConfig);
+      if (!cfg) return "Выбери комплектацию";
+      if (form.mode === "buyout" && !cfg.plans.some((p) => p.weeks === form.buyoutWeeks))
+        return "Выбери срок выкупа";
+      return null;
+    }
+    case 1: {
+      // Контакты + строгая проверка ФИО и адресов (идут в договор).
       if (phoneDigits(form.phone).length !== 10) return "Телефон в формате +7 (XXX) XXX-XX-XX";
       if (!validEmail(form.email)) return "Проверь email";
-      if (form.currentAddress.trim().length < 5) return "Укажи актуальное место проживания";
+      const personal = validatePersonal(form);
+      if (personal.length) return personal[0];
       return null;
-    case 1:
+    }
+    case 2: {
       if (!form.photoMain) return "Загрузи разворот паспорта с фото";
+      if (!form.mainPhotoRecognized)
+        return "На фото не распознан паспорт — переснимите разворот с фото чётче";
       if (!form.photoRegistration) return "Загрузи разворот с пропиской";
       if (!form.photoSelfie) return "Загрузи фото с паспортом в руках";
+      // Паспортные данные обязательны и без мусора — идут в договор.
+      const pass = validatePassport(form.passport);
+      if (pass.length) return pass[0];
       return null;
-    case 2:
-      // Финальный шаг: проверка данных + согласие, затем отправка оператору
+    }
+    case 3:
+      // Финальный шаг: согласие, затем отправка оператору.
       if (!form.agreed) return "Нужно согласие на обработку данных";
       return null;
     default:
@@ -421,14 +507,35 @@ function ApplyModal({
   onClose,
 }: ModalProps) {
   const [error, setError] = useState<string | null>(null);
+  // Ошибки полей показываем только после первой попытки «Далее» — чтобы не
+  // краснить форму, пока человек её ещё заполняет. Дальше они гаснут сами,
+  // как только поле исправлено (fieldErrors пересчитывается на каждый ввод).
+  const [showFieldErrors, setShowFieldErrors] = useState(false);
 
   const step = STEPS[stepIdx];
   const isLast = stepIdx === STEPS.length - 1;
 
+  const fieldErrors = useMemo(() => stepFieldErrors(stepIdx, form), [stepIdx, form]);
+  const err = (key: string) => (showFieldErrors ? fieldErrors[key] : undefined);
+
+  // Новый шаг — начинаем с чистого листа.
+  useEffect(() => {
+    setShowFieldErrors(false);
+    setError(null);
+  }, [stepIdx]);
+
   const goNext = async () => {
-    const err = validateStep(stepIdx, form);
-    if (err) {
-      setError(err);
+    const stepErr = validateStep(stepIdx, form);
+    const hasFieldErrors = Object.keys(fieldErrors).length > 0;
+    if (stepErr || hasFieldErrors) {
+      setShowFieldErrors(true);
+      setError(stepErr ?? Object.values(fieldErrors)[0]);
+      // Подскроллим к первому проблемному полю и сфокусируем его.
+      setTimeout(() => {
+        const el = document.querySelector<HTMLElement>('[data-invalid="true"]');
+        el?.scrollIntoView({ block: "center", behavior: "smooth" });
+        el?.querySelector("input")?.focus();
+      }, 60);
       return;
     }
     setError(null);
@@ -448,7 +555,10 @@ function ApplyModal({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          tariff: "unset",
+          tariff: form.mode === "buyout" ? "buyout" : "week",
+          mode: form.mode,
+          buyoutConfig: form.buyoutConfig,
+          buyoutWeeks: form.buyoutWeeks,
           firstName: form.firstName,
           lastName: form.lastName,
           middleName: form.middleName,
@@ -680,9 +790,20 @@ function ApplyModal({
             </aside>
           )}
 
-          {/* RIGHT — active form step */}
-          <div className="flex-1 overflow-y-auto px-gutter py-12 md:py-20">
-            <div className="mx-auto w-full max-w-[640px]">
+          {/* RIGHT — active form step.
+              onFocusCapture + scroll-padding + pb — чтобы на мобиле
+              экранная клавиатура и нижний футер «Назад/Далее» не закрывали
+              поле ввода: при фокусе прокручиваем его к центру видимой зоны. */}
+          <div
+            className="flex-1 overflow-y-auto px-gutter py-12 [scroll-padding-bottom:9rem] md:py-20"
+            onFocusCapture={(e) => {
+              const t = e.target as HTMLElement;
+              if (t.matches("input, textarea")) {
+                setTimeout(() => t.scrollIntoView({ block: "center", behavior: "smooth" }), 300);
+              }
+            }}
+          >
+            <div className="mx-auto w-full max-w-[640px] pb-32">
             <AnimatePresence mode="wait">
               {submitted ? (
                 <SuccessScreen key="success" form={form} onClose={onClose} />
@@ -700,9 +821,10 @@ function ApplyModal({
                     title={STEP_TITLES[stepIdx]}
                     subtitle={STEP_SUBTITLES[stepIdx]}
                   />
-                  {stepIdx === 0 && <StepContact form={form} setForm={setForm} />}
-                  {stepIdx === 1 && <StepPhotos form={form} setForm={setForm} />}
-                  {stepIdx === 2 && (
+                  {stepIdx === 0 && <StepBike form={form} setForm={setForm} />}
+                  {stepIdx === 1 && <StepContact form={form} setForm={setForm} err={err} />}
+                  {stepIdx === 2 && <StepPhotos form={form} setForm={setForm} err={err} />}
+                  {stepIdx === 3 && (
                     <StepPayment form={form} setForm={setForm} />
                   )}
                 </motion.div>
@@ -803,18 +925,155 @@ function StepHeader({
   );
 }
 
-function StepContact({
+function weekWord(n: number): string {
+  const m10 = n % 10;
+  const m100 = n % 100;
+  if (m10 === 1 && m100 !== 11) return "неделя";
+  if (m10 >= 2 && m10 <= 4 && (m100 < 10 || m100 >= 20)) return "недели";
+  return "недель";
+}
+
+const fmtRub = (n: number) => n.toLocaleString("ru-RU");
+
+// Шаг «Выкуп»: модель (U2 Pro фиксирована), комплект АКБ и срок выкупа.
+// Источник цифр — BUYOUT_CONFIGS (lib/bikes.ts), те же попадают в договор.
+function StepBike({
   form,
   setForm,
 }: {
   form: FormData;
   setForm: ModalProps["setForm"];
 }) {
+  const cfg = getBuyoutConfig(form.buyoutConfig) ?? getBuyoutConfig(DEFAULT_BUYOUT_CONFIG)!;
+  const plan = getBuyoutPlan(cfg, form.buyoutWeeks);
+
+  const pickConfig = (key: BuyoutConfigKey) =>
+    setForm((f) => {
+      const c = getBuyoutConfig(key)!;
+      const weeksOk = c.plans.some((p) => p.weeks === f.buyoutWeeks);
+      return { ...f, buyoutConfig: key, buyoutWeeks: weeksOk ? f.buyoutWeeks : c.plans[0].weeks };
+    });
+
+  // Цена недели: выкуп — по выбранному плану, аренда — +10% к базовому.
+  const weeklyNow = form.mode === "buyout" ? plan.weekly : rentWeekly(cfg);
+
+  const cardCls = (active: boolean) =>
+    `rounded-lg border p-4 text-left transition-colors duration-quick ${
+      active ? "border-volt bg-volt/5" : "border-[var(--line-strong)] hover:border-[var(--text)]"
+    }`;
+
+  return (
+    <div className="mt-10 flex flex-col gap-8">
+      {/* Тип сделки */}
+      <div>
+        <p className="font-mono text-caption uppercase text-mute">Что оформляем</p>
+        <div className="mt-3 grid grid-cols-2 gap-3">
+          <button
+            type="button"
+            onClick={() => setForm((f) => ({ ...f, mode: "buyout" }))}
+            className={cardCls(form.mode === "buyout")}
+          >
+            <span className="block font-sans text-h3 text-[var(--text)]">Выкуп</span>
+            <span className="mt-1 block font-mono text-caption uppercase text-mute">
+              Велосипед станет твоим
+            </span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setForm((f) => ({ ...f, mode: "rent" }))}
+            className={cardCls(form.mode === "rent")}
+          >
+            <span className="block font-sans text-h3 text-[var(--text)]">Аренда</span>
+            <span className="mt-1 block font-mono text-caption uppercase text-mute">
+              Понедельно, без срока
+            </span>
+          </button>
+        </div>
+      </div>
+
+      {/* Модель — сейчас одна доступная */}
+      <div>
+        <p className="font-mono text-caption uppercase text-mute">Модель</p>
+        <div className="mt-3 rounded-lg border border-volt bg-volt/5 p-4">
+          <span className="block text-body-lg font-semibold text-[var(--text)]">Mingto U2 Pro</span>
+          <span className="mt-1 block font-mono text-caption uppercase text-mute">2000 Вт, контроллер 50A</span>
+        </div>
+      </div>
+
+      {/* Комплект АКБ */}
+      <div>
+        <p className="font-mono text-caption uppercase text-mute">Аккумуляторы</p>
+        <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
+          {BUYOUT_CONFIGS.map((c) => (
+            <button key={c.key} type="button" onClick={() => pickConfig(c.key)} className={cardCls(c.key === cfg.key)}>
+              <span className="block font-mono text-body-lg font-semibold tabular-nums text-[var(--text)]">
+                {c.batteryCount === 1 ? c.batteryParams : `${c.batteryCount} × ${c.batteryParams}`}
+              </span>
+              <span className="mt-1 block font-mono text-caption uppercase text-mute">
+                {c.brand ? `${c.brand} · ` : ""}
+                {c.range}
+              </span>
+              <span className="mt-1 block text-body text-mute">{c.topSpeed}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Срок выкупа — только для выкупа; аренда бессрочная */}
+      {form.mode === "buyout" && (
+        <div>
+          <p className="font-mono text-caption uppercase text-mute">Срок выкупа</p>
+          <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {cfg.plans.map((p) => (
+              <button
+                key={p.weeks}
+                type="button"
+                onClick={() => setForm((f) => ({ ...f, buyoutWeeks: p.weeks }))}
+                className={cardCls(p.weeks === plan.weeks)}
+              >
+                <span className="block font-sans text-h3 text-[var(--text)]">
+                  {p.weeks} {weekWord(p.weeks)}
+                </span>
+                <span className="mt-1 block font-mono text-caption uppercase text-mute">
+                  {fmtRub(p.weekly)} ₽ / неделя
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Итог — недельный платёж (полную выкупную цену клиенту не показываем) */}
+      <div className="flex flex-wrap items-baseline justify-between gap-2 border-t border-[var(--line)] pt-5">
+        <div className="flex items-baseline gap-2">
+          <span className="font-sans text-h2 text-[var(--text)]">{fmtRub(weeklyNow)} ₽</span>
+          <span className="font-mono text-caption uppercase text-mute">в неделю</span>
+        </div>
+        <span className="font-mono text-caption uppercase text-mute">
+          {form.mode === "buyout"
+            ? `выкуп · срок ${plan.weeks} ${weekWord(plan.weeks)}`
+            : "аренда · бессрочно"}{" "}
+          · залог {fmtRub(cfg.deposit)} ₽
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function StepContact({
+  form,
+  setForm,
+  err,
+}: {
+  form: FormData;
+  setForm: ModalProps["setForm"];
+  err: (key: string) => string | undefined;
+}) {
   return (
     <div>
       <div className="mt-10 flex flex-col gap-8">
         <div className="grid grid-cols-1 gap-8 sm:grid-cols-2">
-          <Field label="Имя">
+          <Field label="Имя" required error={err("firstName")}>
             <input
               type="text"
               value={form.firstName}
@@ -825,7 +1084,7 @@ function StepContact({
               placeholder="Иван"
             />
           </Field>
-          <Field label="Фамилия">
+          <Field label="Фамилия" required error={err("lastName")}>
             <input
               type="text"
               value={form.lastName}
@@ -837,7 +1096,7 @@ function StepContact({
           </Field>
         </div>
 
-        <Field label="Телефон">
+        <Field label="Телефон" required error={err("phone")}>
           <input
             type="tel"
             inputMode="tel"
@@ -851,7 +1110,7 @@ function StepContact({
           />
         </Field>
 
-        <Field label="Email">
+        <Field label="Email" required error={err("email")}>
           <input
             type="email"
             inputMode="email"
@@ -864,7 +1123,7 @@ function StepContact({
           />
         </Field>
 
-        <Field label="Telegram (для связи)">
+        <Field label="Telegram (для связи)" hint="Необязательно">
           <input
             type="text"
             inputMode="text"
@@ -878,18 +1137,23 @@ function StepContact({
           />
         </Field>
 
-        <Field label="Адрес регистрации (по паспорту)">
+        <Field
+          label="Адрес регистрации (по паспорту)"
+          required
+          hint="Попадёт в договор — как в прописке"
+          error={err("regAddress")}
+        >
           <input
             type="text"
             value={form.regAddress}
             onChange={(e) => setForm((f) => ({ ...f, regAddress: e.target.value }))}
             autoComplete="off"
             className={inputCls}
-            placeholder="Как в прописке: город, улица, дом, кв."
+            placeholder="г. Санкт-Петербург, ул. Ленина, д. 5, кв. 12"
           />
         </Field>
 
-        <Field label="Актуальное место проживания">
+        <Field label="Актуальное место проживания" required error={err("currentAddress")}>
           <input
             type="text"
             value={form.currentAddress}
@@ -906,12 +1170,17 @@ function StepContact({
 
 type PhotoSlotKey = "photoMain" | "photoRegistration" | "photoSelfie";
 
+// Подсказка к фото: ok=true — «так надо», ok=false — «так нельзя».
+// Значок рисуем сами (volt / красный акцент), без системных эмодзи —
+// цветные ✅/❌ выбиваются из монохром+volt айдентики.
+type PhotoTip = { ok: boolean; text: string };
+
 const PHOTO_SLOTS: {
   key: PhotoSlotKey;
   index: string;
   title: string;
   hint: string;
-  tips: string[]; // ✅ подсказки для хорошего фото
+  tips: PhotoTip[];
   capture: "environment" | "user";
 }[] = [
   {
@@ -920,9 +1189,9 @@ const PHOTO_SLOTS: {
     title: "Паспорт · разворот с фото",
     hint: "Данные распознаются автоматически",
     tips: [
-      "✅ Все данные читаемы, без бликов",
-      "✅ Паспорт лежит на ровной поверхности",
-      "❌ Не закрывай пальцами текст",
+      { ok: true, text: "Все данные читаемы, без бликов" },
+      { ok: true, text: "Паспорт лежит на ровной поверхности" },
+      { ok: false, text: "Не закрывай пальцами текст" },
     ],
     capture: "environment",
   },
@@ -932,9 +1201,9 @@ const PHOTO_SLOTS: {
     title: "Паспорт · разворот с пропиской",
     hint: "Страница с регистрацией целиком",
     tips: [
-      "✅ Виден штамп прописки полностью",
-      "✅ Текст читаемый, в фокусе",
-      "❌ Не обрезай края страницы",
+      { ok: true, text: "Виден штамп прописки полностью" },
+      { ok: true, text: "Текст читаемый, в фокусе" },
+      { ok: false, text: "Не обрезай края страницы" },
     ],
     capture: "environment",
   },
@@ -944,9 +1213,9 @@ const PHOTO_SLOTS: {
     title: "Фото с паспортом в руках",
     hint: "Вы держите раскрытый паспорт",
     tips: [
-      "✅ Лицо и паспорт в кадре одновременно",
-      "✅ Хорошее освещение, без теней",
-      "❌ Не используй фильтры и маски",
+      { ok: true, text: "Лицо и паспорт в кадре одновременно" },
+      { ok: true, text: "Хорошее освещение, без теней" },
+      { ok: false, text: "Не используй фильтры и маски" },
     ],
     capture: "user",
   },
@@ -957,9 +1226,11 @@ type OcrState = "idle" | "loading" | "done" | "manual" | "error";
 function StepPhotos({
   form,
   setForm,
+  err,
 }: {
   form: FormData;
   setForm: ModalProps["setForm"];
+  err: (key: string) => string | undefined;
 }) {
   const [ocr, setOcr] = useState<OcrState>(form.photoMain ? "done" : "idle");
 
@@ -982,6 +1253,7 @@ function StepPhotos({
           firstName: fx.firstName || f.firstName,
           lastName: fx.lastName || f.lastName,
           middleName: fx.middleName || f.middleName,
+          mainPhotoRecognized: true,
           passport: {
             birthDate: fx.birthDate || f.passport.birthDate,
             birthPlace: fx.birthPlace || f.passport.birthPlace,
@@ -994,10 +1266,15 @@ function StepPhotos({
         }));
         setOcr("done");
       } else {
-        setOcr(data?.configured ? "error" : "manual");
+        // OCR не настроен — проверить фото нечем, пропускаем (recognized=true).
+        // OCR настроен, но паспорт не распознан → это не паспорт: блокируем.
+        const configured = !!data?.configured;
+        setForm((f) => ({ ...f, mainPhotoRecognized: !configured }));
+        setOcr(configured ? "error" : "manual");
       }
     } catch {
       setOcr("error");
+      setForm((f) => ({ ...f, mainPhotoRecognized: false }));
     }
   };
 
@@ -1008,7 +1285,10 @@ function StepPhotos({
     setForm((f) => ({ ...f, [key]: value }));
     if (key === "photoMain") {
       if (value) recognize(value.fileId);
-      else setOcr("idle");
+      else {
+        setOcr("idle");
+        setForm((f) => ({ ...f, mainPhotoRecognized: false }));
+      }
     }
   };
 
@@ -1017,6 +1297,17 @@ function StepPhotos({
 
   return (
     <div className="mt-10 flex flex-col gap-6">
+      {/* Плашка приватности — свой значок замка вместо системной эмодзи. */}
+      <div className="flex items-center gap-2 border-b border-[var(--line)] pb-4">
+        <svg width="12" height="14" viewBox="0 0 12 14" fill="none" aria-hidden className="shrink-0 text-volt">
+          <path d="M3.25 6V4a2.75 2.75 0 0 1 5.5 0v2" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+          <rect x="1.4" y="6" width="9.2" height="6.8" rx="1.6" stroke="currentColor" strokeWidth="1.4" />
+        </svg>
+        <span className="font-mono text-caption uppercase text-mute">
+          Данные не передаём третьим лицам
+        </span>
+      </div>
+
       {PHOTO_SLOTS.map((slot) => (
         <PhotoSlot
           key={slot.key}
@@ -1053,17 +1344,17 @@ function StepPhotos({
                 </p>
               )}
               <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <PassportField label="Отчество" value={form.middleName} onChange={(v) => setForm((f) => ({ ...f, middleName: v }))} placeholder="Иванович" />
-                <PassportField label="Дата рождения" value={form.passport.birthDate} onChange={(v) => setP("birthDate", v)} placeholder="дд.мм.гггг" inputMode="numeric" />
-                <PassportField label="Серия" value={form.passport.series} onChange={(v) => setP("series", v)} placeholder="0000" inputMode="numeric" />
-                <PassportField label="Номер" value={form.passport.number} onChange={(v) => setP("number", v)} placeholder="000000" inputMode="numeric" />
-                <PassportField label="Дата выдачи" value={form.passport.issueDate} onChange={(v) => setP("issueDate", v)} placeholder="дд.мм.гггг" inputMode="numeric" />
-                <PassportField label="Код подразделения" value={form.passport.departmentCode} onChange={(v) => setP("departmentCode", v)} placeholder="000-000" inputMode="numeric" />
+                <PassportField label="Отчество" value={form.middleName} onChange={(v) => setForm((f) => ({ ...f, middleName: v }))} placeholder="Иванович" error={err("middleName")} />
+                <PassportField label="Дата рождения" required value={form.passport.birthDate} onChange={(v) => setP("birthDate", maskDate(v))} placeholder="дд.мм.гггг" inputMode="numeric" error={err("birthDate")} />
+                <PassportField label="Серия" required value={form.passport.series} onChange={(v) => setP("series", maskSeries(v))} placeholder="0000" inputMode="numeric" error={err("series")} />
+                <PassportField label="Номер" required value={form.passport.number} onChange={(v) => setP("number", maskNumber(v))} placeholder="000000" inputMode="numeric" error={err("number")} />
+                <PassportField label="Дата выдачи" required value={form.passport.issueDate} onChange={(v) => setP("issueDate", maskDate(v))} placeholder="дд.мм.гггг" inputMode="numeric" error={err("issueDate")} />
+                <PassportField label="Код подразделения" required value={form.passport.departmentCode} onChange={(v) => setP("departmentCode", maskDeptCode(v))} placeholder="000-000" inputMode="numeric" error={err("departmentCode")} />
                 <div className="sm:col-span-2">
-                  <PassportField label="Кем выдан" value={form.passport.issuedBy} onChange={(v) => setP("issuedBy", v)} placeholder="Наименование органа" />
+                  <PassportField label="Кем выдан" required value={form.passport.issuedBy} onChange={(v) => setP("issuedBy", v)} placeholder="ГУ МВД России по г. Санкт-Петербургу" error={err("issuedBy")} />
                 </div>
                 <div className="sm:col-span-2">
-                  <PassportField label="Место рождения" value={form.passport.birthPlace} onChange={(v) => setP("birthPlace", v)} placeholder="Город" />
+                  <PassportField label="Место рождения" required value={form.passport.birthPlace} onChange={(v) => setP("birthPlace", v)} placeholder="гор. Санкт-Петербург" error={err("birthPlace")} />
                 </div>
               </div>
             </>
@@ -1081,24 +1372,37 @@ function PassportField({
   onChange,
   placeholder,
   inputMode,
+  error,
+  required,
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
   placeholder?: string;
   inputMode?: "numeric" | "text";
+  error?: string;
+  required?: boolean;
 }) {
   return (
-    <label className="flex flex-col gap-1.5">
-      <span className="font-mono text-caption uppercase text-mute">{label}</span>
+    <label data-invalid={error ? "true" : undefined} className="flex flex-col gap-1.5">
+      <span className="font-mono text-caption uppercase text-mute">
+        {label}
+        {required && <span className="text-volt"> *</span>}
+      </span>
       <input
         type="text"
         inputMode={inputMode}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full rounded-md border border-[var(--line-strong)] bg-[var(--bg)] px-3 py-2.5 font-sans text-body text-[var(--text)] outline-none transition-colors duration-quick placeholder:text-[var(--line-strong)] focus:border-volt"
+        aria-invalid={error ? true : undefined}
+        className={`w-full rounded-md border bg-[var(--bg)] px-3 py-2.5 font-sans text-body text-[var(--text)] outline-none transition-colors duration-quick placeholder:text-[var(--line-strong)] ${
+          error
+            ? "border-[#ff6b6b] focus:border-[#ff6b6b]"
+            : "border-[var(--line-strong)] focus:border-volt"
+        }`}
       />
+      {error && <span className="font-mono text-caption text-[#ff6b6b]">{error}</span>}
     </label>
   );
 }
@@ -1270,10 +1574,19 @@ function PhotoSlot({
           ) : (
             <>
               <div className="font-sans text-h3">＋ Загрузить фото</div>
-              <div className="mt-1 flex flex-col gap-0.5 px-4">
+              <div className="mt-2 flex flex-col gap-1 px-4">
                 {slot.tips.map((tip) => (
-                  <span key={tip} className="font-mono text-[11px] tracking-[0.04em] text-mute">
-                    {tip}
+                  <span
+                    key={tip.text}
+                    className="flex items-start gap-2 text-left font-mono text-[11px] tracking-[0.04em] text-mute"
+                  >
+                    <span
+                      aria-hidden
+                      className={`mt-px shrink-0 leading-none ${tip.ok ? "text-volt" : "text-[#ff6b6b]"}`}
+                    >
+                      {tip.ok ? "✓" : "✕"}
+                    </span>
+                    <span>{tip.text}</span>
                   </span>
                 ))}
               </div>
@@ -1312,16 +1625,36 @@ function StepPayment({
     .toUpperCase();
   const seriesNumber = [p.series, p.number].filter(Boolean).join(" ");
   const docsDone = [form.photoMain, form.photoRegistration, form.photoSelfie].filter(Boolean).length;
+  const cfg = getBuyoutConfig(form.buyoutConfig) ?? getBuyoutConfig(DEFAULT_BUYOUT_CONFIG)!;
+  const plan = getBuyoutPlan(cfg, form.buyoutWeeks);
 
   return (
     <div className="mt-10 flex flex-col">
-      {/* Резюме заявки */}
+      {/* Условия */}
       <div className="border-b border-[var(--line)] pb-3">
+        <span className="font-mono text-caption uppercase text-mute">
+          {form.mode === "buyout" ? "ВЫКУП" : "АРЕНДА"}
+        </span>
+      </div>
+      <SummaryRow label="ВЕЛОСИПЕД" value={`${cfg.model} · ${batteryContractLine(cfg)}`} />
+      <SummaryRow
+        label={form.mode === "buyout" ? "СРОК" : "ПЛАТЁЖ"}
+        value={
+          form.mode === "buyout"
+            ? `${plan.weeks} ${weekWord(plan.weeks)} · ${fmtRub(plan.weekly)} ₽/нед`
+            : `${fmtRub(rentWeekly(cfg))} ₽/нед · бессрочно`
+        }
+      />
+      <SummaryRow label="ЗАЛОГ" value={`${fmtRub(cfg.deposit)} ₽`} />
+
+      {/* Резюме заявки */}
+      <div className="mt-10 border-b border-[var(--line)] pb-3">
         <span className="font-mono text-caption uppercase text-mute">ДАННЫЕ ЗАЯВКИ</span>
       </div>
       <SummaryRow label="ФИО" value={fio || "—"} />
       <SummaryRow label="ТЕЛЕФОН" value={form.phone || "—"} />
       <SummaryRow label="EMAIL" value={form.email?.toUpperCase() || "—"} />
+      <SummaryRow label="АДРЕС РЕГ." value={form.regAddress?.toUpperCase() || "—"} />
       <SummaryRow label="ПРОЖИВАНИЕ" value={form.currentAddress?.toUpperCase() || "—"} />
 
       {/* Паспорт */}
@@ -1344,7 +1677,7 @@ function StepPayment({
       />
 
       <p className="mt-6 max-w-[46ch] font-mono text-[11px] uppercase tracking-[0.08em] text-mute">
-        Тариф и модель обсудим в переписке. После отправки сразу напиши
+        По этим данным сформируем договор. После отправки сразу напиши
         нам в Telegram — договоримся о выдаче.
       </p>
 
@@ -1450,11 +1783,34 @@ function SuccessScreen({
 const inputCls =
   "w-full border-0 border-b-2 border-[var(--line-strong)] bg-transparent px-0 py-4 font-sans text-h3 tnum text-[var(--text)] placeholder:font-sans placeholder:text-body-lg placeholder:text-[var(--line-strong)] focus:border-volt focus:shadow-[0_2px_8px_-2px_rgba(229,255,0,0.3)] focus:outline-none transition-all duration-base ease-out-soft";
 
-function Field({ label, children }: { label: string; children: ReactNode }) {
+function Field({
+  label,
+  children,
+  error,
+  required,
+  hint,
+}: {
+  label: string;
+  children: ReactNode;
+  error?: string;
+  required?: boolean;
+  hint?: string;
+}) {
   return (
-    <label className="flex flex-col gap-2">
-      <span className="font-mono text-caption uppercase text-mute">{label}</span>
+    <label
+      data-invalid={error ? "true" : undefined}
+      className={`flex flex-col gap-2 ${error ? "[&_input]:!border-[#ff6b6b]" : ""}`}
+    >
+      <span className="font-mono text-caption uppercase text-mute">
+        {label}
+        {required && <span className="text-volt"> *</span>}
+      </span>
       {children}
+      {error ? (
+        <span className="font-mono text-caption text-[#ff6b6b]">{error}</span>
+      ) : hint ? (
+        <span className="font-mono text-caption text-mute opacity-70">{hint}</span>
+      ) : null}
     </label>
   );
 }

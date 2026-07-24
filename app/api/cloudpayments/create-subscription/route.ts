@@ -12,15 +12,26 @@
 
 import { NextResponse } from "next/server";
 import { isAllowedOrigin } from "@/lib/api-origin";
+import {
+  getBuyoutConfig,
+  getBuyoutPlan,
+  rentWeekly,
+  batteryContractLine,
+  DEFAULT_BUYOUT_CONFIG,
+} from "@/lib/bikes";
 
 export const runtime = "nodejs";
 
 type CreateSubscriptionBody = {
   token: string; // Token карты из виджета CloudPayments
-  tariff: {
+  // Условия сделки — те же ключи, что в форме заявки и договоре.
+  mode?: "rent" | "buyout";
+  buyoutConfig?: string;
+  buyoutWeeks?: number;
+  tariff?: {
     key: string;
     name: string;
-    price: number; // цена за период в рублях
+    price: number; // цена от клиента — НЕ доверяем, только для логов
   };
   customer: {
     firstName: string;
@@ -37,24 +48,26 @@ type CreateSubscriptionBody = {
 // а НЕ доверяет клиентскому tariff.price. Это защита от
 // подмены цены через DevTools / curl.
 // ============================================================
-const TARIFF_PRICES: Record<string, number> = {
-  "three-day": 3500,
-  week: 5500,
-  month: 19000,
-  buyout: 6500,
-};
-
-const DEPOSIT_RUB = 5000;
-
-const TARIFF_RECURRENCE: Record<
-  string,
-  { interval: "Day" | "Week" | "Month"; period: number; maxPeriods: number } | null
-> = {
-  "three-day": null,
-  week: { interval: "Week", period: 1, maxPeriods: 52 },
-  month: { interval: "Month", period: 1, maxPeriods: 12 },
-  buyout: { interval: "Week", period: 1, maxPeriods: 26 },
-};
+// Цена берётся из ЕДИНОГО каталога (lib/bikes.ts) — того же, по которому
+// считает лендинг, форма заявки и генерируется договор. Отдельного
+// прайса здесь нет намеренно: иначе списания разъедутся с договором.
+function resolveTerms(body: CreateSubscriptionBody) {
+  const cfg = getBuyoutConfig(body.buyoutConfig) ?? getBuyoutConfig(DEFAULT_BUYOUT_CONFIG)!;
+  const isBuyout = body.mode !== "rent";
+  const plan = getBuyoutPlan(cfg, body.buyoutWeeks);
+  return {
+    cfg,
+    isBuyout,
+    // Оба типа списываются понедельно.
+    weekly: isBuyout ? plan.weekly : rentWeekly(cfg),
+    // Выкуп — конечное число списаний; аренда — бессрочно (год вперёд).
+    recurrence: {
+      interval: "Week" as const,
+      period: 1,
+      maxPeriods: isBuyout ? plan.weeks : 52,
+    },
+  };
+}
 
 export async function POST(req: Request) {
   // CSRF: проверяем Origin header — только наш домен может вызывать API.
@@ -77,21 +90,18 @@ export async function POST(req: Request) {
     );
   }
 
-  if (!body.token || !body.tariff?.key) {
+  if (!body.token) {
     return NextResponse.json(
-      { error: "missing_fields", message: "Не указан token или тариф" },
+      { error: "missing_fields", message: "Не указан token" },
       { status: 400 },
     );
   }
 
-  // Серверный lookup цены — НИКОГДА не доверяем body.tariff.price
-  const trustedPrice = TARIFF_PRICES[body.tariff.key];
-  if (trustedPrice === undefined) {
-    return NextResponse.json(
-      { error: "invalid_tariff", message: `Неизвестный тариф: ${body.tariff.key}` },
-      { status: 400 },
-    );
-  }
+  // Цена считается на сервере из каталога — клиентскую не читаем вообще.
+  const { cfg, isBuyout, weekly: trustedPrice, recurrence } = resolveTerms(body);
+  const dealName = isBuyout
+    ? `выкуп, ${recurrence.maxPeriods} нед`
+    : "аренда, понедельно";
 
   const publicId = process.env.CLOUDPAYMENTS_PUBLIC_ID;
   const apiSecret = process.env.CLOUDPAYMENTS_API_SECRET;
@@ -106,22 +116,17 @@ export async function POST(req: Request) {
         { status: 503 },
       );
     }
-    const recurrence = TARIFF_RECURRENCE[body.tariff.key];
     return NextResponse.json({
       mode: "mock",
-      subscription: recurrence
-        ? {
-            id: `mock-sub-${Date.now()}`,
-            amount: trustedPrice,
-            interval: recurrence.interval,
-            period: recurrence.period,
-            maxPeriods: recurrence.maxPeriods,
-            status: "Active",
-          }
-        : null,
-      message: recurrence
-        ? `Mock: подписка ${trustedPrice} ₽ каждую ${recurrence.interval === "Week" ? "неделю" : "месяц"}, макс ${recurrence.maxPeriods} списаний`
-        : `Mock: разовый платёж ${trustedPrice + DEPOSIT_RUB} ₽, подписка не требуется`,
+      subscription: {
+        id: `mock-sub-${Date.now()}`,
+        amount: trustedPrice,
+        interval: recurrence.interval,
+        period: recurrence.period,
+        maxPeriods: recurrence.maxPeriods,
+        status: "Active",
+      },
+      message: `Mock: ${dealName} — ${trustedPrice} ₽ каждую неделю, макс ${recurrence.maxPeriods} списаний`,
     });
   }
 
@@ -129,26 +134,16 @@ export async function POST(req: Request) {
   // Реальный CloudPayments API
   // ============================================================
   const auth = Buffer.from(`${publicId}:${apiSecret}`).toString("base64");
-  const recurrence = TARIFF_RECURRENCE[body.tariff.key];
-
-  // Если тариф без рекуррента (3 дня) — подписку не создаём
-  if (!recurrence) {
-    return NextResponse.json({
-      mode: "live",
-      subscription: null,
-      message: "Тариф без подписки, первый платёж обработан виджетом",
-    });
-  }
 
   // Создаём подписку через CloudPayments API
   // https://developers.cloudpayments.ru/en/#create-subscription
   const startDate = new Date();
-  startDate.setDate(startDate.getDate() + (recurrence.interval === "Week" ? 7 : 30));
+  startDate.setDate(startDate.getDate() + 7); // первое рекуррентное — через неделю
 
   const payload = {
     token: body.token,
     accountId: body.customer.email || body.customer.phone,
-    description: `Аренда ВОЛЬТ U2 · тариф ${body.tariff.name}`,
+    description: `${cfg.model}, ${batteryContractLine(cfg)} — ${dealName}`,
     email: body.customer.email,
     amount: trustedPrice,
     currency: "RUB",

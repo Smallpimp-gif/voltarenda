@@ -1,6 +1,6 @@
-// Генерация договора аренды (.docx) по финальному шаблону №18. Реквизиты
-// Арендодателя фиксированы; данные Арендатора — из заявки. Условия:
-// 5500 ₽/нед, срок неопределённый (бессрочный), велосипед U2 pro + 2×60/33.
+// Генерация договора аренды (.docx) по финальному шаблону (эталон — Договор
+// №33). Реквизиты Арендодателя фиксированы; данные Арендатора и параметры
+// Имущества/выкупа — из заявки (см. lib/bikes.ts как источник истины цифр).
 //
 // Работает в Node и в Cloudflare Workers: docx — чистый JS, на выходе Blob.
 
@@ -14,6 +14,7 @@ import {
   TableRow,
   TableCell,
   WidthType,
+  TableLayoutType,
 } from "docx";
 
 export type ContractTenant = {
@@ -33,18 +34,89 @@ export type ContractTenant = {
 
 export type ContractKind = "аренда" | "выкуп";
 
+// Параметры Имущества и оценочная стоимость (из выбранной комплектации).
+export type ContractBike = {
+  model: string; // «U2 pro»
+  batteryCount: number; // 1
+  batteryParams: string; // «63V/65Ah»
+  valuation: { bike: number; batteryEach: number; charger: number; keysLock: number; box: number };
+};
+
 export type ContractData = {
   number: number;
   dateText: string; // напр. «27» июня 2026 г.
   kind: ContractKind;
   tenant: ContractTenant;
+  bike: ContractBike;
+  // Условия выкупа — обязательны при kind==="выкуп".
+  buyout?: { weekly: number; weeks: number };
+  // Условия аренды — обязательны при kind==="аренда".
+  rent?: { weekly: number; deposit: number };
 };
 
-const WEEKLY = 5500;
-const BUYOUT_WEEKS = 41;
-const BUYOUT_TOTAL = WEEKLY * BUYOUT_WEEKS; // 225 500
 const rub = new Intl.NumberFormat("ru-RU");
 const FILL = "________________";
+
+// --- сумма и число прописью (для юр. чёткости, как в эталоне) ----------
+
+const ONES_M = ["", "один", "два", "три", "четыре", "пять", "шесть", "семь", "восемь", "девять"];
+const ONES_F = ["", "одна", "две", "три", "четыре", "пять", "шесть", "семь", "восемь", "девять"];
+const TEENS = [
+  "десять", "одиннадцать", "двенадцать", "тринадцать", "четырнадцать",
+  "пятнадцать", "шестнадцать", "семнадцать", "восемнадцать", "девятнадцать",
+];
+const TENS = ["", "", "двадцать", "тридцать", "сорок", "пятьдесят", "шестьдесят", "семьдесят", "восемьдесят", "девяносто"];
+const HUNDREDS = ["", "сто", "двести", "триста", "четыреста", "пятьсот", "шестьсот", "семьсот", "восемьсот", "девятьсот"];
+
+// n: 0..999 → слова. fem — женский род единиц (для «тысяч»).
+function triple(n: number, fem: boolean): string {
+  const parts: string[] = [];
+  const h = Math.floor(n / 100);
+  const t = Math.floor((n % 100) / 10);
+  const u = n % 10;
+  if (h) parts.push(HUNDREDS[h]);
+  if (t === 1) {
+    parts.push(TEENS[u]);
+  } else {
+    if (t) parts.push(TENS[t]);
+    if (u) parts.push((fem ? ONES_F : ONES_M)[u]);
+  }
+  return parts.join(" ");
+}
+
+function plural(n: number, one: string, few: string, many: string): string {
+  const m10 = n % 10;
+  const m100 = n % 100;
+  if (m10 === 1 && m100 !== 11) return one;
+  if (m10 >= 2 && m10 <= 4 && (m100 < 10 || m100 >= 20)) return few;
+  return many;
+}
+
+// Рубли прописью (без копеек): 240000 → «двести сорок тысяч рублей».
+function rubWords(n: number): string {
+  if (n === 0) return "ноль рублей";
+  const th = Math.floor(n / 1000);
+  const rest = n % 1000;
+  const parts: string[] = [];
+  if (th) {
+    parts.push(triple(th, true));
+    parts.push(plural(th, "тысяча", "тысячи", "тысяч"));
+  }
+  if (rest) parts.push(triple(rest, false));
+  parts.push(plural(n, "рубль", "рубля", "рублей"));
+  return parts.join(" ").replace(/\s+/g, " ").trim();
+}
+
+// Число прописью в родительном падеже для «в течение N (…) недель».
+// Частые значения — точным словом; иначе падаем на цифру.
+const WEEKS_GEN: Record<number, string> = {
+  24: "двадцати четырёх",
+  26: "двадцати шести",
+  40: "сорока",
+};
+function weeksGen(n: number): string {
+  return WEEKS_GEN[n] ?? String(n);
+}
 
 // --- helpers ----------------------------------------------------------
 
@@ -71,9 +143,8 @@ function heading(text: string) {
   });
 }
 
-function cell(text: string, opts: { bold?: boolean; caption?: boolean; w?: number } = {}) {
+function cell(text: string, opts: { bold?: boolean; caption?: boolean } = {}) {
   return new TableCell({
-    width: opts.w ? { size: opts.w, type: WidthType.PERCENTAGE } : undefined,
     children: [
       new Paragraph({
         children: [
@@ -90,8 +161,15 @@ function cell(text: string, opts: { bold?: boolean; caption?: boolean; w?: numbe
   });
 }
 
-function fullTable(rows: TableRow[]) {
-  return new Table({ width: { size: 100, type: WidthType.PERCENTAGE }, rows });
+// Фиксированная сетка колонок (в твипах) обязательна — иначе Pages/Word
+// схлопывают колонки до 1 символа в ширину. Сумма ≈ ширина текста на A4.
+function fullTable(rows: TableRow[], columnWidths: number[]) {
+  return new Table({
+    width: { size: columnWidths.reduce((a, b) => a + b, 0), type: WidthType.DXA },
+    columnWidths,
+    layout: TableLayoutType.FIXED,
+    rows,
+  });
 }
 
 function tenantLine(t: ContractTenant): string {
@@ -110,11 +188,37 @@ function tenantLine(t: ContractTenant): string {
   return parts.join(", ");
 }
 
+// Строка оценочной стоимости (п. 1.3): велосипед + N×АКБ + ЗУ + ключи + короб.
+function valuationLine(bike: ContractBike): { text: string; total: number } {
+  const v = bike.valuation;
+  const items: string[] = [`велосипед ${bike.model} — ${rub.format(v.bike)} ₽`];
+  for (let i = 0; i < bike.batteryCount; i++) {
+    items.push(`аккумулятор ${bike.batteryParams} — ${rub.format(v.batteryEach)} ₽`);
+  }
+  items.push(`зарядное устройство — ${rub.format(v.charger)} ₽`);
+  items.push(`ключи и замок — ${rub.format(v.keysLock)} ₽`);
+  items.push(`короб (кофр) — ${rub.format(v.box)} ₽`);
+  const total = v.bike + v.batteryEach * bike.batteryCount + v.charger + v.keysLock + v.box;
+  return { text: `1.3. Оценочная стоимость Имущества: ${items.join(", ")}, итого ${rub.format(total)} ₽.`, total };
+}
+
 // --- generator --------------------------------------------------------
 
 export async function generateContractBlob(data: ContractData): Promise<Blob> {
   const t = data.tenant;
   const b = data.kind === "выкуп"; // выкуп vs аренда
+  const bike = data.bike;
+  const val = valuationLine(bike);
+  const valTotal = val.total;
+
+  // Экономика выкупа/аренды.
+  const buyoutWeekly = data.buyout?.weekly ?? 0;
+  const buyoutWeeks = data.buyout?.weeks ?? 0;
+  const buyoutTotal = buyoutWeekly * buyoutWeeks;
+  const rentWeekly = data.rent?.weekly ?? 0;
+  const deposit = data.rent?.deposit ?? 5000;
+
+  const batteryTableLine = `${bike.batteryCount} шт.: ${bike.batteryParams}`;
 
   const children = [
     para(
@@ -125,22 +229,25 @@ export async function generateContractBlob(data: ContractData): Promise<Blob> {
     ),
 
     // Шапка: город / дата / номер
-    fullTable([
-      new TableRow({
-        children: [
-          cell("г. Санкт-Петербург", { w: 40 }),
-          cell(data.dateText, { w: 35 }),
-          cell(`№ ${data.number}`, { bold: true, w: 25 }),
-        ],
-      }),
-      new TableRow({
-        children: [
-          cell("Город составления", { caption: true }),
-          cell("Дата составления", { caption: true }),
-          cell("Номер договора", { caption: true }),
-        ],
-      }),
-    ]),
+    fullTable(
+      [
+        new TableRow({
+          children: [
+            cell("г. Санкт-Петербург"),
+            cell(data.dateText),
+            cell(`№ ${data.number}`, { bold: true }),
+          ],
+        }),
+        new TableRow({
+          children: [
+            cell("Город составления", { caption: true }),
+            cell("Дата составления", { caption: true }),
+            cell("Номер договора", { caption: true }),
+          ],
+        }),
+      ],
+      [3600, 3000, 2400],
+    ),
 
     para(
       "Семенов Евгений Ильич, паспорт 47 18 № 648777, выдан УМВД России по Мурманской области 11.04.2019, код 510-004, адрес рег.: Мурманская обл., г. Кировск, тел. +7 (901) 300-03-19",
@@ -163,33 +270,34 @@ export async function generateContractBlob(data: ContractData): Promise<Blob> {
     ),
 
     // Характеристики Имущества
-    fullTable([
-      new TableRow({ children: [cell("U2 pro", { bold: true, w: 55 }), cell("Марка/модель", { caption: true, w: 45 })] }),
-      new TableRow({ children: [cell("чёрный с зелёными деталями"), cell("Цвет", { caption: true })] }),
-      new TableRow({ children: [cell("2026"), cell("Год выпуска", { caption: true })] }),
-      new TableRow({ children: [cell(""), cell("VIN / номер рамы (вписывается при передаче)", { caption: true })] }),
-      new TableRow({ children: [cell("25 км/ч"), cell("Ограничитель скорости", { caption: true })] }),
-      new TableRow({ children: [cell("2 шт.: 60V/33Ah"), cell("Аккумуляторная батарея (передаётся)", { caption: true })] }),
-    ]),
+    fullTable(
+      [
+        new TableRow({ children: [cell(bike.model, { bold: true }), cell("Марка/модель", { caption: true })] }),
+        new TableRow({ children: [cell("чёрный с зелёными деталями"), cell("Цвет", { caption: true })] }),
+        new TableRow({ children: [cell("2026"), cell("Год выпуска", { caption: true })] }),
+        new TableRow({ children: [cell(""), cell("VIN / номер рамы (вписывается при передаче)", { caption: true })] }),
+        new TableRow({ children: [cell("25 км/ч"), cell("Ограничитель скорости", { caption: true })] }),
+        new TableRow({ children: [cell(batteryTableLine), cell("Аккумуляторная батарея (передаётся)", { caption: true })] }),
+      ],
+      [4600, 4400],
+    ),
 
     para(
       "1.2. При передаче Имущества Стороны производят фото- и видеофиксацию его состояния и комплектации (не менее 10 фото и видео не менее 1 минуты).",
     ),
-    para(
-      "1.3. Оценочная стоимость Имущества: велосипед U2 pro — 77 000 ₽, аккумулятор 60V/33Ah — 40 000 ₽, аккумулятор 60V/33Ah — 40 000 ₽, зарядное устройство — 5 000 ₽, ключи и замок — 5 000 ₽, короб (кофр) — 5 000 ₽, итого 172 000 ₽.",
-    ),
+    para(val.text),
 
     heading(b ? "2. Выкупная цена и порядок расчётов" : "2. Арендная плата, залог и срок"),
     ...(b
       ? [
           para(
-            `2.1. Выкупная цена Имущества составляет ${rub.format(BUYOUT_TOTAL)} ₽ и уплачивается еженедельными платежами по ${rub.format(WEEKLY)} ₽ в течение ${BUYOUT_WEEKS} (сорока одной) недели.`,
+            `2.1. Выкупная цена Имущества составляет ${rub.format(buyoutTotal)} ₽ (${rubWords(buyoutTotal)}) и уплачивается еженедельными платежами по ${rub.format(buyoutWeekly)} ₽ в течение ${buyoutWeeks} (${weeksGen(buyoutWeeks)}) недель.`,
           ),
           para(
             "2.2. Платёж вносится авансом не позднее 17:00 первого дня недельного периода наличными или переводом на счёт/карту Арендодателя; подтверждение — чек, расписка или электронная квитанция.",
           ),
           para(
-            `2.3. Право собственности переходит к Арендатору после внесения выкупной цены в полном объёме (всех ${BUYOUT_WEEKS} платежей) и оформляется отдельным актом. К выкупу применяются правила о купле-продаже (п. 3 ст. 609, ст. 624 ГК РФ).`,
+            `2.3. Право собственности переходит к Арендатору после внесения выкупной цены в полном объёме (всех ${buyoutWeeks} платежей) и оформляется отдельным актом. К выкупу применяются правила о купле-продаже (п. 3 ст. 609, ст. 624 ГК РФ).`,
           ),
           para(
             "2.4. До перехода права собственности Арендатор не вправе отчуждать, закладывать или передавать Имущество третьим лицам.",
@@ -197,10 +305,10 @@ export async function generateContractBlob(data: ContractData): Promise<Blob> {
         ]
       : [
           para(
-            `2.1. Арендная плата составляет ${rub.format(WEEKLY)} ₽ в неделю. Платёж вносится авансом не позднее 17:00 первого дня недельного периода наличными или переводом на счёт/карту Арендодателя; подтверждение — чек, расписка или электронная квитанция.`,
+            `2.1. Арендная плата составляет ${rub.format(rentWeekly)} ₽ в неделю. Платёж вносится авансом не позднее 17:00 первого дня недельного периода наличными или переводом на счёт/карту Арендодателя; подтверждение — чек, расписка или электронная квитанция.`,
           ),
           para(
-            "2.2. При заключении договора Арендатор вносит обеспечительный залог в размере 5 000 ₽. Залог возвращается Арендатору при возврате Имущества за вычетом задолженности по арендной плате, штрафов и подтверждённого ущерба.",
+            `2.2. При заключении договора Арендатор вносит обеспечительный залог в размере ${rub.format(deposit)} ₽. Залог возвращается Арендатору при возврате Имущества за вычетом задолженности по арендной плате, штрафов и подтверждённого ущерба.`,
           ),
           para(
             "2.3. Договор заключён на неопределённый срок и вступает в силу с момента подписания. Любая Сторона вправе расторгнуть договор в одностороннем порядке, письменно (в т. ч. через мессенджер/SMS) уведомив другую Сторону не менее чем за 3 дня; Имущество подлежит возврату не позднее дня расторжения.",
@@ -238,7 +346,7 @@ export async function generateContractBlob(data: ContractData): Promise<Blob> {
         : "4.3. При расторжении Имущество возвращается Арендодателю; залог возвращается Арендатору в течение 10 рабочих дней за вычетом задолженности, штрафов и подтверждённого ущерба.",
     ),
     para(
-      "4.4. При утрате, хищении, уничтожении или конфискации Имущества Арендатор возмещает его полную оценочную стоимость (172 000 ₽ либо стоимость утраченных компонентов). При хищении — заявление в полицию в течение 24 часов и уведомление Арендодателя.",
+      `4.4. При утрате, хищении, уничтожении или конфискации Имущества Арендатор возмещает его полную оценочную стоимость (${rub.format(valTotal)} ₽ либо стоимость утраченных компонентов). При хищении — заявление в полицию в течение 24 часов и уведомление Арендодателя.`,
     ),
     para(
       "4.5. Плановое ТО (естественный износ) — поровну (50/50); ремонт по вине Арендатора — 100% за его счёт. Повреждения, не зафиксированные при передаче, считаются возникшими по вине Арендатора, пока не доказано иное.",
@@ -250,11 +358,14 @@ export async function generateContractBlob(data: ContractData): Promise<Blob> {
     ),
 
     heading("Подписи сторон"),
-    fullTable([
-      new TableRow({ children: [cell("АРЕНДОДАТЕЛЬ", { bold: true, w: 50 }), cell("АРЕНДАТОР", { bold: true, w: 50 })] }),
-      new TableRow({ children: [cell("Семенов Евгений Ильич"), cell(t.fio)] }),
-      new TableRow({ children: [cell("подпись / расшифровка", { caption: true }), cell("подпись / расшифровка", { caption: true })] }),
-    ]),
+    fullTable(
+      [
+        new TableRow({ children: [cell("АРЕНДОДАТЕЛЬ", { bold: true }), cell("АРЕНДАТОР", { bold: true })] }),
+        new TableRow({ children: [cell("Семенов Евгений Ильич"), cell(t.fio)] }),
+        new TableRow({ children: [cell("подпись / расшифровка", { caption: true }), cell("подпись / расшифровка", { caption: true })] }),
+      ],
+      [4500, 4500],
+    ),
   ];
 
   const doc = new Document({ sections: [{ properties: {}, children }] });

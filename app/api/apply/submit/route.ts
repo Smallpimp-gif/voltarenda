@@ -23,6 +23,15 @@ import {
 import { findTenantByTelegramUsername } from "@/lib/auth/tenants";
 import { nextContractNumber } from "@/lib/contract-number";
 import { generateContractBlob } from "@/lib/contract";
+import { validatePassport, validatePersonal } from "@/lib/passport-validate";
+import {
+  getBuyoutConfig,
+  getBuyoutPlan,
+  buyoutTotal,
+  batteryContractLine,
+  rentWeekly,
+  DEFAULT_BUYOUT_CONFIG,
+} from "@/lib/bikes";
 
 export const runtime = "nodejs";
 
@@ -40,6 +49,10 @@ type SubmitBody = {
   tariff: string;
   bikeModel?: string;
   battery?: string;
+  // Тип сделки + выбранная комплектация (ключ из BUYOUT_CONFIGS) и срок.
+  mode?: "rent" | "buyout";
+  buyoutConfig?: string;
+  buyoutWeeks?: number;
   firstName: string;
   lastName: string;
   middleName?: string;
@@ -58,16 +71,6 @@ type SubmitBody = {
 
 const VALID_TARIFFS = ["three-day", "week", "month", "buyout", "unset"];
 
-// Серверный источник истины для human-read имён + цен.
-// Клиентский body не доверяем (подмена через DevTools).
-const TARIFF_META: Record<string, { name: string; price: number }> = {
-  unset: { name: "Не выбран — обсудить с клиентом", price: 0 },
-  "three-day": { name: "3 дня", price: 3500 },
-  week: { name: "Неделя", price: 5500 },
-  month: { name: "Месяц", price: 19000 },
-  buyout: { name: "Выкуп · Неделя × 26", price: 6500 },
-};
-
 export async function POST(req: Request) {
   // CSRF
   const origin = req.headers.get("origin");
@@ -85,14 +88,14 @@ export async function POST(req: Request) {
     );
   }
 
-  // Валидация
+  // Валидация. Строгая (ФИО/адреса/паспорт) — из общего модуля, тот же,
+  // что на клиенте: договор формируется из этих данных, мусор недопустим.
   const errors: string[] = [];
   if (!body.tariff || !VALID_TARIFFS.includes(body.tariff)) errors.push("Неизвестный тариф");
-  if (!body.firstName || body.firstName.trim().length < 2) errors.push("Укажи имя");
-  if (!body.lastName || body.lastName.trim().length < 2) errors.push("Укажи фамилию");
   if (!body.phone || body.phone.replace(/\D/g, "").length < 10) errors.push("Некорректный телефон");
   if (!body.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(body.email)) errors.push("Некорректный email");
-  if (!body.currentAddress || body.currentAddress.trim().length < 5) errors.push("Укажи актуальное место проживания");
+  errors.push(...validatePersonal(body));
+  errors.push(...validatePassport(body.passport ?? {}));
   if (!body.photoMainId) errors.push("Фото паспорта не загружено");
   if (!body.photoRegistrationId) errors.push("Фото прописки не загружено");
   if (!body.photoSelfieId) errors.push("Селфи не загружено");
@@ -106,14 +109,26 @@ export async function POST(req: Request) {
 
   try {
     const applicationId = crypto.randomUUID();
+
+    // Выкупная комплектация: ключ из каталога (fallback — дефолт) + срок.
+    const buyoutConfig = getBuyoutConfig(body.buyoutConfig) ?? getBuyoutConfig(DEFAULT_BUYOUT_CONFIG)!;
+    const buyoutPlan = getBuyoutPlan(buyoutConfig, body.buyoutWeeks);
+    const isBuyout = body.mode !== "rent"; // по умолчанию выкуп
+    const rentPerWeek = rentWeekly(buyoutConfig);
+
     const application = {
       id: applicationId,
       createdAt: new Date().toISOString(),
       status: "pending",
       tariff: body.tariff,
       bike: {
-        model: body.bikeModel ?? "",
-        battery: body.battery ?? "",
+        model: buyoutConfig.model,
+        battery: batteryContractLine(buyoutConfig),
+        configKey: buyoutConfig.key,
+        mode: isBuyout ? "buyout" : "rent",
+        buyoutWeeks: buyoutPlan.weeks,
+        buyoutWeekly: buyoutPlan.weekly,
+        rentWeekly: rentPerWeek,
       },
       customer: {
         firstName: body.firstName.trim(),
@@ -173,13 +188,15 @@ export async function POST(req: Request) {
     // настроен (нет env) или сеть упала — submit всё равно считается
     // успешным, заявка лежит на диске. Await тут чтобы лог ошибок
     // попал в тот же request, но оператор получит мгновенно.
-    const tariffMeta = TARIFF_META[body.tariff];
+    const buyoutSum = buyoutTotal(buyoutPlan);
     await notifyOperator(
       formatApplicationNotification({
         id: applicationId,
-        tariff: body.tariff,
-        tariffName: tariffMeta.name,
-        tariffPrice: tariffMeta.price,
+        tariff: isBuyout ? "buyout" : "week",
+        tariffName: isBuyout
+          ? `Выкуп · ${buyoutPlan.weekly.toLocaleString("ru-RU")} ₽ × ${buyoutPlan.weeks} нед`
+          : `Аренда · ${rentPerWeek.toLocaleString("ru-RU")} ₽/нед · залог ${buyoutConfig.deposit.toLocaleString("ru-RU")} ₽`,
+        tariffPrice: isBuyout ? buyoutSum : rentPerWeek,
         bikeModel: application.bike.model,
         battery: application.bike.battery,
         firstName: application.customer.firstName,
@@ -213,7 +230,7 @@ export async function POST(req: Request) {
       ]
         .filter(Boolean)
         .join(" ");
-      const kind = body.tariff === "buyout" ? "выкуп" : "аренда";
+      const kind = isBuyout ? ("выкуп" as const) : ("аренда" as const);
       const blob = await generateContractBlob({
         number,
         dateText,
@@ -232,6 +249,14 @@ export async function POST(req: Request) {
           phone: application.customer.phone,
           telegram: application.customer.telegram,
         },
+        bike: {
+          model: buyoutConfig.model,
+          batteryCount: buyoutConfig.batteryCount,
+          batteryParams: buyoutConfig.batteryParams,
+          valuation: buyoutConfig.valuation,
+        },
+        buyout: isBuyout ? { weekly: buyoutPlan.weekly, weeks: buyoutPlan.weeks } : undefined,
+        rent: isBuyout ? undefined : { weekly: rentPerWeek, deposit: buyoutConfig.deposit },
       });
       const safeFio = fio.replace(/[^\p{L}\d]+/gu, "_");
       await sendDocumentToOperator(

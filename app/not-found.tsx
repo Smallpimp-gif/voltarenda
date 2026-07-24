@@ -51,7 +51,7 @@ export default function NotFound() {
               На главную →
             </Link>
             <Link
-              href="/#tariffs"
+              href="/#configurator"
               className="rounded-md border border-[var(--line-strong)] px-6 py-4 font-mono text-caption uppercase transition-colors duration-quick ease-out-soft hover:border-volt hover:text-volt"
             >
               Смотреть тарифы

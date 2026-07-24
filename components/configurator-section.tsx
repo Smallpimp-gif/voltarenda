@@ -6,12 +6,29 @@
 import { useState } from "react";
 import { useApply } from "./apply";
 import { BikePicker } from "./bike-picker";
-import { DEFAULT_MODEL, DEFAULT_BATTERY, type BikeModelKey, type BatteryKey } from "@/lib/bikes";
+import {
+  DEFAULT_MODEL,
+  DEFAULT_BUYOUT_CONFIG,
+  getBuyoutConfig,
+  type BikeModelKey,
+  type BuyoutConfigKey,
+} from "@/lib/bikes";
 
 export function ConfiguratorSection() {
   const { open } = useApply();
   const [model, setModel] = useState<BikeModelKey>(DEFAULT_MODEL);
-  const [battery, setBattery] = useState<BatteryKey>(DEFAULT_BATTERY);
+  const [mode, setMode] = useState<"rent" | "buyout">("buyout");
+  const [configKey, setConfigKey] = useState<BuyoutConfigKey>(DEFAULT_BUYOUT_CONFIG);
+  const [weeks, setWeeks] = useState<number>(
+    getBuyoutConfig(DEFAULT_BUYOUT_CONFIG)!.plans[0].weeks,
+  );
+
+  // Смена комплекта АКБ: если у него нет выбранного срока — берём первый.
+  const pickConfig = (key: BuyoutConfigKey) => {
+    setConfigKey(key);
+    const c = getBuyoutConfig(key)!;
+    if (!c.plans.some((p) => p.weeks === weeks)) setWeeks(c.plans[0].weeks);
+  };
 
   return (
     <section
@@ -24,17 +41,21 @@ export function ConfiguratorSection() {
           <span className="font-mono text-caption uppercase text-mute">Конфигуратор</span>
           <h2 className="text-h2 text-[var(--text)]">Собери свой велосипед</h2>
           <p className="mt-2 max-w-[52ch] text-body-lg text-mute">
-            Модель и аккумуляторы — под твои задачи. Цена примерная; аренду или
-            выкуп и финальную стоимость подберёт оператор.
+            Аккумуляторы и срок — под твои задачи. Цена за неделю итоговая:
+            с ней же оформишь заявку, ничего не поменяется.
           </p>
         </div>
 
         <div className="mt-10 rounded-lg border border-[var(--line)] bg-[var(--bg-2)] p-6 sm:p-8">
           <BikePicker
             model={model}
-            battery={battery}
+            mode={mode}
+            configKey={configKey}
+            weeks={weeks}
             onModel={setModel}
-            onBattery={setBattery}
+            onMode={setMode}
+            onConfig={pickConfig}
+            onWeeks={setWeeks}
           />
 
           <button
@@ -43,10 +64,13 @@ export function ConfiguratorSection() {
               try {
                 (window as any).ym?.(108583356, "reachGoal", "CONFIGURATOR_APPLY", {
                   model,
-                  battery,
+                  mode,
+                  config: configKey,
+                  weeks,
                 });
               } catch {}
-              open(undefined, { bikeModel: model, battery });
+              // Выбор с лендинга переносится в форму — человек не выбирает дважды.
+              open(undefined, { mode, buyoutConfig: configKey, buyoutWeeks: weeks });
             }}
             className="btn-cta btn-cta-volt mt-8 w-full rounded-md bg-volt px-8 py-5 font-mono text-caption uppercase text-ink hover:bg-volt-hover sm:w-auto"
           >
