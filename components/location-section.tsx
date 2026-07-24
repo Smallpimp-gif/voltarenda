@@ -15,7 +15,7 @@ import {
 import { EASE, SMOOTH_SCROLL } from "./motion-config";
 
 const INFO: [string, string][] = [
-  ["АДРЕС", "СПб, Парголово, ул. Шишкина, 297"],
+  ["АДРЕС", "СПб, ул. Черняховского, 24"],
   ["ЧАСЫ РАБОТЫ", "пн–вс · 9:00 – 21:00"],
   ["ТЕЛЕФОН", "+7 (901) 300-03-19"],
   ["С СОБОЙ", "паспорт, селфи, банковская карта"],
@@ -89,9 +89,11 @@ export function LocationSection() {
           <span className="font-mono text-caption uppercase text-mute">
             06 / ПУНКТ ВЫДАЧИ
           </span>
-          <h2 className="mt-2 font-sans text-h2">Забирай в Парголове</h2>
+          <h2 className="mt-2 font-sans text-h2">Забирай на Черняховского</h2>
           <p className="mt-4 max-w-[52ch] font-sans text-body text-mute">
-            Посёлок Парголово, рядом с метро Парнас (~15 минут пешком или 1 остановка на автобусе). Приезжай, забирай велик, инструктаж — и в путь. Всё за 15 минут.
+            Улица Черняховского, 24 — центр города, рядом с Лиговским
+            проспектом. Приезжай, забирай велик, инструктаж — и в путь.
+            Всё за 15 минут.
           </p>
         </motion.div>
 
@@ -121,8 +123,8 @@ export function LocationSection() {
 
           </div>
 
-          {/* Правая — Яндекс.Карты embed.
-              Пока точка в центре СПб (Невский, 1); реальный адрес заменим позже. */}
+          {/* Правая — Яндекс.Карты embed. Точка ищется по адресу (без
+              захардкоженных координат) — Яндекс геокодирует сам. */}
           <motion.div
             style={{
               opacity: mapOpacity,
@@ -137,7 +139,7 @@ export function LocationSection() {
               <span className="font-mono text-caption uppercase text-mute">Загрузка карты…</span>
             </div>
             <iframe
-              src="https://yandex.ru/map-widget/v1/?ll=30.311619%2C60.081695&z=16&mode=search&text=%D0%A1%D0%B0%D0%BD%D0%BA%D1%82-%D0%9F%D0%B5%D1%82%D0%B5%D1%80%D0%B1%D1%83%D1%80%D0%B3%2C%20%D0%9F%D0%B0%D1%80%D0%B3%D0%BE%D0%BB%D0%BE%D0%B2%D0%BE%2C%20%D1%83%D0%BB.%20%D0%A8%D0%B8%D1%88%D0%BA%D0%B8%D0%BD%D0%B0%2C%20297&pt=30.311619%2C60.081695"
+              src="https://yandex.ru/map-widget/v1/?z=16&mode=search&text=%D0%A1%D0%B0%D0%BD%D0%BA%D1%82-%D0%9F%D0%B5%D1%82%D0%B5%D1%80%D0%B1%D1%83%D1%80%D0%B3%2C%20%D1%83%D0%BB%D0%B8%D1%86%D0%B0%20%D0%A7%D0%B5%D1%80%D0%BD%D1%8F%D1%85%D0%BE%D0%B2%D1%81%D0%BA%D0%BE%D0%B3%D0%BE%2C%2024"
               loading="lazy"
               title="Пункт выдачи Вольтаренды на карте"
               className="absolute inset-0 z-10 h-full w-full border-0"
@@ -147,7 +149,7 @@ export function LocationSection() {
 
           {/* CTA под картой — на всю ширину grid */}
           <a
-            href="https://yandex.ru/maps/?rtext=~60.081695,30.311619&rtt=auto"
+            href="https://yandex.ru/maps/?rtext=~%D0%A1%D0%B0%D0%BD%D0%BA%D1%82-%D0%9F%D0%B5%D1%82%D0%B5%D1%80%D0%B1%D1%83%D1%80%D0%B3%2C%20%D1%83%D0%BB%D0%B8%D1%86%D0%B0%20%D0%A7%D0%B5%D1%80%D0%BD%D1%8F%D1%85%D0%BE%D0%B2%D1%81%D0%BA%D0%BE%D0%B3%D0%BE%2C%2024&rtt=auto"
             target="_blank"
             rel="noopener noreferrer"
             className="btn-cta btn-cta-volt col-span-1 inline-flex items-center justify-between rounded-md bg-volt px-5 py-4 font-mono text-caption uppercase text-ink hover:bg-volt-hover lg:col-span-2"

@@ -85,17 +85,13 @@ const jsonLd = {
   logo: `${SITE_URL}/logo.svg`,
   address: {
     "@type": "PostalAddress",
-    streetAddress: "ул. Шишкина, 297",
-    addressLocality: "Парголово, Санкт‑Петербург",
+    streetAddress: "ул. Черняховского, 24",
+    addressLocality: "Санкт‑Петербург",
     addressRegion: "Санкт‑Петербург",
-    postalCode: "194356",
     addressCountry: "RU",
   },
-  geo: {
-    "@type": "GeoCoordinates",
-    latitude: 60.081695,
-    longitude: 30.311619,
-  },
+  // geo намеренно не задан: координаты Черняховского, 24 не подтверждены.
+  // Впиши точные lat/lng из Яндекс.Карт — иначе поиск уведёт людей не туда.
   areaServed: {
     "@type": "City",
     name: "Санкт‑Петербург",

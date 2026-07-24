@@ -232,7 +232,7 @@ export function Hero({ availableBikes }: { availableBikes?: number | null }) {
           variants={itemVariants}
           className="mt-8 grid grid-cols-2 gap-x-4 gap-y-3 font-mono text-[11px] uppercase tracking-[0.08em] text-white/70 md:flex md:flex-wrap md:items-center md:gap-x-6 md:gap-y-2"
         >
-          <TrustItem icon={<MapPinIcon />}>Парголово</TrustItem>
+          <TrustItem icon={<MapPinIcon />}>Черняховского, 24</TrustItem>
           <TrustItem icon={<BatteryIcon />}>2 АКБ в комплекте</TrustItem>
           <TrustItem icon={<ZapIcon />}>Выдача за 2 часа</TrustItem>
           <TrustItem icon={<WrenchIcon />}>Техподдержка 24/7</TrustItem>
