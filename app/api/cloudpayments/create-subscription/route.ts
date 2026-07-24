@@ -74,7 +74,7 @@ function resolveTerms(body: CreateSubscriptionBody) {
 
 export async function POST(req: Request) {
   // CSRF: проверяем Origin header — только наш домен может вызывать API.
-  // См. lib/api-origin.ts: prod = https://voltarenda.ru, dev = любой localhost:*.
+  // Список доменов — в lib/api-origin.ts.
   const origin = req.headers.get("origin");
   if (!isAllowedOrigin(origin)) {
     return NextResponse.json(

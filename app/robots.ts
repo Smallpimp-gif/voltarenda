@@ -9,7 +9,7 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ["/api/"],
       },
     ],
-    sitemap: "https://voltarenda.ru/sitemap.xml",
-    host: "https://voltarenda.ru",
+    sitemap: "https://voltarenda.small-pimp.workers.dev/sitemap.xml",
+    host: "https://voltarenda.small-pimp.workers.dev",
   };
 }

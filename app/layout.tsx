@@ -4,7 +4,8 @@ import { ApplyProvider } from "@/components/apply";
 import { YandexMetrika } from "@/components/yandex-metrika";
 import "./globals.css";
 
-const SITE_URL = "https://voltarenda.ru";
+// Рабочий домен. Заменишь на собственный, когда привяжешь его к воркеру.
+const SITE_URL = "https://voltarenda.small-pimp.workers.dev";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),

@@ -4,25 +4,25 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const lastMod = new Date("2026-04-17");
   return [
     {
-      url: "https://voltarenda.ru/",
+      url: "https://voltarenda.small-pimp.workers.dev/",
       lastModified: lastMod,
       changeFrequency: "weekly",
       priority: 1,
     },
     {
-      url: "https://voltarenda.ru/legal/offer",
+      url: "https://voltarenda.small-pimp.workers.dev/legal/offer",
       lastModified: lastMod,
       changeFrequency: "monthly",
       priority: 0.3,
     },
     {
-      url: "https://voltarenda.ru/legal/privacy",
+      url: "https://voltarenda.small-pimp.workers.dev/legal/privacy",
       lastModified: lastMod,
       changeFrequency: "monthly",
       priority: 0.2,
     },
     {
-      url: "https://voltarenda.ru/legal/cookies",
+      url: "https://voltarenda.small-pimp.workers.dev/legal/cookies",
       lastModified: lastMod,
       changeFrequency: "monthly",
       priority: 0.2,
