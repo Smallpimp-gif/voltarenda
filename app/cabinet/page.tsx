@@ -3,6 +3,8 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { logoutAction } from "@/lib/auth/actions";
 import { buildCabinetView, buildSchedule } from "@/lib/schedule";
 import { PaymentSchedule } from "@/components/cabinet/payment-schedule";
+import { PaymentSetup } from "@/components/cabinet/payment-setup";
+import { getSubscription } from "@/lib/subscriptions";
 
 const rub = new Intl.NumberFormat("ru-RU");
 const money = (n: number) => `${rub.format(n)} ₽`;
@@ -56,6 +58,7 @@ export default async function CabinetPage() {
   const v = buildCabinetView(tenant);
   const schedule = buildSchedule(tenant);
   const due = v.daysUntil !== null ? dueLabel(v.daysUntil) : null;
+  const subscription = await getSubscription(tenant.id);
 
   return (
     <div className="mx-auto w-full max-w-content px-gutter pb-14 pt-[max(3.5rem,calc(env(safe-area-inset-top)+1.5rem))]">
@@ -170,9 +173,28 @@ export default async function CabinetPage() {
         </div>
       </section>
 
-      {/* 02 / Договор */}
+      {/* 02 / Автосписание */}
+      {!v.completed && (
+        <section className="mt-20">
+          <SectionHeader num="02" eyebrow="Оплата" title="Автосписание" />
+          <div className="mt-8">
+            <PaymentSetup
+              tenantId={tenant.id}
+              tenantName={tenant.name}
+              email={user.email}
+              weekly={v.weekly}
+              mode={v.type === "выкуп" ? "buyout" : "rent"}
+              weeksLeft={v.remainingWeeks ?? null}
+              nextDate={v.nextDate ?? "—"}
+              subscription={subscription}
+            />
+          </div>
+        </section>
+      )}
+
+      {/* 03 / Договор */}
       <section className="mt-20">
-        <SectionHeader num="02" eyebrow="Договор" title="Условия аренды" />
+        <SectionHeader num="03" eyebrow="Договор" title="Условия аренды" />
         <div className="mt-8 rounded-[28px] border border-[var(--line)] bg-[var(--bg-2)] p-6 sm:p-8">
           <Row label="Номер договора" value={tenant.contract} />
           <Row label="Тип" value={v.type === "выкуп" ? "Выкуп" : "Аренда"} />
@@ -194,7 +216,7 @@ export default async function CabinetPage() {
 
       {/* 03 / График */}
       <section className="mt-20">
-        <SectionHeader num="03" eyebrow="График" title="Все платежи" />
+        <SectionHeader num="04" eyebrow="График" title="Все платежи" />
         <div className="mt-8">
           <PaymentSchedule rows={schedule} openEnded={!v.isBuyout} />
         </div>

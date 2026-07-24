@@ -20,6 +20,7 @@ import crypto from "crypto";
 import { readJSON, writeJSON } from "@/lib/store";
 import { getTenantById } from "@/lib/auth/tenants";
 import { getPaidThrough, setPaidThrough } from "@/lib/payments";
+import { getSubscription, saveSubscription } from "@/lib/subscriptions";
 import { notifyOperator } from "@/lib/notify";
 
 export const runtime = "nodejs";
@@ -91,6 +92,23 @@ export async function POST(req: Request) {
   const before = await getPaidThrough(tenant.id);
   const after = before + weeks;
   await setPaidThrough(tenant.id, after);
+
+  // Первое списание по подписке — запоминаем карту, чтобы кабинет показал
+  // «автосписание включено» вместо кнопки «привязать карту».
+  if (subscriptionId) {
+    const known = await getSubscription(tenant.id);
+    if (!known || known.subscriptionId !== subscriptionId || known.status !== "active") {
+      await saveSubscription(tenant.id, {
+        subscriptionId,
+        cardLastFour: p.get("CardLastFour") ?? undefined,
+        cardType: p.get("CardType") ?? undefined,
+        weekly,
+        mode: tenant.type === "выкуп" ? "buyout" : "rent",
+        maxPeriods: tenant.buyoutWeeks ?? 52,
+        status: "active",
+      });
+    }
+  }
 
   seen[transactionId] = `${tenant.id}:${after}`;
   await writeJSON(TX_KEY, seen);
