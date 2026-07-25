@@ -24,10 +24,10 @@ import {
 import { APPLE_EASE } from "./motion-config";
 
 const METRICS: { value: string; label: string }[] = [
-  { value: "до 120 км", label: "пробег на смену" },
-  { value: "60 + 30 Ач", label: "LiFePO4 · 2 АКБ" },
-  { value: "150 кг", label: "грузоподъёмность" },
-  { value: "до 65 км/ч", label: "макс. скорость" },
+  { value: "до 140 км", label: "пробег на смену" },
+  { value: "2 × 60V/33Ah", label: "два аккумулятора" },
+  { value: "2000 Вт", label: "мотор · контроллер 50A" },
+  { value: "до 70 км/ч", label: "макс. скорость" },
 ];
 
 export function BikeSection() {
@@ -170,7 +170,7 @@ export function BikeSection() {
               transition={{ delay: 0.4, duration: 0.7, ease: APPLE_EASE }}
               className="mt-4 font-sans text-display-1 text-white"
             >
-              ВОЛЬТ U2
+              Mingto U2 Pro
             </motion.h2>
             <motion.p
               initial={{ opacity: 0, y: 20 }}
@@ -179,7 +179,7 @@ export function BikeSection() {
               className="mt-6 max-w-[44ch] font-sans text-body-lg text-white/75"
             >
               Собран под повседневную работу курьера. Два АКБ в комплекте —
-              ~60 км на каждом, ~120 км на смену без тревоги о зарядке.
+              ~70 км на каждом, до 140 км на смену без тревоги о зарядке.
             </motion.p>
           </div>
 

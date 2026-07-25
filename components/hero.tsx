@@ -141,30 +141,29 @@ export function Hero({ availableBikes }: { availableBikes?: number | null }) {
           Аренда · Санкт-Петербург · Выдача в день обращения
         </motion.span>
 
-        {/* H1 — на мобилке короткий «Вольт U2 в аренду» (3 слова, 1–2
-            строки). На десктопе полная SEO-версия с ключом «Электро-
-            велосипед». Ключевое слово живёт в eyebrow на мобилке, индекс
-            не теряется. */}
+        {/* H1 — на мобилке короткий «Mingto U2 Pro в аренду» (1–2 строки).
+            На десктопе полная SEO-версия с ключом «Электровелосипед».
+            Ключевое слово живёт в eyebrow на мобилке, индекс не теряется. */}
         <motion.h1
           variants={itemVariants}
           className="mt-4 font-sans font-bold leading-[0.95] tracking-[-0.03em] text-[clamp(36px,5vw,72px)]"
         >
-          <span className="md:hidden">Вольт U2<br />в аренду</span>
+          <span className="md:hidden">Mingto U2 Pro<br />в аренду</span>
           <span className="hidden md:inline">
-            Электровелосипед U2<br />в аренду в&nbsp;СПб
+            Электровелосипед Mingto U2 Pro<br />в аренду в&nbsp;СПб
           </span>
         </motion.h1>
 
-        {/* Subtitle — полная спецификация + ценовой якорь. «от 633 ₽/день»
+        {/* Subtitle — спецификация + ценовой якорь. «от 5 500 ₽/нед»
             выделен volt-цветом (brand accent), чтобы цена считывалась
             сразу, до того как пользователь прочитает всё предложение. */}
         <motion.p
           variants={itemVariants}
           className="mt-6 max-w-[52ch] font-sans text-body-lg text-mute"
         >
-          Топовая модель для курьеров. <span className="whitespace-nowrap">65 км/ч</span>, 2 аккумулятора LiFePO4, <span className="whitespace-nowrap">до 120 км</span> на смену.{" "}
-          <span className="font-semibold text-volt">От 633 ₽/день</span> — ниже,
-          чем у других прокатов СПб.
+          Мощная модель для курьеров: мотор <span className="whitespace-nowrap">2000 Вт</span>, два аккумулятора, <span className="whitespace-nowrap">до 140 км</span> на смену.{" "}
+          <span className="font-semibold text-volt">От 5 500 ₽/нед</span> — аренда
+          или выкуп, дешевле других прокатов СПб.
         </motion.p>
 
         {/* Доступность — управляется из кабинета владельца. Лёгкий эффект

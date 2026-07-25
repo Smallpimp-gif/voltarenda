@@ -41,7 +41,7 @@ export default function NotFound() {
           </h1>
           <p className="max-w-[52ch] font-sans text-body-lg text-mute">
             Ссылка могла устареть или ты попал сюда случайно. Возвращайся на
-            главную — там мы оставили всё важное про аренду ВОЛЬТ U2.
+            главную — там мы оставили всё важное про аренду Mingto U2 Pro.
           </p>
           <div className="flex flex-wrap items-center gap-4">
             <Link

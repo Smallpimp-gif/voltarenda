@@ -28,7 +28,7 @@ import {
 
 const FOOTER_SECTIONS: { href: string; label: string }[] = [
   { href: "#how", label: "Как работает" },
-  { href: "#bike", label: "ВОЛЬТ U2" },
+  { href: "#bike", label: "Mingto U2 Pro" },
   { href: "#configurator", label: "Цены" },
   { href: "#calc", label: "Калькулятор" },
   { href: "#location", label: "Точка выдачи" },
@@ -106,7 +106,7 @@ export function FooterSection() {
             className="max-w-[44ch] font-sans text-body-lg text-mute"
           >
             Оформи заявку — заберёшь велик через пару часов и выйдешь на первую смену.
-            От 633 ₽/день, выдача в тот же день.
+            От 5 500 ₽/нед, выдача в тот же день.
           </motion.p>
           <motion.div
             style={{ opacity: ctaOpacity, y: ctaY, scale: ctaScale }}
@@ -167,7 +167,7 @@ export function FooterSection() {
               />
             </div>
             <p className="mt-4 max-w-[32ch] font-sans text-body text-mute">
-              Электровелосипеды ВОЛЬТ U2 в аренду для курьеров Санкт‑Петербурга. Выдача в тот же день.
+              Электровелосипеды Mingto U2 Pro в аренду для курьеров Санкт‑Петербурга. Выдача в тот же день.
             </p>
             <div className="mt-6 flex flex-col gap-2">
               {FOOTER_CONTACTS.map((l) => (

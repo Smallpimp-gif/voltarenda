@@ -68,7 +68,7 @@ export default async function OgImage() {
               maxWidth: "900px",
             }}
           >
-            Электровелосипед ВОЛЬТ U2 в аренду курьерам Санкт‑Петербурга
+            Электровелосипед Mingto U2 Pro в аренду курьерам Санкт‑Петербурга
           </div>
         </div>
 
@@ -101,7 +101,7 @@ export default async function OgImage() {
             <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
               <span>аренда от</span>
               <span style={{ color: "#F2F1EC", fontSize: "32px", fontWeight: 600 }}>
-                633 ₽ / день
+                5 500 ₽ / нед
               </span>
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>

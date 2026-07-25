@@ -297,7 +297,7 @@ export function CalculatorSection() {
           >
             <header className="flex items-center justify-between">
               <span className="font-mono text-caption uppercase text-mute">РЕЗУЛЬТАТ / 01</span>
-              <span className="font-mono text-caption uppercase text-mute">ВОЛЬТ U2</span>
+              <span className="font-mono text-caption uppercase text-mute">Mingto U2 Pro</span>
             </header>
             <h3 className="mt-16 font-sans text-h2">Чистыми</h3>
             <div className="mt-3 flex flex-col">

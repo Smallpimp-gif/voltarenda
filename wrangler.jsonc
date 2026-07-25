@@ -8,6 +8,13 @@
     "directory": ".open-next/assets",
     "binding": "ASSETS"
   },
+  // Привязка своего домена. Раскомментируй ПОСЛЕ того, как voltarenda.ru
+  // будет добавлен в Cloudflare (NS-серверы домена переключены на Cloudflare
+  // в панели reg.ru). До этого деплой с этим блоком упадёт — зоны ещё нет.
+  // "routes": [
+  //   { "pattern": "voltarenda.ru", "custom_domain": true },
+  //   { "pattern": "www.voltarenda.ru", "custom_domain": true }
+  // ],
   // KV-хранилище данных (пользователи, сессии, арендаторы, платежи,
   // настройки, заявки). Namespace "voltarenda-data" в аккаунте Cloudflare.
   "kv_namespaces": [
