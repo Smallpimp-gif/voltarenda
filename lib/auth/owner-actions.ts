@@ -277,16 +277,19 @@ async function recordSale(
   const file = await loadPurchases();
   const p = file.purchases.find((x) => x.id === purchaseId);
   if (!p) return;
-  const { remainingQty } = purchaseStats(p);
+  const { remainingQty, costPerUnit } = purchaseStats(p);
   if (qty <= 0 || qty > remainingQty) return;
   if (!Number.isFinite(revenue) || revenue < 0) return;
+  // В кассу «на руках» идёт ПРИБЫЛЬ (выручка − себестоимость проданного).
+  // Валовая выручка остаётся во вкладке «Закупки» (сама продажа хранит revenue).
+  const profit = Math.round((revenue - qty * costPerUnit) * 100) / 100;
   const ledgerId = await addLedgerEntry({
     tenantId: "",
     name: p.name || "Магазин",
-    amount: revenue,
+    amount: profit,
     weeks: 0,
     kind: "shop",
-    note: note || `${qty} шт`,
+    note: note || `${qty} шт · выручка ${revenue} ₽`,
   });
   const ok = await addSale(purchaseId, { qty, revenue, note: note || undefined, ledgerId });
   if (!ok) await deleteLedgerEntry(ledgerId); // откат записи кассы
