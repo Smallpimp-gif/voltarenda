@@ -31,8 +31,11 @@ const afterReset = (f: LedgerFile) =>
 
 // --- Касса (после последнего обнуления) -------------------------------
 
+// «На руках сейчас» — собранные деньги: аренда + магазин + ручные
+// корректировки. Расходы сюда НЕ вычитаются (их ведём отдельной строкой,
+// они не уменьшают собранное).
 export function cassaTotal(file: LedgerFile): number {
-  return afterReset(file).reduce((s, e) => s + e.amount, 0);
+  return afterReset(file).reduce((s, e) => s + (e.kind === "expense" ? 0 : e.amount), 0);
 }
 
 export function cassaEntries(file: LedgerFile): LedgerEntry[] {
@@ -47,7 +50,8 @@ export function cassaBreakdown(file: LedgerFile): CassaBreakdown {
     else if (e.kind === "shop") b.shop += e.amount;
     else if (e.kind === "expense") b.expense += e.amount;
     else if (e.kind === "manual") b.manual += e.amount;
-    b.total += e.amount;
+    // Расход НЕ уменьшает «на руках» — только показывается отдельно.
+    if (e.kind !== "expense") b.total += e.amount;
   }
   return b;
 }
