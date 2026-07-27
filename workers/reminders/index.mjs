@@ -28,6 +28,24 @@ function isoToDayNum(iso) {
   return Math.floor(Date.UTC(y, m - 1, d) / DAY);
 }
 
+// Период оплаты — синхрон с lib/schedule.ts. Месяц календарный (кламп дня).
+function periodOf(t) {
+  return t.period ?? "week";
+}
+function addPeriods(startNum, period, k) {
+  if (period === "day") return startNum + k;
+  if (period === "week") return startNum + k * 7;
+  const dt = new Date(startNum * DAY);
+  const y = dt.getUTCFullYear();
+  const m = dt.getUTCMonth() + 1;
+  const d = dt.getUTCDate();
+  const idx = m - 1 + k;
+  const ny = y + Math.floor(idx / 12);
+  const nm = ((idx % 12) + 12) % 12 + 1;
+  const nd = Math.min(d, new Date(Date.UTC(ny, nm, 0)).getUTCDate());
+  return Math.floor(Date.UTC(ny, nm - 1, nd) / DAY);
+}
+
 const rub = new Intl.NumberFormat("ru-RU");
 const money = (n) => `${rub.format(n)} ₽`;
 
@@ -113,7 +131,7 @@ async function runReminders(env) {
     if (t.buyoutWeeks && paid >= t.buyoutWeeks) continue; // выкуп завершён
 
     const start = accrualStart(t, today);
-    const nextDueNum = start + paid * 7; // ближайший неоплаченный платёж
+    const nextDueNum = addPeriods(start, periodOf(t), paid); // ближайший неоплаченный платёж
     const days = nextDueNum - today;
     if (days < 0 || days > 1) continue;
 
