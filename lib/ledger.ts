@@ -9,16 +9,12 @@
 // Прогресс выкупа арендаторов (paidThrough в lib/payments) — отдельно.
 
 import { readJSON, writeJSON } from "@/lib/store";
+import type { LedgerEntry, LedgerKind, CassaBreakdown, CategorySpend } from "@/lib/ledger-types";
 
-export type LedgerEntry = {
-  id: string;
-  tenantId: string;
-  name: string; // снимок фамилии на момент оплаты
-  amount: number; // ₽ (может быть отрицательным — корректировка вниз)
-  weeks: number; // сколько недель закрыто этой записью
-  kind: "weekly" | "catchup" | "manual";
-  at: string; // ISO
-};
+// Чистые типы и константы (без node:fs) — в ledger-types.ts, чтобы клиентские
+// компоненты могли их импортировать. Переэкспортируем для совместимости.
+export type { LedgerKind, LedgerEntry, CassaBreakdown, CategorySpend } from "@/lib/ledger-types";
+export { EXPENSE_CATEGORIES } from "@/lib/ledger-types";
 
 type LedgerFile = { entries: LedgerEntry[]; lastResetAt: string | null };
 
@@ -41,6 +37,19 @@ export function cassaTotal(file: LedgerFile): number {
 
 export function cassaEntries(file: LedgerFile): LedgerEntry[] {
   return afterReset(file);
+}
+
+// Разбивка кассы «на руках»: из чего складывается итог (после обнуления).
+export function cassaBreakdown(file: LedgerFile): CassaBreakdown {
+  const b: CassaBreakdown = { rental: 0, shop: 0, expense: 0, manual: 0, total: 0 };
+  for (const e of afterReset(file)) {
+    if (e.kind === "weekly" || e.kind === "catchup") b.rental += e.amount;
+    else if (e.kind === "shop") b.shop += e.amount;
+    else if (e.kind === "expense") b.expense += e.amount;
+    else if (e.kind === "manual") b.manual += e.amount;
+    b.total += e.amount;
+  }
+  return b;
 }
 
 export async function addLedgerEntry(
@@ -140,4 +149,37 @@ export function incomeByTenant(file: LedgerFile): TenantIncome[] {
     map.set(e.tenantId, cur);
   }
   return [...map.values()].sort((a, b) => b.amount - a.amount);
+}
+
+// --- Магазин и расходы: суммы за текущий месяц (по МСК) ----------------
+
+function sumThisMonth(file: LedgerFile, kind: LedgerKind): number {
+  const nowKey = monthKeyFmt.format(new Date());
+  return file.entries
+    .filter((e) => e.kind === kind && monthKeyFmt.format(new Date(e.at)) === nowKey)
+    .reduce((s, e) => s + e.amount, 0);
+}
+
+export function shopThisMonth(file: LedgerFile): number {
+  return sumThisMonth(file, "shop");
+}
+
+// Возвращает положительное число (сумма расходов за месяц).
+export function expensesThisMonth(file: LedgerFile): number {
+  return -sumThisMonth(file, "expense");
+}
+
+// Расходы за текущий месяц по категориям (для быстрого «куда ушло»).
+export function expensesByCategoryThisMonth(file: LedgerFile): CategorySpend[] {
+  const nowKey = monthKeyFmt.format(new Date());
+  const map = new Map<string, number>();
+  for (const e of file.entries) {
+    if (e.kind !== "expense") continue;
+    if (monthKeyFmt.format(new Date(e.at)) !== nowKey) continue;
+    const cat = e.category || "Прочее";
+    map.set(cat, (map.get(cat) ?? 0) + -e.amount);
+  }
+  return [...map.entries()]
+    .map(([category, amount]) => ({ category, amount }))
+    .sort((a, b) => b.amount - a.amount);
 }

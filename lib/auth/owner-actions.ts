@@ -24,6 +24,7 @@ import {
   resetCassa,
   loadLedger,
   cassaTotal,
+  EXPENSE_CATEGORIES,
 } from "@/lib/ledger";
 import {
   paymentState,
@@ -139,6 +140,46 @@ export async function setLedgerTotalAction(formData: FormData): Promise<void> {
       kind: "manual",
     });
   }
+  revalidatePath("/cabinet/owner");
+}
+
+// Заработок с магазина — доход в кассу (+). name = комментарий или «Магазин».
+export async function addShopIncomeAction(formData: FormData): Promise<void> {
+  await requireOwner();
+  const amount = Math.round(Number(formData.get("amount")) * 100) / 100;
+  if (!Number.isFinite(amount) || amount <= 0) return;
+  const note = String(formData.get("note") ?? "").trim().slice(0, 120);
+  await addLedgerEntry({
+    tenantId: "",
+    name: note || "Магазин",
+    amount,
+    weeks: 0,
+    kind: "shop",
+    note: note || undefined,
+  });
+  revalidatePath("/cabinet/owner");
+}
+
+// Расход из кассы (−). Категория из фикс. списка, сумма вводится
+// положительной, хранится отрицательной.
+export async function addExpenseAction(formData: FormData): Promise<void> {
+  await requireOwner();
+  const raw = Math.round(Number(formData.get("amount")) * 100) / 100;
+  if (!Number.isFinite(raw) || raw <= 0) return;
+  const catRaw = String(formData.get("category") ?? "").trim();
+  const category = (EXPENSE_CATEGORIES as readonly string[]).includes(catRaw)
+    ? catRaw
+    : "Прочее";
+  const note = String(formData.get("note") ?? "").trim().slice(0, 120);
+  await addLedgerEntry({
+    tenantId: "",
+    name: note || category,
+    amount: -raw,
+    weeks: 0,
+    kind: "expense",
+    category,
+    note: note || undefined,
+  });
   revalidatePath("/cabinet/owner");
 }
 

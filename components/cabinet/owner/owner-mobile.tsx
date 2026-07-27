@@ -16,7 +16,7 @@ import { IncomeReport, type Entry as IncomeEntry } from "./income-report";
 import { DepositsPanel, type DepositRow, type DepositLogRow } from "./deposits-panel";
 import { ForecastPanel } from "./forecast-panel";
 import type { Tenant, PaymentEvent } from "@/lib/schedule";
-import type { MonthIncome, TenantIncome } from "@/lib/ledger";
+import type { MonthIncome, TenantIncome, CassaBreakdown } from "@/lib/ledger";
 
 const rub = new Intl.NumberFormat("ru-RU");
 const money = (n: number) => `${rub.format(n)} ₽`;
@@ -31,6 +31,7 @@ export function OwnerMobile({
   editTenant,
   editPaidThrough,
   ledgerTotal,
+  ledgerBreakdown,
   ledgerRows,
   ledgerResetAt,
   incomeTotal,
@@ -53,6 +54,7 @@ export function OwnerMobile({
   editTenant?: Tenant;
   editPaidThrough: number;
   ledgerTotal: number;
+  ledgerBreakdown: CassaBreakdown;
   ledgerRows: LedgerRow[];
   ledgerResetAt: string | null;
   incomeTotal: number;
@@ -180,7 +182,7 @@ export function OwnerMobile({
         <div className="flex flex-col gap-8 px-gutter py-6">
           <div>
             <h2 className="mb-3 text-h3 text-[var(--text)]">Касса</h2>
-            <LedgerPanel total={ledgerTotal} rows={ledgerRows} lastResetAt={ledgerResetAt} />
+            <LedgerPanel total={ledgerTotal} breakdown={ledgerBreakdown} rows={ledgerRows} lastResetAt={ledgerResetAt} />
           </div>
           <div>
             <h2 className="mb-3 text-h3 text-[var(--text)]">Доходы</h2>

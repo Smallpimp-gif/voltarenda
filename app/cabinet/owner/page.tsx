@@ -23,6 +23,7 @@ import {
   loadLedger,
   cassaTotal,
   cassaEntries,
+  cassaBreakdown,
   incomeTotal,
   incomeThisMonth,
   incomeByMonth,
@@ -133,12 +134,15 @@ export default async function OwnerPage({
     loadDepositLog(),
   ]);
   const cassaSum = cassaTotal(ledger);
+  const cassaB = cassaBreakdown(ledger);
   const ledgerRows: LedgerRow[] = [...cassaEntries(ledger)].reverse().map((e) => ({
     id: e.id,
     name: e.name,
     amount: e.amount,
     weeks: e.weeks,
     kind: e.kind,
+    category: e.category,
+    note: e.note,
     at: e.at,
   }));
   const incomeSum = incomeTotal(ledger);
@@ -229,6 +233,7 @@ export default async function OwnerPage({
         editTenant={editTenant}
         editPaidThrough={editPaidThrough}
         ledgerTotal={cassaSum}
+        ledgerBreakdown={cassaB}
         ledgerRows={ledgerRows}
         ledgerResetAt={ledger.lastResetAt}
         incomeTotal={incomeSum}
@@ -359,7 +364,7 @@ export default async function OwnerPage({
           </span>
         </SectionHeader>
         <div className="mt-8">
-          <LedgerPanel total={cassaSum} rows={ledgerRows} lastResetAt={ledger.lastResetAt} />
+          <LedgerPanel total={cassaSum} breakdown={cassaB} rows={ledgerRows} lastResetAt={ledger.lastResetAt} />
         </div>
       </section>
 
