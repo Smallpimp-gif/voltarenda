@@ -31,6 +31,13 @@ import {
   EXPENSE_CATEGORIES,
 } from "@/lib/ledger";
 import {
+  addPurchase,
+  addSale,
+  editPurchase,
+  deletePurchase,
+  deleteSale,
+} from "@/lib/purchases";
+import {
   paymentState,
   effectiveWeekly,
   depositOf,
@@ -234,6 +241,72 @@ export async function deleteLedgerEntryAction(formData: FormData): Promise<void>
   const entry = await findLedgerEntry(id);
   if (!entry || !EDITABLE_KINDS.includes(entry.kind)) return;
   await deleteLedgerEntry(id);
+  revalidatePath("/cabinet/owner");
+}
+
+// --- Закупки товара (поштучный учёт, прибыль) -------------------------
+
+// Новая закупка: название, кол-во, цена за штуку, доставка.
+export async function addPurchaseAction(formData: FormData): Promise<void> {
+  await requireOwner();
+  const name = String(formData.get("name") ?? "").trim().slice(0, 80);
+  const qty = Math.floor(Number(formData.get("qty")));
+  const unitCost = Math.round(Number(formData.get("unitCost")) * 100) / 100;
+  const delivery = Math.round(Number(formData.get("delivery")) * 100) / 100;
+  if (!name) return;
+  if (!Number.isFinite(qty) || qty <= 0) return;
+  if (!Number.isFinite(unitCost) || unitCost < 0) return;
+  const del = Number.isFinite(delivery) && delivery > 0 ? delivery : 0;
+  await addPurchase({ name, qty, unitCost, delivery: del });
+  revalidatePath("/cabinet/owner");
+}
+
+// Продажа части остатка партии: кол-во + выручка.
+export async function addSaleAction(formData: FormData): Promise<void> {
+  await requireOwner();
+  const purchaseId = String(formData.get("purchaseId") ?? "");
+  const qty = Math.floor(Number(formData.get("qty")));
+  const revenue = Math.round(Number(formData.get("revenue")) * 100) / 100;
+  const note = String(formData.get("note") ?? "").trim().slice(0, 120);
+  if (!purchaseId) return;
+  if (!Number.isFinite(qty) || qty <= 0) return;
+  if (!Number.isFinite(revenue) || revenue < 0) return;
+  await addSale(purchaseId, { qty, revenue, note: note || undefined });
+  revalidatePath("/cabinet/owner");
+}
+
+// Правка параметров закупки (название / кол-во / цена / доставка).
+export async function editPurchaseAction(formData: FormData): Promise<void> {
+  await requireOwner();
+  const id = String(formData.get("id") ?? "");
+  if (!id) return;
+  const name = String(formData.get("name") ?? "").trim().slice(0, 80);
+  const qty = Math.floor(Number(formData.get("qty")));
+  const unitCost = Math.round(Number(formData.get("unitCost")) * 100) / 100;
+  const delivery = Math.round(Number(formData.get("delivery")) * 100) / 100;
+  const patch: Parameters<typeof editPurchase>[1] = {};
+  if (name) patch.name = name;
+  if (Number.isFinite(qty) && qty > 0) patch.qty = qty;
+  if (Number.isFinite(unitCost) && unitCost >= 0) patch.unitCost = unitCost;
+  if (Number.isFinite(delivery) && delivery >= 0) patch.delivery = delivery;
+  await editPurchase(id, patch);
+  revalidatePath("/cabinet/owner");
+}
+
+export async function deletePurchaseAction(formData: FormData): Promise<void> {
+  await requireOwner();
+  const id = String(formData.get("id") ?? "");
+  if (!id) return;
+  await deletePurchase(id);
+  revalidatePath("/cabinet/owner");
+}
+
+export async function deleteSaleAction(formData: FormData): Promise<void> {
+  await requireOwner();
+  const purchaseId = String(formData.get("purchaseId") ?? "");
+  const saleId = String(formData.get("saleId") ?? "");
+  if (!purchaseId || !saleId) return;
+  await deleteSale(purchaseId, saleId);
   revalidatePath("/cabinet/owner");
 }
 

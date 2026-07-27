@@ -12,6 +12,11 @@ import { BikesForm } from "./bikes-form";
 import { TenantForm } from "./tenant-form";
 import { TenantsTable, type TenantRow } from "./tenants-table";
 import { LedgerPanel, type LedgerRow } from "./ledger-panel";
+import {
+  PurchasesPanel,
+  type PurchaseRow,
+  type PurchasesSummaryRow,
+} from "./purchases-panel";
 import { IncomeReport, type Entry as IncomeEntry } from "./income-report";
 import { DepositsPanel, type DepositRow, type DepositLogRow } from "./deposits-panel";
 import { ForecastPanel } from "./forecast-panel";
@@ -34,6 +39,8 @@ export function OwnerMobile({
   ledgerBreakdown,
   ledgerRows,
   ledgerResetAt,
+  purchaseRows,
+  purchasesSummary,
   incomeTotal,
   incomeThisMonth,
   incomeMonths,
@@ -57,6 +64,8 @@ export function OwnerMobile({
   ledgerBreakdown: CassaBreakdown;
   ledgerRows: LedgerRow[];
   ledgerResetAt: string | null;
+  purchaseRows: PurchaseRow[];
+  purchasesSummary: PurchasesSummaryRow;
   incomeTotal: number;
   incomeThisMonth: number;
   incomeMonths: MonthIncome[];
@@ -183,6 +192,10 @@ export function OwnerMobile({
           <div>
             <h2 className="mb-3 text-h3 text-[var(--text)]">Касса</h2>
             <LedgerPanel total={ledgerTotal} breakdown={ledgerBreakdown} rows={ledgerRows} lastResetAt={ledgerResetAt} />
+          </div>
+          <div>
+            <h2 className="mb-3 text-h3 text-[var(--text)]">Закупки</h2>
+            <PurchasesPanel rows={purchaseRows} summary={purchasesSummary} />
           </div>
           <div>
             <h2 className="mb-3 text-h3 text-[var(--text)]">Доходы</h2>

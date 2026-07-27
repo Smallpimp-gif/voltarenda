@@ -34,6 +34,11 @@ import {
   LedgerPanel,
   type LedgerRow,
 } from "@/components/cabinet/owner/ledger-panel";
+import { loadPurchases, purchaseStats, purchasesSummary } from "@/lib/purchases";
+import {
+  PurchasesPanel,
+  type PurchaseRow,
+} from "@/components/cabinet/owner/purchases-panel";
 import { IncomeReport } from "@/components/cabinet/owner/income-report";
 import { BikesForm } from "@/components/cabinet/owner/bikes-form";
 import { TenantForm } from "@/components/cabinet/owner/tenant-form";
@@ -126,13 +131,43 @@ export default async function OwnerPage({
     : cu.user.email;
 
   const sp = await searchParams;
-  const [tenants, bikes, payMap, ledger, depositLog] = await Promise.all([
+  const [tenants, bikes, payMap, ledger, depositLog, purchases] = await Promise.all([
     loadTenants(),
     getAvailableBikes(),
     loadPaymentMap(),
     loadLedger(),
     loadDepositLog(),
+    loadPurchases(),
   ]);
+  // Закупки — новые сверху, со всеми расчётами (прибыль/остаток).
+  const purchaseRows: PurchaseRow[] = [...purchases.purchases]
+    .reverse()
+    .map((p) => {
+      const s = purchaseStats(p);
+      return {
+        id: p.id,
+        name: p.name,
+        at: p.at,
+        qty: p.qty,
+        unitCost: p.unitCost,
+        delivery: p.delivery,
+        invested: s.invested,
+        costPerUnit: s.costPerUnit,
+        soldQty: s.soldQty,
+        revenue: s.revenue,
+        profit: s.profit,
+        remainingQty: s.remainingQty,
+        tiedValue: s.tiedValue,
+        sales: [...p.sales].reverse().map((x) => ({
+          id: x.id,
+          at: x.at,
+          qty: x.qty,
+          revenue: x.revenue,
+          note: x.note,
+        })),
+      };
+    });
+  const purchasesSum = purchasesSummary(purchases);
   const cassaSum = cassaTotal(ledger);
   const cassaB = cassaBreakdown(ledger);
   const ledgerRows: LedgerRow[] = [...cassaEntries(ledger)].reverse().map((e) => ({
@@ -236,6 +271,8 @@ export default async function OwnerPage({
         ledgerBreakdown={cassaB}
         ledgerRows={ledgerRows}
         ledgerResetAt={ledger.lastResetAt}
+        purchaseRows={purchaseRows}
+        purchasesSummary={purchasesSum}
         incomeTotal={incomeSum}
         incomeThisMonth={incomeMonth}
         incomeMonths={incomeMonths}
@@ -368,9 +405,21 @@ export default async function OwnerPage({
         </div>
       </section>
 
-      {/* 04 / Доходы */}
+      {/* 04 / Закупки */}
       <section className="mt-20">
-        <SectionHeader num="04" eyebrow="Доходы" title="Сколько заработано">
+        <SectionHeader num="04" eyebrow="Закупки" title="Товар и прибыль">
+          <span className="hidden font-mono text-caption uppercase text-mute lg:inline">
+            закупка — не расход, деньги вернутся с продажей
+          </span>
+        </SectionHeader>
+        <div className="mt-8">
+          <PurchasesPanel rows={purchaseRows} summary={purchasesSum} />
+        </div>
+      </section>
+
+      {/* 05 / Доходы */}
+      <section className="mt-20">
+        <SectionHeader num="05" eyebrow="Доходы" title="Сколько заработано">
           <span className="hidden font-mono text-caption uppercase text-mute lg:inline">
             вся история · не сбрасывается
           </span>
@@ -386,9 +435,9 @@ export default async function OwnerPage({
         </div>
       </section>
 
-      {/* 05 / Залоги */}
+      {/* 06 / Залоги */}
       <section className="mt-20">
-        <SectionHeader num="05" eyebrow="Залоги" title="Удержанные залоги">
+        <SectionHeader num="06" eyebrow="Залоги" title="Удержанные залоги">
           <span className="hidden font-mono text-caption uppercase text-mute lg:inline">
             по умолчанию 5 000 ₽
           </span>
