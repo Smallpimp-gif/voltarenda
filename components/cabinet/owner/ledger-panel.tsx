@@ -11,6 +11,7 @@ import {
   setLedgerTotalAction,
   addExpenseAction,
   addShopIncomeAction,
+  addShopSaleAction,
   editLedgerEntryAction,
   deleteLedgerEntryAction,
 } from "@/lib/auth/owner-actions";
@@ -45,16 +46,20 @@ const RED = "#ef4444";
 
 type AddForm = null | "expense" | "shop";
 
+export type SaleableItem = { id: string; name: string; remaining: number };
+
 export function LedgerPanel({
   total,
   breakdown,
   rows,
   lastResetAt,
+  saleable = [],
 }: {
   total: number;
   breakdown: CassaBreakdown;
   rows: LedgerRow[];
   lastResetAt: string | null;
+  saleable?: SaleableItem[];
 }) {
   const [editing, setEditing] = useState(false);
   const [adding, setAdding] = useState<AddForm>(null);
@@ -150,7 +155,9 @@ export function LedgerPanel({
         {adding === "expense" && (
           <ExpenseForm onDone={() => setAdding(null)} />
         )}
-        {adding === "shop" && <ShopForm onDone={() => setAdding(null)} />}
+        {adding === "shop" && (
+          <ShopForm saleable={saleable} onDone={() => setAdding(null)} />
+        )}
 
         <div className="mt-4 flex items-center justify-between gap-3">
           <p className="text-caption text-mute">
@@ -333,56 +340,137 @@ function ExpenseForm({ onDone }: { onDone: () => void }) {
   );
 }
 
-function ShopForm({ onDone }: { onDone: () => void }) {
+// «+ Магазин»: продажа товара из закупок (выбрать товар → кол-во + цена за
+// штуку, списывается остаток и считается прибыль) либо свободный доход без
+// товара. И то и другое падает в кассу как «магазин».
+function ShopForm({ saleable, onDone }: { saleable: SaleableItem[]; onDone: () => void }) {
+  const [itemId, setItemId] = useState<string>("");
+  const item = saleable.find((s) => s.id === itemId) ?? null;
+
   return (
-    <form
-      onSubmit={(e) => {
-        e.preventDefault();
-        const fd = new FormData(e.currentTarget);
-        onDone();
-        void addShopIncomeAction(fd);
-      }}
-      className="mt-4 rounded-md border border-[var(--line-strong)] p-4"
-    >
-      <div className="flex items-center gap-1.5 rounded-md border border-volt bg-[var(--bg)] px-3 py-2">
-        <span className="text-mute">+</span>
-        <input
-          name="amount"
-          type="number"
-          step="0.01"
-          min="0"
-          inputMode="decimal"
-          autoFocus
-          placeholder="0"
-          className="w-full bg-transparent font-sans text-h3 tabular-nums text-[var(--text)] outline-none"
-        />
-        <span className="text-mute">₽</span>
-      </div>
+    <div className="mt-4 rounded-md border border-volt p-4">
+      {saleable.length > 0 && (
+        <label className="flex flex-col gap-1">
+          <span className="text-caption text-mute">Товар</span>
+          <select
+            value={itemId}
+            onChange={(e) => setItemId(e.target.value)}
+            className="w-full rounded-md border border-[var(--line-strong)] bg-[var(--bg)] px-3 py-2.5 text-body text-[var(--text)] outline-none focus:border-volt"
+          >
+            <option value="">Без товара (просто доход)</option>
+            {saleable.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.name} · остаток {s.remaining} шт
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
 
-      <input
-        name="note"
-        type="text"
-        maxLength={120}
-        placeholder="Что продали (необязательно)"
-        className="mt-3 w-full rounded-md border border-[var(--line-strong)] bg-[var(--bg)] px-3 py-2.5 text-body text-[var(--text)] outline-none placeholder:text-[var(--line-strong)] focus:border-volt"
-      />
+      {item ? (
+        <form
+          key="sale"
+          onSubmit={(e) => {
+            e.preventDefault();
+            const fd = new FormData(e.currentTarget);
+            onDone();
+            void addShopSaleAction(fd);
+          }}
+          className="mt-3"
+        >
+          <input type="hidden" name="purchaseId" value={item.id} />
+          <div className="grid grid-cols-2 gap-2">
+            <label className="flex flex-col gap-1">
+              <span className="text-caption text-mute">Кол-во, шт (до {item.remaining})</span>
+              <input
+                name="qty"
+                type="number"
+                step="1"
+                min="1"
+                max={item.remaining}
+                autoFocus
+                placeholder="1"
+                className="w-full rounded-md border border-[var(--line-strong)] bg-[var(--bg)] px-3 py-2.5 font-sans tabular-nums text-[var(--text)] outline-none focus:border-volt"
+              />
+            </label>
+            <label className="flex flex-col gap-1">
+              <span className="text-caption text-mute">Цена продажи за шт, ₽</span>
+              <input
+                name="unitPrice"
+                type="number"
+                step="0.01"
+                min="0"
+                inputMode="decimal"
+                placeholder="0"
+                className="w-full rounded-md border border-[var(--line-strong)] bg-[var(--bg)] px-3 py-2.5 font-sans tabular-nums text-[var(--text)] outline-none focus:border-volt"
+              />
+            </label>
+          </div>
+          <input
+            name="note"
+            type="text"
+            maxLength={120}
+            placeholder="Комментарий (необязательно)"
+            className="mt-3 w-full rounded-md border border-[var(--line-strong)] bg-[var(--bg)] px-3 py-2.5 text-body text-[var(--text)] outline-none placeholder:text-[var(--line-strong)] focus:border-volt"
+          />
+          <FormButtons submitLabel="Записать продажу" onDone={onDone} />
+        </form>
+      ) : (
+        <form
+          key="income"
+          onSubmit={(e) => {
+            e.preventDefault();
+            const fd = new FormData(e.currentTarget);
+            onDone();
+            void addShopIncomeAction(fd);
+          }}
+          className="mt-3"
+        >
+          <div className="flex items-center gap-1.5 rounded-md border border-volt bg-[var(--bg)] px-3 py-2">
+            <span className="text-mute">+</span>
+            <input
+              name="amount"
+              type="number"
+              step="0.01"
+              min="0"
+              inputMode="decimal"
+              autoFocus
+              placeholder="0"
+              className="w-full bg-transparent font-sans text-h3 tabular-nums text-[var(--text)] outline-none"
+            />
+            <span className="text-mute">₽</span>
+          </div>
+          <input
+            name="note"
+            type="text"
+            maxLength={120}
+            placeholder="Что продали (необязательно)"
+            className="mt-3 w-full rounded-md border border-[var(--line-strong)] bg-[var(--bg)] px-3 py-2.5 text-body text-[var(--text)] outline-none placeholder:text-[var(--line-strong)] focus:border-volt"
+          />
+          <FormButtons submitLabel="Записать доход" onDone={onDone} />
+        </form>
+      )}
+    </div>
+  );
+}
 
-      <div className="mt-3 flex gap-2">
-        <button
-          type="submit"
-          className="rounded-pill bg-volt px-5 py-2.5 text-caption font-medium text-ink transition-transform duration-quick hover:bg-volt-hover active:scale-95"
-        >
-          Записать доход
-        </button>
-        <button
-          type="button"
-          onClick={onDone}
-          className="text-caption font-medium text-mute transition-colors duration-quick hover:text-[var(--text)]"
-        >
-          Отмена
-        </button>
-      </div>
-    </form>
+function FormButtons({ submitLabel, onDone }: { submitLabel: string; onDone: () => void }) {
+  return (
+    <div className="mt-3 flex gap-2">
+      <button
+        type="submit"
+        className="rounded-pill bg-volt px-5 py-2.5 text-caption font-medium text-ink transition-transform duration-quick hover:bg-volt-hover active:scale-95"
+      >
+        {submitLabel}
+      </button>
+      <button
+        type="button"
+        onClick={onDone}
+        className="text-caption font-medium text-mute transition-colors duration-quick hover:text-[var(--text)]"
+      >
+        Отмена
+      </button>
+    </div>
   );
 }
 

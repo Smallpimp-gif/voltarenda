@@ -58,10 +58,12 @@ export function cassaBreakdown(file: LedgerFile): CassaBreakdown {
 
 export async function addLedgerEntry(
   e: Omit<LedgerEntry, "id" | "at">,
-): Promise<void> {
+): Promise<string> {
+  const id = crypto.randomUUID();
   const file = await loadLedger();
-  file.entries.push({ ...e, id: crypto.randomUUID(), at: new Date().toISOString() });
+  file.entries.push({ ...e, id, at: new Date().toISOString() });
   await writeJSON(KEY, file);
+  return id;
 }
 
 // Откат последней оплаты арендатора — только из текущей кассы (историю

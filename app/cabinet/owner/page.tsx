@@ -169,6 +169,10 @@ export default async function OwnerPage({
       };
     });
   const purchasesSum = purchasesSummary(purchases);
+  // Товары с остатком — для продажи прямо из кассы («+ Магазин» → выбор товара).
+  const saleable = purchaseRows
+    .filter((r) => r.remainingQty > 0)
+    .map((r) => ({ id: r.id, name: r.name, remaining: r.remainingQty }));
   const cassaSum = cassaTotal(ledger);
   const cassaB = cassaBreakdown(ledger);
   const ledgerRows: LedgerRow[] = [...cassaEntries(ledger)].reverse().map((e) => ({
@@ -275,6 +279,7 @@ export default async function OwnerPage({
         ledgerBreakdown={cassaB}
         ledgerRows={ledgerRows}
         ledgerResetAt={ledger.lastResetAt}
+        ledgerSaleable={saleable}
         purchaseRows={purchaseRows}
         purchasesSummary={purchasesSum}
         incomeTotal={incomeSum}
@@ -405,7 +410,7 @@ export default async function OwnerPage({
           </span>
         </SectionHeader>
         <div className="mt-8">
-          <LedgerPanel total={cassaSum} breakdown={cassaB} rows={ledgerRows} lastResetAt={ledger.lastResetAt} />
+          <LedgerPanel total={cassaSum} breakdown={cassaB} rows={ledgerRows} lastResetAt={ledger.lastResetAt} saleable={saleable} />
         </div>
       </section>
 

@@ -14,6 +14,7 @@ export type Sale = {
   qty: number; // сколько штук продано этой операцией
   revenue: number; // выручка за эти штуки, ₽
   note?: string;
+  ledgerId?: string; // связанная запись кассы (доход магазина), если есть
 };
 
 export type Purchase = {
@@ -114,7 +115,7 @@ export async function addPurchase(input: {
 // остатка (защита от продажи «в минус»).
 export async function addSale(
   purchaseId: string,
-  input: { qty: number; revenue: number; note?: string },
+  input: { qty: number; revenue: number; note?: string; ledgerId?: string },
 ): Promise<boolean> {
   const file = await loadPurchases();
   const p = file.purchases.find((x) => x.id === purchaseId);
@@ -127,6 +128,7 @@ export async function addSale(
     qty: input.qty,
     revenue: input.revenue,
     note: input.note,
+    ledgerId: input.ledgerId,
   });
   await writeJSON(KEY, file);
   return true;
@@ -156,13 +158,14 @@ export async function deletePurchase(id: string): Promise<boolean> {
   return true;
 }
 
-export async function deleteSale(purchaseId: string, saleId: string): Promise<boolean> {
+// Возвращает удалённую продажу (для отката связанной записи кассы) или null.
+export async function deleteSale(purchaseId: string, saleId: string): Promise<Sale | null> {
   const file = await loadPurchases();
   const p = file.purchases.find((x) => x.id === purchaseId);
-  if (!p) return false;
+  if (!p) return null;
   const i = p.sales.findIndex((s) => s.id === saleId);
-  if (i < 0) return false;
-  p.sales.splice(i, 1);
+  if (i < 0) return null;
+  const [removed] = p.sales.splice(i, 1);
   await writeJSON(KEY, file);
-  return true;
+  return removed;
 }

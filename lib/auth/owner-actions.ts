@@ -36,6 +36,8 @@ import {
   editPurchase,
   deletePurchase,
   deleteSale,
+  loadPurchases,
+  purchaseStats,
 } from "@/lib/purchases";
 import {
   paymentState,
@@ -262,17 +264,56 @@ export async function addPurchaseAction(formData: FormData): Promise<void> {
   revalidatePath("/cabinet/owner");
 }
 
-// Продажа части остатка партии: кол-во + выручка.
+// Продажа товара = списание остатка партии + доход магазина в кассу.
+// Обе точки входа (вкладка «Закупки» и «+ Магазин» в кассе) идут сюда,
+// чтобы любая продажа отражалась и в остатке/прибыли, и в кассе. Запись
+// кассы связана с продажей через ledgerId (удаление продажи убирает доход).
+async function recordSale(
+  purchaseId: string,
+  qty: number,
+  revenue: number,
+  note?: string,
+): Promise<void> {
+  const file = await loadPurchases();
+  const p = file.purchases.find((x) => x.id === purchaseId);
+  if (!p) return;
+  const { remainingQty } = purchaseStats(p);
+  if (qty <= 0 || qty > remainingQty) return;
+  if (!Number.isFinite(revenue) || revenue < 0) return;
+  const ledgerId = await addLedgerEntry({
+    tenantId: "",
+    name: p.name || "Магазин",
+    amount: revenue,
+    weeks: 0,
+    kind: "shop",
+    note: note || `${qty} шт`,
+  });
+  const ok = await addSale(purchaseId, { qty, revenue, note: note || undefined, ledgerId });
+  if (!ok) await deleteLedgerEntry(ledgerId); // откат записи кассы
+}
+
+// Продажа из вкладки «Закупки»: кол-во + выручка (общая сумма).
 export async function addSaleAction(formData: FormData): Promise<void> {
   await requireOwner();
   const purchaseId = String(formData.get("purchaseId") ?? "");
   const qty = Math.floor(Number(formData.get("qty")));
   const revenue = Math.round(Number(formData.get("revenue")) * 100) / 100;
   const note = String(formData.get("note") ?? "").trim().slice(0, 120);
-  if (!purchaseId) return;
-  if (!Number.isFinite(qty) || qty <= 0) return;
-  if (!Number.isFinite(revenue) || revenue < 0) return;
-  await addSale(purchaseId, { qty, revenue, note: note || undefined });
+  if (!purchaseId || !Number.isFinite(qty)) return;
+  await recordSale(purchaseId, qty, revenue, note || undefined);
+  revalidatePath("/cabinet/owner");
+}
+
+// Продажа из кассы («+ Магазин» с выбором товара): кол-во + цена за штуку.
+export async function addShopSaleAction(formData: FormData): Promise<void> {
+  await requireOwner();
+  const purchaseId = String(formData.get("purchaseId") ?? "");
+  const qty = Math.floor(Number(formData.get("qty")));
+  const unitPrice = Math.round(Number(formData.get("unitPrice")) * 100) / 100;
+  const note = String(formData.get("note") ?? "").trim().slice(0, 120);
+  if (!purchaseId || !Number.isFinite(qty) || !Number.isFinite(unitPrice)) return;
+  const revenue = Math.round(qty * unitPrice * 100) / 100;
+  await recordSale(purchaseId, qty, revenue, note || undefined);
   revalidatePath("/cabinet/owner");
 }
 
@@ -307,7 +348,9 @@ export async function deleteSaleAction(formData: FormData): Promise<void> {
   const purchaseId = String(formData.get("purchaseId") ?? "");
   const saleId = String(formData.get("saleId") ?? "");
   if (!purchaseId || !saleId) return;
-  await deleteSale(purchaseId, saleId);
+  const removed = await deleteSale(purchaseId, saleId);
+  // Убираем связанный доход магазина из кассы.
+  if (removed?.ledgerId) await deleteLedgerEntry(removed.ledgerId);
   revalidatePath("/cabinet/owner");
 }
 

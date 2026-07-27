@@ -11,7 +11,7 @@ import { logoutAction } from "@/lib/auth/actions";
 import { BikesForm } from "./bikes-form";
 import { TenantForm } from "./tenant-form";
 import { TenantsTable, type TenantRow } from "./tenants-table";
-import { LedgerPanel, type LedgerRow } from "./ledger-panel";
+import { LedgerPanel, type LedgerRow, type SaleableItem } from "./ledger-panel";
 import {
   PurchasesPanel,
   type PurchaseRow,
@@ -40,6 +40,7 @@ export function OwnerMobile({
   ledgerBreakdown,
   ledgerRows,
   ledgerResetAt,
+  ledgerSaleable,
   purchaseRows,
   purchasesSummary,
   incomeTotal,
@@ -65,6 +66,7 @@ export function OwnerMobile({
   ledgerBreakdown: CassaBreakdown;
   ledgerRows: LedgerRow[];
   ledgerResetAt: string | null;
+  ledgerSaleable: SaleableItem[];
   purchaseRows: PurchaseRow[];
   purchasesSummary: PurchasesSummaryRow;
   incomeTotal: number;
@@ -194,7 +196,7 @@ export function OwnerMobile({
         <div className="flex flex-col gap-8 px-gutter py-6">
           <div>
             <h2 className="mb-3 text-h3 text-[var(--text)]">Касса</h2>
-            <LedgerPanel total={ledgerTotal} breakdown={ledgerBreakdown} rows={ledgerRows} lastResetAt={ledgerResetAt} />
+            <LedgerPanel total={ledgerTotal} breakdown={ledgerBreakdown} rows={ledgerRows} lastResetAt={ledgerResetAt} saleable={ledgerSaleable} />
           </div>
           <div>
             <h2 className="mb-3 text-h3 text-[var(--text)]">Закупки</h2>
