@@ -218,6 +218,7 @@ export default async function OwnerPage({
       contract: t.contract,
       type: t.type,
       weekly: effectiveWeekly(t),
+      period: t.period ?? "week",
       telegramUsername: t.telegramUsername ?? "",
       paidThrough: ps.paidThrough,
       totalWeeks: ps.totalWeeks,

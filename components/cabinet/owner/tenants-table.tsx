@@ -8,6 +8,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { markPaidAction, togglePauseAction } from "@/lib/auth/owner-actions";
+import { periodShort, type PaymentPeriod } from "@/lib/schedule";
 import { DeleteTenantButton } from "./delete-button";
 
 const rub = new Intl.NumberFormat("ru-RU");
@@ -21,7 +22,8 @@ export type TenantRow = {
   name: string;
   contract: string;
   type: string;
-  weekly: number;
+  weekly: number; // сумма за один период оплаты
+  period: PaymentPeriod;
   telegramUsername: string;
   paidThrough: number;
   totalWeeks: number | null;
@@ -372,7 +374,7 @@ export function TenantsTable({ rows }: { rows: TenantRow[] }) {
                       <span aria-hidden className="text-mute">›</span>
                     </p>
                     <p className="mt-1 truncate text-caption text-mute">
-                      {capFirst(paidInfo)} · {money(row.weekly)}/нед · договор {row.contract}
+                      {capFirst(paidInfo)} · {money(row.weekly)}/{periodShort(row.period)} · договор {row.contract}
                     </p>
                   </Link>
                   <span className={`shrink-0 rounded-pill px-2.5 py-1 font-mono text-caption uppercase ${st.cls}`}>
@@ -390,7 +392,7 @@ export function TenantsTable({ rows }: { rows: TenantRow[] }) {
                     <span aria-hidden className="text-mute opacity-0 transition-opacity duration-quick group-hover:opacity-100">›</span>
                   </p>
                   <p className="mt-0.5 text-caption text-mute">
-                    {capFirst(paidInfo)} · {money(row.weekly)}/нед · {row.type === "выкуп" ? "выкуп" : "аренда"} · договор {row.contract}
+                    {capFirst(paidInfo)} · {money(row.weekly)}/{periodShort(row.period)} · {row.type === "выкуп" ? "выкуп" : "аренда"} · договор {row.contract}
                   </p>
                 </Link>
                 <div className="min-w-0">

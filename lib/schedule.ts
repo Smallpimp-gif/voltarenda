@@ -17,14 +17,19 @@ export type TenantPosition = {
   intoBuyout: boolean;
 };
 
+// Период оплаты. «week» — историческое поведение (по умолчанию), поэтому
+// существующие арендаторы без поля period ведут себя ровно как раньше.
+export type PaymentPeriod = "day" | "week" | "month";
+
 export type Tenant = {
   id: string;
   name: string; // фамилия
   contract: string;
   type: "аренда" | "выкуп" | string;
-  weekly: number;
+  weekly: number; // сумма за ОДИН период (не обязательно неделя — см. period)
+  period?: PaymentPeriod; // единица оплаты; по умолчанию "week"
   startDate: string; // YYYY-MM-DD
-  buyoutWeeks: number | null;
+  buyoutWeeks: number | null; // число ПЕРИОДОВ до выкупа (не обязательно недель)
   telegramUsername?: string;
   // Пауза выкупа: пока на паузе, график заморожен (выкупная сумма не идёт),
   // вместо недельных — фикс. плата за паузу (PAUSE_FEE_MONTHLY), отдельно.
@@ -93,6 +98,60 @@ export function dayNumToIso(dayNum: number): string {
   return `${dt.getUTCFullYear()}-${m}-${d}`;
 }
 
+// --- Период оплаты: календарная арифметика -----------------------------
+
+export function periodOf(t: { period?: PaymentPeriod }): PaymentPeriod {
+  return t.period ?? "week";
+}
+
+// Короткая метка периода для UI: «дн» / «нед» / «мес».
+export function periodShort(period: PaymentPeriod): string {
+  return period === "day" ? "дн" : period === "month" ? "мес" : "нед";
+}
+
+function ymdOf(dayNum: number): { y: number; m: number; d: number } {
+  const dt = new Date(dayNum * 86400000);
+  return { y: dt.getUTCFullYear(), m: dt.getUTCMonth() + 1, d: dt.getUTCDate() };
+}
+
+function daysInMonth(y: number, m: number): number {
+  return new Date(Date.UTC(y, m, 0)).getUTCDate(); // m 1-based; «день 0» = посл. день
+}
+
+// Дата k-го шага периода от startNum (k=0 → сам startNum). Месяц — строго
+// календарный: тот же день месяца, что у старта, с клампом к длине месяца
+// (31 января + 1 мес → 28/29 февраля; + ещё 1 → 31 марта, привязка к числу
+// старта сохраняется).
+export function addPeriods(startNum: number, period: PaymentPeriod, k: number): number {
+  if (period === "day") return startNum + k;
+  if (period === "week") return startNum + k * 7;
+  const { y, m, d } = ymdOf(startNum);
+  const idx = m - 1 + k; // 0-based индекс месяца
+  const ny = y + Math.floor(idx / 12);
+  const nm = ((idx % 12) + 12) % 12 + 1; // 1-based
+  const nd = Math.min(d, daysInMonth(ny, nm));
+  return Math.floor(Date.UTC(ny, nm - 1, nd) / 86400000);
+}
+
+// Сколько шагов периода полностью «созрело» к todayNum: наибольшее k≥0 с
+// addPeriods(start,k) ≤ today. Для day/week — floor((today−start)/шаг).
+export function periodsElapsed(
+  startNum: number,
+  period: PaymentPeriod,
+  todayNum: number,
+): number {
+  if (todayNum <= startNum) return 0;
+  if (period === "day") return todayNum - startNum;
+  if (period === "week") return Math.floor((todayNum - startNum) / 7);
+  const s = ymdOf(startNum);
+  const t = ymdOf(todayNum);
+  let k = (t.y - s.y) * 12 + (t.m - s.m);
+  if (k < 0) return 0;
+  if (addPeriods(startNum, "month", k) > todayNum) k -= 1;
+  else if (addPeriods(startNum, "month", k + 1) <= todayNum) k += 1;
+  return Math.max(0, k);
+}
+
 // «Эффективная» дата начала для накопления платежей: сдвинута вперёд на все
 // дни паузы (завершённые + текущий незакрытый период). Пока на паузе, сдвиг
 // растёт ровно с todayNum, поэтому число «созревших» платежей замирает —
@@ -113,16 +172,20 @@ export function accrualStartNum(
 // paymentNumber — порядковый номер платежа (1-based). completed=true,
 // если выкуп уже выплачен полностью.
 export function nextDue(
-  tenant: Pick<Tenant, "startDate" | "buyoutWeeks" | "pausedSince" | "pausedDays">,
+  tenant: Pick<Tenant, "startDate" | "buyoutWeeks" | "pausedSince" | "pausedDays" | "period">,
   todayNum: number,
 ): { dueNum: number; paymentNumber: number; completed: boolean } {
   const startNum = accrualStartNum(tenant, todayNum);
-  const delta = todayNum - startNum;
-  const dueNum = delta <= 0 ? startNum : startNum + Math.ceil(delta / 7) * 7;
-  const paymentNumber = Math.round((dueNum - startNum) / 7) + 1;
+  const period = periodOf(tenant);
+  // Ближайшая дата платежа ≥ сегодня. Платежи — в addPeriods(start, k),
+  // k = 0,1,… (платёж №1 = сам старт).
+  const e = periodsElapsed(startNum, period, todayNum);
+  const k = addPeriods(startNum, period, e) >= todayNum ? e : e + 1;
+  const dueNum = addPeriods(startNum, period, k);
+  const paymentNumber = k + 1;
   let completed = false;
   if (tenant.buyoutWeeks) {
-    const lastDueNum = startNum + (tenant.buyoutWeeks - 1) * 7;
+    const lastDueNum = addPeriods(startNum, period, tenant.buyoutWeeks - 1);
     completed = dueNum > lastDueNum;
   }
   return { dueNum, paymentNumber, completed };
@@ -280,13 +343,16 @@ export function upcomingPaymentEvents(
   const horizon = todayNum + horizonDays;
   for (const t of tenants) {
     if (t.pausedSince) continue;
-    const { dueNum, paymentNumber, completed } = nextDue(t, todayNum);
+    const { paymentNumber, completed } = nextDue(t, todayNum);
     if (completed) continue;
+    const startNum = accrualStartNum(t, todayNum);
+    const period = periodOf(t);
     const weekly = effectiveWeekly(t);
     const total = t.buyoutWeeks ?? Infinity;
-    let d = dueNum;
     let n = paymentNumber;
-    while (d <= horizon && n <= total) {
+    while (n <= total) {
+      const d = addPeriods(startNum, period, n - 1);
+      if (d > horizon) break;
       events.push({
         dateISO: dayNumToIso(d),
         dateLabel: formatDay(d),
@@ -295,7 +361,6 @@ export function upcomingPaymentEvents(
         tenantId: t.id,
         name: t.name,
       });
-      d += 7;
       n += 1;
     }
   }
@@ -320,8 +385,8 @@ export function buildSchedule(
   upcomingWindow = 8,
 ): ScheduleRow[] {
   const startNum = accrualStartNum(tenant, todayNum);
-  const { dueNum: nextNum } = nextDue(tenant, todayNum);
-  const nextNumber = Math.round((nextNum - startNum) / 7) + 1;
+  const period = periodOf(tenant);
+  const { dueNum: nextNum, paymentNumber: nextNumber } = nextDue(tenant, todayNum);
 
   let from = 1;
   let to: number;
@@ -335,7 +400,7 @@ export function buildSchedule(
   const weekly = effectiveWeekly(tenant);
   const rows: ScheduleRow[] = [];
   for (let n = from; n <= to; n += 1) {
-    const d = startNum + (n - 1) * 7;
+    const d = addPeriods(startNum, period, n - 1);
     rows.push({
       number: n,
       date: formatDay(d),
@@ -378,12 +443,16 @@ export function paymentState(
   partialPaid = 0,
 ): PaymentState {
   const startNum = accrualStartNum(tenant, todayNum);
+  const period = periodOf(tenant);
   const total = tenant.buyoutWeeks ?? Infinity;
   const weekly = effectiveWeekly(tenant);
 
   // Платежи со сроком СТРОГО до сегодня (платёж «на сегодня» ещё не просрочен).
-  const pastDue =
-    todayNum > startNum ? Math.floor((todayNum - startNum - 1) / 7) + 1 : 0;
+  let pastDue = 0;
+  if (todayNum > startNum) {
+    const e = periodsElapsed(startNum, period, todayNum);
+    pastDue = addPeriods(startNum, period, e) < todayNum ? e + 1 : e;
+  }
   const dueCount = Math.min(pastDue, total);
 
   const paid = Math.max(0, Math.min(paidThrough, total === Infinity ? paidThrough : total));
@@ -402,7 +471,7 @@ export function paymentState(
   let nextDaysUntil: number | null = null;
   if (!completed) {
     nextNumber = paid + 1;
-    const nextDueNum = startNum + (nextNumber - 1) * 7;
+    const nextDueNum = addPeriods(startNum, period, nextNumber - 1);
     nextDate = formatDay(nextDueNum);
     nextWeekday = weekdayOf(nextDueNum);
     nextDaysUntil = nextDueNum - todayNum;

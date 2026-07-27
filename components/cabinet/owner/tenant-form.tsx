@@ -42,9 +42,15 @@ export function TenantForm({
     initial,
   );
   const [type, setType] = useState<string>(tenant?.type ?? "аренда");
+  const [period, setPeriod] = useState<string>(tenant?.period ?? "week");
   const [positions, setPositions] = useState<TenantPosition[]>(
     tenant?.positions ?? [],
   );
+
+  const payLabel =
+    period === "day" ? "Платёж за сутки, ₽" : period === "month" ? "Платёж в месяц, ₽" : "Платёж в неделю, ₽";
+  const buyoutLabel =
+    period === "day" ? "Суток выкупа" : period === "month" ? "Месяцев выкупа" : "Недель выкупа";
 
   const addPos = () =>
     setPositions((p) => [
@@ -95,7 +101,19 @@ export function TenantForm({
             <option value="выкуп">Выкуп</option>
           </select>
         </Labeled>
-        <Labeled label="Недельный платёж, ₽">
+        <Labeled label="Период оплаты">
+          <select
+            name="period"
+            value={period}
+            onChange={(e) => setPeriod(e.target.value)}
+            className={inputCls}
+          >
+            <option value="day">Сутки</option>
+            <option value="week">Неделя</option>
+            <option value="month">Месяц (календарный)</option>
+          </select>
+        </Labeled>
+        <Labeled label={payLabel}>
           <input
             name="weekly"
             type="number"
@@ -110,7 +128,7 @@ export function TenantForm({
           <input name="startDate" type="date" defaultValue={tenant?.startDate} required className={inputCls} />
         </Labeled>
         {type === "выкуп" && (
-          <Labeled label="Недель выкупа">
+          <Labeled label={buyoutLabel}>
             <input
               name="buyoutWeeks"
               type="number"

@@ -7,7 +7,7 @@
 // Локально (файловый режим) — единый файл, всё совместимо.
 
 import { readJSON, writeJSON } from "@/lib/store";
-import type { Tenant, TenantPosition } from "@/lib/schedule";
+import type { Tenant, TenantPosition, PaymentPeriod } from "@/lib/schedule";
 
 const KEY = "bot/tenants";
 
@@ -96,9 +96,10 @@ export type TenantInput = {
   name: string;
   contract: string;
   type: "аренда" | "выкуп";
-  weekly: number;
+  weekly: number; // сумма за один период оплаты
+  period?: PaymentPeriod; // day | week | month; по умолчанию week
   startDate: string; // YYYY-MM-DD
-  buyoutWeeks: number | null;
+  buyoutWeeks: number | null; // число периодов до выкупа
   telegramUsername?: string;
   positions?: TenantPosition[];
   deposit?: number;
@@ -113,6 +114,7 @@ export async function addTenant(input: TenantInput): Promise<Tenant> {
     contract: input.contract.trim(),
     type: input.type,
     weekly: input.weekly,
+    period: input.period ?? "week",
     startDate: input.startDate,
     buyoutWeeks: input.type === "выкуп" ? input.buyoutWeeks : null,
     telegramUsername: input.telegramUsername?.trim() ?? "",
@@ -134,6 +136,7 @@ export async function updateTenant(id: string, input: TenantInput): Promise<Tena
     contract: input.contract.trim(),
     type: input.type,
     weekly: input.weekly,
+    period: input.period ?? tenants[idx].period ?? "week",
     startDate: input.startDate,
     buyoutWeeks: input.type === "выкуп" ? input.buyoutWeeks : null,
     telegramUsername:

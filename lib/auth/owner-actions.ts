@@ -45,6 +45,7 @@ import {
   isoToDayNum,
   dayNumToIso,
   type TenantPosition,
+  type PaymentPeriod,
 } from "@/lib/schedule";
 import { addDepositLogEntry, loadDepositLog, depositAdjustmentsTotal } from "@/lib/deposits";
 
@@ -399,6 +400,9 @@ function parseTenant(formData: FormData): TenantInput | string {
   const contract = String(formData.get("contract") ?? "").trim();
   const type = String(formData.get("type") ?? "").trim();
   const weekly = Number(formData.get("weekly"));
+  const periodRaw = String(formData.get("period") ?? "").trim();
+  const period: PaymentPeriod =
+    periodRaw === "day" || periodRaw === "month" ? periodRaw : "week";
   const startDate = String(formData.get("startDate") ?? "").trim();
   const buyoutRaw = String(formData.get("buyoutWeeks") ?? "").trim();
   const telegramUsername = String(formData.get("telegramUsername") ?? "")
@@ -449,6 +453,7 @@ function parseTenant(formData: FormData): TenantInput | string {
     contract,
     type,
     weekly: Math.round(weekly),
+    period,
     startDate,
     buyoutWeeks,
     telegramUsername,
