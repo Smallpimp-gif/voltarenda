@@ -11,8 +11,12 @@ import {
   setLedgerTotalAction,
   addExpenseAction,
   addShopIncomeAction,
+  editLedgerEntryAction,
+  deleteLedgerEntryAction,
 } from "@/lib/auth/owner-actions";
-import { EXPENSE_CATEGORIES, type CassaBreakdown } from "@/lib/ledger-types";
+import { EXPENSE_CATEGORIES, EDITABLE_KINDS, type CassaBreakdown } from "@/lib/ledger-types";
+
+const EDITABLE = new Set<string>(EDITABLE_KINDS);
 
 const rub = new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 2 });
 const money = (n: number) => `${rub.format(Math.abs(n))} ₽`;
@@ -54,6 +58,7 @@ export function LedgerPanel({
 }) {
   const [editing, setEditing] = useState(false);
   const [adding, setAdding] = useState<AddForm>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   return (
     <div className="overflow-hidden rounded-[28px] border border-[var(--line)] bg-[var(--bg-2)]">
@@ -164,10 +169,28 @@ export function LedgerPanel({
           {rows.map((r) => {
             const negative = r.amount < 0;
             const sub = subtitle(r);
+            const canEdit = EDITABLE.has(r.kind);
+
+            if (canEdit && editingId === r.id) {
+              return (
+                <RowEditForm key={r.id} row={r} onDone={() => setEditingId(null)} />
+              );
+            }
+
+            const RowTag = canEdit ? "button" : "div";
             return (
-              <div
+              <RowTag
                 key={r.id}
-                className="flex items-center gap-3 border-b border-[var(--line)] px-5 py-3.5 last:border-0"
+                {...(canEdit
+                  ? {
+                      type: "button" as const,
+                      onClick: () => setEditingId(r.id),
+                      title: "Изменить запись",
+                    }
+                  : {})}
+                className={`flex w-full items-center gap-3 border-b border-[var(--line)] px-5 py-3.5 text-left last:border-0 ${
+                  canEdit ? "transition-colors duration-quick hover:bg-[var(--bg)]" : ""
+                }`}
               >
                 <span
                   className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[var(--line-strong)]"
@@ -191,7 +214,22 @@ export function LedgerPanel({
                   {negative ? "−" : "+"}
                   {money(r.amount)}
                 </span>
-              </div>
+                {canEdit && (
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth={1.8}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="h-4 w-4 shrink-0 text-[var(--line-strong)]"
+                    aria-hidden
+                  >
+                    <path d="M12 20h9" />
+                    <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                  </svg>
+                )}
+              </RowTag>
             );
           })}
         </div>
@@ -342,6 +380,117 @@ function ShopForm({ onDone }: { onDone: () => void }) {
           className="text-caption font-medium text-mute transition-colors duration-quick hover:text-[var(--text)]"
         >
           Отмена
+        </button>
+      </div>
+    </form>
+  );
+}
+
+// Инлайн-правка записи журнала (магазин / расход / корректировка).
+function RowEditForm({ row, onDone }: { row: LedgerRow; onDone: () => void }) {
+  const isExpense = row.kind === "expense";
+  const isManual = row.kind === "manual";
+  const [category, setCategory] = useState<string>(
+    row.category && (EXPENSE_CATEGORIES as readonly string[]).includes(row.category)
+      ? row.category
+      : EXPENSE_CATEGORIES[0],
+  );
+  // Сумму показываем как вводил владелец: расход/магазин — положительной,
+  // корректировку — со знаком.
+  const shownAmount = isManual ? row.amount : Math.abs(row.amount);
+  const accent = isExpense ? "#ef4444" : "var(--volt, #d4f000)";
+
+  function handleDelete() {
+    if (!confirm("Удалить эту запись? Касса пересчитается.")) return;
+    const fd = new FormData();
+    fd.set("id", row.id);
+    onDone();
+    void deleteLedgerEntryAction(fd);
+  }
+
+  return (
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        const fd = new FormData(e.currentTarget);
+        onDone();
+        void editLedgerEntryAction(fd);
+      }}
+      className="border-b border-[var(--line)] bg-[var(--bg)] px-5 py-4 last:border-0"
+    >
+      <input type="hidden" name="id" value={row.id} />
+
+      <div
+        className="flex items-center gap-1.5 rounded-md border bg-[var(--bg-2)] px-3 py-2"
+        style={{ borderColor: accent }}
+      >
+        <span className="text-mute">{isExpense ? "−" : isManual ? "±" : "+"}</span>
+        <input
+          name="amount"
+          type="number"
+          step="0.01"
+          {...(isManual ? {} : { min: "0" })}
+          inputMode="decimal"
+          autoFocus
+          defaultValue={shownAmount}
+          className="w-full bg-transparent font-sans text-h3 tabular-nums text-[var(--text)] outline-none"
+        />
+        <span className="text-mute">₽</span>
+      </div>
+
+      {isExpense && (
+        <>
+          <input type="hidden" name="category" value={category} />
+          <div className="mt-3 flex flex-wrap gap-2">
+            {EXPENSE_CATEGORIES.map((c) => (
+              <button
+                key={c}
+                type="button"
+                onClick={() => setCategory(c)}
+                className={`rounded-pill border px-3 py-1.5 text-caption transition-colors duration-quick ${
+                  category === c
+                    ? "border-[var(--text)] bg-[var(--text)] text-[var(--bg)]"
+                    : "border-[var(--line-strong)] text-mute hover:text-[var(--text)]"
+                }`}
+              >
+                {c}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+
+      {!isManual && (
+        <input
+          name="note"
+          type="text"
+          maxLength={120}
+          defaultValue={row.note ?? ""}
+          placeholder={isExpense ? "Комментарий (необязательно)" : "Что продали (необязательно)"}
+          className="mt-3 w-full rounded-md border border-[var(--line-strong)] bg-[var(--bg-2)] px-3 py-2.5 text-body text-[var(--text)] outline-none placeholder:text-[var(--line-strong)] focus:border-volt"
+        />
+      )}
+
+      <div className="mt-3 flex items-center gap-2">
+        <button
+          type="submit"
+          className="rounded-pill bg-volt px-5 py-2.5 text-caption font-medium text-ink transition-transform duration-quick hover:bg-volt-hover active:scale-95"
+        >
+          Сохранить
+        </button>
+        <button
+          type="button"
+          onClick={onDone}
+          className="text-caption font-medium text-mute transition-colors duration-quick hover:text-[var(--text)]"
+        >
+          Отмена
+        </button>
+        <button
+          type="button"
+          onClick={handleDelete}
+          className="ml-auto text-caption font-medium text-mute transition-colors duration-quick hover:text-danger"
+        >
+          Удалить
         </button>
       </div>
     </form>

@@ -16,6 +16,10 @@ export type LedgerEntry = {
   at: string; // ISO
 };
 
+// Редактируемые вручную типы записей (магазин / расход / корректировка).
+// Аренду (weekly/catchup) правим через оплату арендатора, а не в журнале.
+export const EDITABLE_KINDS: readonly LedgerKind[] = ["shop", "expense", "manual"];
+
 // Категории расходов — фикс. список для быстрого выбора в кабинете.
 export const EXPENSE_CATEGORIES = [
   "Ремонт",

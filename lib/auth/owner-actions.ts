@@ -24,6 +24,10 @@ import {
   resetCassa,
   loadLedger,
   cassaTotal,
+  updateLedgerEntry,
+  deleteLedgerEntry,
+  findLedgerEntry,
+  EDITABLE_KINDS,
   EXPENSE_CATEGORIES,
 } from "@/lib/ledger";
 import {
@@ -180,6 +184,56 @@ export async function addExpenseAction(formData: FormData): Promise<void> {
     category,
     note: note || undefined,
   });
+  revalidatePath("/cabinet/owner");
+}
+
+// Правка записи кассы: сумма, комментарий, категория (для расхода). Меняем
+// только операции, введённые вручную (магазин / расход / корректировка) —
+// аренда правится через оплату арендатора.
+export async function editLedgerEntryAction(formData: FormData): Promise<void> {
+  await requireOwner();
+  const id = String(formData.get("id") ?? "");
+  if (!id) return;
+  const entry = await findLedgerEntry(id);
+  if (!entry || !EDITABLE_KINDS.includes(entry.kind)) return;
+
+  const raw = Math.round(Number(formData.get("amount")) * 100) / 100;
+  if (!Number.isFinite(raw)) return;
+  const note = String(formData.get("note") ?? "").trim().slice(0, 120);
+
+  const patch: Parameters<typeof updateLedgerEntry>[1] = { note: note || undefined };
+
+  if (entry.kind === "expense") {
+    if (raw <= 0) return; // расход вводится положительным
+    const catRaw = String(formData.get("category") ?? "").trim();
+    const category = (EXPENSE_CATEGORIES as readonly string[]).includes(catRaw)
+      ? catRaw
+      : entry.category ?? "Прочее";
+    patch.amount = -raw;
+    patch.category = category;
+    patch.name = note || category;
+  } else if (entry.kind === "shop") {
+    if (raw <= 0) return; // доход магазина — положительный
+    patch.amount = raw;
+    patch.name = note || "Магазин";
+  } else {
+    // manual — корректировка, знак свободный, имя сохраняем
+    patch.amount = raw;
+  }
+
+  await updateLedgerEntry(id, patch);
+  revalidatePath("/cabinet/owner");
+}
+
+// Удаление записи кассы — только для ручных операций (магазин / расход /
+// корректировка). Аренду удаляем через откат оплаты у арендатора.
+export async function deleteLedgerEntryAction(formData: FormData): Promise<void> {
+  await requireOwner();
+  const id = String(formData.get("id") ?? "");
+  if (!id) return;
+  const entry = await findLedgerEntry(id);
+  if (!entry || !EDITABLE_KINDS.includes(entry.kind)) return;
+  await deleteLedgerEntry(id);
   revalidatePath("/cabinet/owner");
 }
 

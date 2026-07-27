@@ -14,7 +14,7 @@ import type { LedgerEntry, LedgerKind, CassaBreakdown, CategorySpend } from "@/l
 // Чистые типы и константы (без node:fs) — в ledger-types.ts, чтобы клиентские
 // компоненты могли их импортировать. Переэкспортируем для совместимости.
 export type { LedgerKind, LedgerEntry, CassaBreakdown, CategorySpend } from "@/lib/ledger-types";
-export { EXPENSE_CATEGORIES } from "@/lib/ledger-types";
+export { EXPENSE_CATEGORIES, EDITABLE_KINDS } from "@/lib/ledger-types";
 
 type LedgerFile = { entries: LedgerEntry[]; lastResetAt: string | null };
 
@@ -73,6 +73,38 @@ export async function removeLastLedgerEntry(tenantId: string): Promise<void> {
       return;
     }
   }
+}
+
+// Правка одной записи по id. Меняем только переданные поля.
+export async function updateLedgerEntry(
+  id: string,
+  patch: Partial<Pick<LedgerEntry, "amount" | "category" | "note" | "name">>,
+): Promise<boolean> {
+  const file = await loadLedger();
+  const e = file.entries.find((x) => x.id === id);
+  if (!e) return false;
+  if (patch.amount !== undefined) e.amount = patch.amount;
+  if ("category" in patch) e.category = patch.category;
+  if ("note" in patch) e.note = patch.note;
+  if (patch.name !== undefined) e.name = patch.name;
+  await writeJSON(KEY, file);
+  return true;
+}
+
+// Удалить запись по id (независимо от границы обнуления).
+export async function deleteLedgerEntry(id: string): Promise<boolean> {
+  const file = await loadLedger();
+  const i = file.entries.findIndex((x) => x.id === id);
+  if (i < 0) return false;
+  file.entries.splice(i, 1);
+  await writeJSON(KEY, file);
+  return true;
+}
+
+// Найти запись по id (для проверки типа перед правкой/удалением).
+export async function findLedgerEntry(id: string): Promise<LedgerEntry | null> {
+  const file = await loadLedger();
+  return file.entries.find((x) => x.id === id) ?? null;
 }
 
 // Обнулить кассу — двигаем границу на сейчас. Записи и доходы сохраняются.
