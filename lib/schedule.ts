@@ -109,6 +109,14 @@ export function periodShort(period: PaymentPeriod): string {
   return period === "day" ? "дн" : period === "month" ? "мес" : "нед";
 }
 
+// Сумма за период → недельный эквивалент (для сводного «недельного дохода»,
+// где смешаны разные периоды). Сутки ×7, месяц ×12/52 (год ≈ 52 недели).
+export function weeklyEquivalent(amountPerPeriod: number, period: PaymentPeriod): number {
+  if (period === "day") return amountPerPeriod * 7;
+  if (period === "month") return (amountPerPeriod * 12) / 52;
+  return amountPerPeriod;
+}
+
 function ymdOf(dayNum: number): { y: number; m: number; d: number } {
   const dt = new Date(dayNum * 86400000);
   return { y: dt.getUTCFullYear(), m: dt.getUTCMonth() + 1, d: dt.getUTCDate() };

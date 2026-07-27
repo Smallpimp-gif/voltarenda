@@ -20,6 +20,7 @@ import {
 import { IncomeReport, type Entry as IncomeEntry } from "./income-report";
 import { DepositsPanel, type DepositRow, type DepositLogRow } from "./deposits-panel";
 import { ForecastPanel } from "./forecast-panel";
+import { weeklyEquivalent } from "@/lib/schedule";
 import type { Tenant, PaymentEvent } from "@/lib/schedule";
 import type { MonthIncome, TenantIncome, CassaBreakdown } from "@/lib/ledger";
 
@@ -82,7 +83,9 @@ export function OwnerMobile({
   const [tab, setTab] = useState<Tab>("tenants");
 
   const active = rows.filter((r) => r.kind !== "done" && !r.paused);
-  const weeklyIncome = active.reduce((s, r) => s + r.weekly, 0);
+  const weeklyIncome = Math.round(
+    active.reduce((s, r) => s + weeklyEquivalent(r.weekly, r.period), 0),
+  );
   const overdueRows = rows.filter((r) => r.kind === "overdue");
   const overdueSum = overdueRows.reduce((s, r) => s + r.overdueCount * r.weekly, 0);
   const todayRows = rows.filter((r) => r.kind === "today");

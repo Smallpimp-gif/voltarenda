@@ -7,6 +7,7 @@ import { getAvailableBikes } from "@/lib/settings";
 import {
   paymentState,
   effectiveWeekly,
+  weeklyEquivalent,
   depositOf,
   upcomingPaymentEvents,
   mskDayNum,
@@ -241,7 +242,9 @@ export default async function OwnerPage({
   // Недельный доход — с активных, кроме завершённых и тех, кто на паузе
   // (на паузе платят фикс. за паузу, а не недельные).
   const activeRows = rows.filter((r) => r.kind !== "done" && !r.paused);
-  const weeklyIncome = activeRows.reduce((s, r) => s + r.weekly, 0);
+  const weeklyIncome = Math.round(
+    activeRows.reduce((s, r) => s + weeklyEquivalent(r.weekly, r.period), 0),
+  );
   const overdueRows = rows.filter((r) => r.kind === "overdue");
   const overdueCount = overdueRows.length;
   const overdueSum = overdueRows.reduce((s, r) => s + r.overdueCount * r.weekly, 0);
