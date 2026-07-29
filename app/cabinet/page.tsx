@@ -68,6 +68,9 @@ export default async function CabinetPage({
   const subscription = await getSubscription(tenant.id);
   const payOn = tochkaEnabled();
   const canPay = payOn && !v.completed && !v.paused && v.weekly > 0;
+  // Контакт для чека: настоящий email аккаунта или ранее сохранённый.
+  const realEmail = user.email && !user.email.endsWith("@telegram.local") ? user.email : "";
+  const contactPrefill = realEmail || tenant.receiptContact || "";
 
   return (
     <div className="mx-auto w-full max-w-content px-gutter pb-14 pt-[max(3.5rem,calc(env(safe-area-inset-top)+1.5rem))]">
@@ -99,7 +102,9 @@ export default async function CabinetPage({
       )}
       {sp.payfail && (
         <div className="mt-8 rounded-2xl border border-danger/40 bg-danger/10 px-5 py-4 text-body text-danger">
-          Оплата не прошла или была отменена. Попробуйте ещё раз.
+          {sp.payfail === "contact"
+            ? "Проверьте email или телефон для чека — формат не распознан."
+            : "Оплата не прошла или была отменена. Попробуйте ещё раз."}
         </div>
       )}
 
@@ -166,15 +171,24 @@ export default async function CabinetPage({
                     {v.isBuyout && v.nextNumber ? ` · платёж ${v.nextNumber} из ${v.buyoutWeeks}` : ""}
                   </p>
                   {canPay && (
-                    <form action={payRentAction} className="mt-6">
+                    <form action={payRentAction} className="mt-6 flex flex-col gap-3">
+                      <input
+                        name="contact"
+                        type="text"
+                        inputMode="email"
+                        required
+                        defaultValue={contactPrefill}
+                        placeholder="Email или телефон для чека"
+                        className="w-full rounded-xl border border-[var(--line-strong)] bg-[var(--bg)] px-4 py-3 text-body text-[var(--text)] outline-none transition-colors duration-quick placeholder:text-mute focus:border-volt sm:max-w-sm"
+                      />
                       <button
                         type="submit"
                         className="w-full rounded-pill bg-volt px-6 py-4 font-mono text-caption uppercase text-ink transition-transform duration-quick hover:bg-volt-hover active:scale-[0.98] sm:w-auto"
                       >
                         Оплатить {money(v.weekly)} →
                       </button>
-                      <span className="mt-3 block font-mono text-caption uppercase text-mute">
-                        СБП или карта · чек придёт на почту
+                      <span className="font-mono text-caption uppercase text-mute">
+                        СБП или карта · чек придёт на указанный контакт
                       </span>
                     </form>
                   )}

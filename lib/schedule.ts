@@ -37,6 +37,7 @@ export type Tenant = {
   pausedDays?: number; // накоплено дней паузы из завершённых периодов
   positions?: TenantPosition[]; // доп. позиции (АКБ и т.п.)
   deposit?: number; // залог, ₽ (по умолчанию DEFAULT_DEPOSIT)
+  receiptContact?: string; // email или телефон для чека 54-ФЗ (при онлайн-оплате)
 };
 
 // Плата за паузу выкупа — фикс., в месяц, отдельно от выкупной суммы.
