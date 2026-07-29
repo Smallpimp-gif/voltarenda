@@ -1,0 +1,13 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "voltarenda-tochka-poll",
+  "main": "index.mjs",
+  "compatibility_date": "2025-03-25",
+  "compatibility_flags": ["nodejs_compat"],
+  // То же KV-хранилище, что и у сайта (binding DATA).
+  "kv_namespaces": [
+    { "binding": "DATA", "id": "3b078fddd5f64ce993f586a96eb8826a" }
+  ],
+  // Каждые 5 минут — быстрое подтверждение оплат.
+  "triggers": { "crons": ["*/5 * * * *"] }
+}

@@ -12,6 +12,7 @@
     "cf:preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
     "cf:deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
     "cf:deploy-cron": "wrangler deploy --config workers/reminders/wrangler.jsonc",
+    "cf:deploy-poll": "wrangler deploy --config workers/tochka-poll/wrangler.jsonc",
     "cf:typegen": "wrangler types"
   },
   "dependencies": {

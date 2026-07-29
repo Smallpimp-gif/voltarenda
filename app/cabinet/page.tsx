@@ -5,6 +5,8 @@ import { buildCabinetView, buildSchedule } from "@/lib/schedule";
 import { PaymentSchedule } from "@/components/cabinet/payment-schedule";
 import { PaymentSetup } from "@/components/cabinet/payment-setup";
 import { getSubscription } from "@/lib/subscriptions";
+import { tochkaEnabled } from "@/lib/tochka";
+import { payRentAction } from "@/lib/pay/tochka-actions";
 
 const rub = new Intl.NumberFormat("ru-RU");
 const money = (n: number) => `${rub.format(n)} ₽`;
@@ -48,17 +50,24 @@ function Row({ label, value }: { label: string; value: string }) {
   );
 }
 
-export default async function CabinetPage() {
+export default async function CabinetPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ paid?: string; payfail?: string; pay?: string }>;
+}) {
   const current = await getCurrentUser();
   if (!current) redirect("/cabinet/login");
   if (current.user.role === "owner") redirect("/cabinet/owner");
   if (!current.tenant) redirect("/cabinet/login"); // запись арендатора удалили
 
   const { user, tenant } = current;
+  const sp = await searchParams;
   const v = buildCabinetView(tenant);
   const schedule = buildSchedule(tenant);
   const due = v.daysUntil !== null ? dueLabel(v.daysUntil) : null;
   const subscription = await getSubscription(tenant.id);
+  const payOn = tochkaEnabled();
+  const canPay = payOn && !v.completed && !v.paused && v.weekly > 0;
 
   return (
     <div className="mx-auto w-full max-w-content px-gutter pb-14 pt-[max(3.5rem,calc(env(safe-area-inset-top)+1.5rem))]">
@@ -80,6 +89,19 @@ export default async function CabinetPage() {
           </button>
         </form>
       </header>
+
+      {/* Статус после возврата с оплаты */}
+      {sp.paid && (
+        <div className="mt-8 rounded-2xl border border-volt bg-volt/10 px-5 py-4 text-body text-[var(--text)]">
+          Спасибо! Платёж обрабатывается — статус обновится, как только банк
+          подтвердит зачисление (обычно пара минут).
+        </div>
+      )}
+      {sp.payfail && (
+        <div className="mt-8 rounded-2xl border border-danger/40 bg-danger/10 px-5 py-4 text-body text-danger">
+          Оплата не прошла или была отменена. Попробуйте ещё раз.
+        </div>
+      )}
 
       {/* 01 / Платёж */}
       <section className="mt-16">
@@ -143,6 +165,19 @@ export default async function CabinetPage() {
                     {v.nextWeekday ? `, ${v.nextWeekday}` : ""}
                     {v.isBuyout && v.nextNumber ? ` · платёж ${v.nextNumber} из ${v.buyoutWeeks}` : ""}
                   </p>
+                  {canPay && (
+                    <form action={payRentAction} className="mt-6">
+                      <button
+                        type="submit"
+                        className="w-full rounded-pill bg-volt px-6 py-4 font-mono text-caption uppercase text-ink transition-transform duration-quick hover:bg-volt-hover active:scale-[0.98] sm:w-auto"
+                      >
+                        Оплатить {money(v.weekly)} →
+                      </button>
+                      <span className="mt-3 block font-mono text-caption uppercase text-mute">
+                        СБП или карта · чек придёт на почту
+                      </span>
+                    </form>
+                  )}
                 </div>
               </>
             )}
