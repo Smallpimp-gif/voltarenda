@@ -8,9 +8,11 @@
     "directory": ".open-next/assets",
     "binding": "ASSETS"
   },
+  // workers.dev URL включён (иначе привязка routes его отключает).
+  "workers_dev": true,
   // Привязка своего домена. Раскомментируй ПОСЛЕ того, как voltarenda.ru
   // будет добавлен в Cloudflare (NS-серверы домена переключены на Cloudflare
-  // в панели reg.ru). До этого деплой с этим блоком упадёт — зоны ещё нет.
+  // в панели регистратора). До этого деплой с этим блоком упадёт — зоны ещё нет.
   // "routes": [
   //   { "pattern": "voltarenda.ru", "custom_domain": true },
   //   { "pattern": "www.voltarenda.ru", "custom_domain": true }
