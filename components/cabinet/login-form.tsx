@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useRef, useState } from "react";
+import { useActionState, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { loginAction, type ActionState } from "@/lib/auth/actions";
 import { AuthShell, Field, SubmitButton, FormError } from "./ui";
@@ -11,7 +11,7 @@ export type SocialConfig = {
   vk: boolean;
   yandex: boolean;
   telegram: boolean;
-  telegramBot: string; // username бота (для официального виджета)
+  telegramBotId: string;
 };
 
 export function LoginForm({ social }: { social: SocialConfig }) {
@@ -44,6 +44,20 @@ export function LoginForm({ social }: { social: SocialConfig }) {
       })
       .catch(() => setEntering(false));
   }, []);
+
+  // Telegram-вход полным редиректом на страницу Telegram (не попап — попап
+  // виснет на мобильных). На телефоне открывает приложение Telegram, после
+  // подтверждения возвращает на наш колбэк /api/auth/telegram/widget.
+  const telegramLogin = useCallback(() => {
+    const origin = window.location.origin;
+    const p = new URLSearchParams({
+      bot_id: social.telegramBotId,
+      origin,
+      request_access: "write",
+      return_to: `${origin}/api/auth/telegram/widget`,
+    });
+    window.location.href = `https://oauth.telegram.org/auth?${p.toString()}`;
+  }, [social.telegramBotId]);
 
   if (entering) {
     return (
@@ -92,73 +106,77 @@ export function LoginForm({ social }: { social: SocialConfig }) {
             <span className="font-mono text-caption uppercase text-mute">или</span>
             <span className="h-px flex-1 bg-[var(--line)]" />
           </div>
-
-          {social.telegram && (
-            <div className="mb-2.5 flex justify-center">
-              <TelegramWidget bot={social.telegramBot} />
-            </div>
-          )}
-
-          {(social.vk || social.yandex) && (
-            <div className="grid grid-cols-2 gap-2.5">
-              {social.vk && (
-                <SocialTile href="/api/auth/vk" label="ВКонтакте" icon={<VkIcon />} />
-              )}
-              {social.yandex && (
-                <SocialTile href="/api/auth/yandex" label="Яндекс" icon={<YandexIcon />} />
-              )}
-            </div>
-          )}
+          <div className="grid grid-cols-3 gap-2.5">
+            {social.telegram && (
+              <SocialTile as="button" onClick={telegramLogin} label="Telegram" icon={<TelegramIcon />} />
+            )}
+            {social.vk && (
+              <SocialTile as="a" href="/api/auth/vk" label="ВКонтакте" icon={<VkIcon />} />
+            )}
+            {social.yandex && (
+              <SocialTile as="a" href="/api/auth/yandex" label="Яндекс" icon={<YandexIcon />} />
+            )}
+          </div>
         </div>
       )}
     </AuthShell>
   );
 }
 
-// Плитка соцвхода (VK/Яндекс): иконка + подпись, нейтральный фон, hover/press.
-function SocialTile({ href, label, icon }: { href: string; label: string; icon: React.ReactNode }) {
-  return (
-    <a
-      href={href}
-      aria-label={`Войти через ${label}`}
-      className="flex items-center justify-center gap-2.5 rounded-2xl border border-[var(--line)] bg-[var(--bg-2)] py-3.5 text-body font-medium text-[var(--text)] transition-all duration-quick hover:border-[var(--line-strong)] hover:bg-[var(--bg)] active:translate-y-px"
-    >
-      <span className="flex h-5 w-5 items-center justify-center">{icon}</span>
+// Одинаковая плитка соцвхода: иконка сверху, подпись снизу. Нейтральный фон,
+// подсветка на hover, лёгкий press на active.
+function SocialTile({
+  as,
+  href,
+  onClick,
+  label,
+  icon,
+}: {
+  as: "a" | "button";
+  href?: string;
+  onClick?: () => void;
+  label: string;
+  icon: React.ReactNode;
+}) {
+  const cls =
+    "flex flex-col items-center justify-center gap-2 rounded-2xl border border-[var(--line)] bg-[var(--bg-2)] py-4 text-caption font-medium text-mute transition-all duration-quick hover:border-[var(--line-strong)] hover:bg-[var(--bg)] hover:text-[var(--text)] active:translate-y-px";
+  const inner = (
+    <>
+      <span className="flex h-6 w-6 items-center justify-center">{icon}</span>
       {label}
+    </>
+  );
+  if (as === "button") {
+    return (
+      <button type="button" onClick={onClick} aria-label={`Войти через ${label}`} className={cls}>
+        {inner}
+      </button>
+    );
+  }
+  return (
+    <a href={href} aria-label={`Войти через ${label}`} className={cls}>
+      {inner}
     </a>
   );
 }
 
-// Официальный виджет входа Telegram (надёжно работает на десктопе и мобильном:
-// на телефоне открывает приложение, на десктопе — страница Telegram). Рендерит
-// собственную кнопку. Требует /setdomain у BotFather на домен сайта.
-function TelegramWidget({ bot }: { bot: string }) {
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el || !bot) return;
-    el.innerHTML = "";
-    const s = document.createElement("script");
-    s.src = "https://telegram.org/js/telegram-widget.js?22";
-    s.async = true;
-    s.setAttribute("data-telegram-login", bot);
-    s.setAttribute("data-size", "large");
-    s.setAttribute("data-radius", "12");
-    s.setAttribute("data-auth-url", "/api/auth/telegram/widget");
-    s.setAttribute("data-request-access", "write");
-    el.appendChild(s);
-    return () => {
-      el.innerHTML = "";
-    };
-  }, [bot]);
-  return <div ref={ref} className="flex min-h-[48px] items-center justify-center" />;
-}
+// --- Бренд-иконки (24px, фирменные цвета) -----------------------------
 
-// --- Бренд-иконки (фирменные цвета) -----------------------------------
+function TelegramIcon() {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="#229ED9" aria-hidden>
+      <path d="M12 24c6.627 0 12-5.373 12-12S18.627 0 12 0 0 5.373 0 12s5.373 12 12 12z" />
+      <path
+        fill="#fff"
+        d="M5.49 11.86c3.5-1.52 5.83-2.53 6.99-3.02 3.33-1.39 4.02-1.63 4.47-1.64.1 0 .32.02.47.14.12.1.16.24.17.34.02.1.04.31.02.48-.18 1.9-.96 6.5-1.36 8.63-.17.9-.5 1.2-.82 1.23-.7.07-1.23-.46-1.9-.9-1.06-.7-1.65-1.13-2.68-1.81-1.19-.78-.42-1.21.26-1.91.18-.18 3.25-2.98 3.31-3.23.01-.03.01-.15-.06-.21s-.17-.04-.24-.02c-.1.02-1.75 1.11-4.94 3.27-.47.32-.89.48-1.27.47-.42-.01-1.22-.24-1.82-.43-.73-.24-1.32-.36-1.26-.77.03-.21.33-.43.87-.66z"
+      />
+    </svg>
+  );
+}
 
 function VkIcon() {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="#0077FF" aria-hidden>
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="#0077FF" aria-hidden>
       <path d="M13.16 18.94c-6.84 0-10.98-4.75-11.16-12.66h3.43c.12 5.8 2.72 8.26 4.72 8.76V6.28h3.24v4.94c1.98-.21 4.06-2.48 4.76-4.94h3.24c-.54 3.03-2.8 5.3-4.42 6.24 1.62.76 4.18 2.74 5.16 6.42h-3.56c-.76-2.38-2.68-4.22-5.18-4.46v4.46h-.47z" />
     </svg>
   );
@@ -166,7 +184,7 @@ function VkIcon() {
 
 function YandexIcon() {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden>
+    <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden>
       <circle cx="12" cy="12" r="12" fill="#FC3F1D" />
       <text
         x="12"
