@@ -7,7 +7,7 @@
 // сети/подписи — чтобы прогнать роутинг Mini App локально (вне Telegram
 // initData недоступен).
 
-import { createHmac, timingSafeEqual } from "node:crypto";
+import { createHmac, createHash, timingSafeEqual } from "node:crypto";
 
 export type TgUser = {
   id: number;
@@ -69,4 +69,36 @@ export function verifyInitData(initData: string): TgUser | null {
   } catch {
     return null;
   }
+}
+
+// Проверка подписи Telegram Login Widget (вход с сайта, не Mini App).
+// Отличается от initData: secret = SHA256(bot_token), поля идут плоско в
+// query. https://core.telegram.org/widgets/login#checking-authorization
+export function verifyWidgetAuth(fields: Record<string, string>): TgUser | null {
+  const token = process.env.TELEGRAM_BOT_TOKEN;
+  if (!token) return null;
+  const { hash, ...rest } = fields;
+  if (!hash) return null;
+
+  const dataCheckString = Object.keys(rest)
+    .sort()
+    .map((k) => `${k}=${rest[k]}`)
+    .join("\n");
+  const secret = createHash("sha256").update(token).digest();
+  const computed = createHmac("sha256", secret).update(dataCheckString).digest("hex");
+
+  const a = Buffer.from(computed, "hex");
+  const b = Buffer.from(hash, "hex");
+  if (a.length !== b.length || !timingSafeEqual(a, b)) return null;
+
+  const authDate = Number(rest.auth_date);
+  if (!authDate || Date.now() / 1000 - authDate > MAX_AGE_SEC) return null;
+  const id = Number(rest.id);
+  if (!id) return null;
+  return {
+    id,
+    first_name: String(rest.first_name ?? ""),
+    last_name: rest.last_name ? String(rest.last_name) : undefined,
+    username: rest.username ? String(rest.username) : undefined,
+  };
 }

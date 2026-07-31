@@ -13,6 +13,8 @@ export type User = {
   tenantId: string | null; // ссылка на bot/tenants; null у владельца
   telegramId: string | null; // задел под Telegram-вход
   telegramUsername?: string | null; // ник в нижнем регистре (из заявки/входа)
+  vkId?: string | null; // id пользователя VK (вход через VK ID)
+  yandexId?: string | null; // id пользователя Яндекс (вход через Яндекс ID)
   createdAt: string; // ISO
   lastLoginAt: string | null;
 };
@@ -64,6 +66,16 @@ export async function findUserByTelegramUsername(username: string): Promise<User
       (u) => (u.telegramUsername ?? "").toLowerCase() === norm,
     ) ?? null
   );
+}
+
+export async function findUserByVkId(vkId: string): Promise<User | null> {
+  const users = await loadUsers();
+  return Object.values(users).find((u) => u.vkId === vkId) ?? null;
+}
+
+export async function findUserByYandexId(yandexId: string): Promise<User | null> {
+  const users = await loadUsers();
+  return Object.values(users).find((u) => u.yandexId === yandexId) ?? null;
 }
 
 export async function getUserById(id: string): Promise<User | null> {
