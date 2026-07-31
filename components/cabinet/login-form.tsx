@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useCallback, useEffect } from "react";
+import { useActionState, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { loginAction, type ActionState } from "@/lib/auth/actions";
 import { AuthShell, Field, SubmitButton, FormError } from "./ui";
@@ -16,7 +16,35 @@ export type SocialConfig = {
 
 export function LoginForm({ social }: { social: SocialConfig }) {
   const [state, formAction, pending] = useActionState(loginAction, initial);
+  const [entering, setEntering] = useState(false);
   const anySocial = social.vk || social.yandex || social.telegram;
+
+  // Открыт ВНУТРИ Telegram (Mini App) → моментальный вход по initData, без
+  // кнопок и ввода номера. В обычном браузере initData пуст — идём обычным
+  // путём (форма + виджет).
+  useEffect(() => {
+    const wa = (window as unknown as { Telegram?: { WebApp?: { initData?: string; ready?: () => void } } })
+      .Telegram?.WebApp;
+    const initData = wa?.initData;
+    if (!initData) return;
+    setEntering(true);
+    try {
+      wa?.ready?.();
+    } catch {
+      /* не в Telegram — ок */
+    }
+    fetch("/api/auth/telegram", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ initData }),
+    })
+      .then((r) => r.json())
+      .then((d: { redirect?: string }) => {
+        if (d?.redirect) window.location.replace(d.redirect);
+        else setEntering(false);
+      })
+      .catch(() => setEntering(false));
+  }, []);
 
   // Подгружаем telegram-widget.js один раз — ради window.Telegram.Login.auth
   // (кастомная кнопка Telegram вместо чужеродного виджета).
@@ -39,6 +67,14 @@ export function LoginForm({ social }: { social: SocialConfig }) {
       window.location.href = `/api/auth/telegram/widget?${qs}`;
     });
   }, [social.telegramBotId]);
+
+  if (entering) {
+    return (
+      <div className="mx-auto flex min-h-dvh max-w-md items-center justify-center px-gutter">
+        <p className="font-mono text-caption uppercase text-mute">Входим…</p>
+      </div>
+    );
+  }
 
   return (
     <AuthShell
