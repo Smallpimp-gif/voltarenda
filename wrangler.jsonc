@@ -10,13 +10,14 @@
   },
   // workers.dev URL включён (иначе привязка routes его отключает).
   "workers_dev": true,
-  // Привязка своего домена. Раскомментируй ПОСЛЕ того, как voltarenda.ru
-  // будет добавлен в Cloudflare (NS-серверы домена переключены на Cloudflare
-  // в панели регистратора). До этого деплой с этим блоком упадёт — зоны ещё нет.
-  // "routes": [
-  //   { "pattern": "voltarenda.ru", "custom_domain": true },
-  //   { "pattern": "www.voltarenda.ru", "custom_domain": true }
-  // ],
+  // Адрес сайта — для возвратов после оплаты и т.п.
+  "vars": { "SITE_URL": "https://voltarenda.ru" },
+  // Привязка через Worker Route (не custom_domain) — использует уже
+  // существующую проксируемую DNS-запись voltarenda.ru в зоне.
+  "routes": [
+    { "pattern": "voltarenda.ru/*", "zone_name": "voltarenda.ru" },
+    { "pattern": "www.voltarenda.ru/*", "zone_name": "voltarenda.ru" }
+  ],
   // KV-хранилище данных (пользователи, сессии, арендаторы, платежи,
   // настройки, заявки). Namespace "voltarenda-data" в аккаунте Cloudflare.
   "kv_namespaces": [
