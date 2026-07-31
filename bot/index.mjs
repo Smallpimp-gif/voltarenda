@@ -13,6 +13,7 @@
 
 import { readFileSync, existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
+import { createHmac } from "node:crypto";
 import { Bot, InlineKeyboard } from "grammy";
 import cron from "node-cron";
 import {
@@ -43,6 +44,7 @@ const TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const ADMIN_CHAT_ID = process.env.TELEGRAM_CHAT_ID ? Number(process.env.TELEGRAM_CHAT_ID) : null;
 const REMINDER_CRON = process.env.BOT_REMINDER_CRON || "0 10 * * *"; // 10:00
 const TZ = process.env.BOT_TZ || "Europe/Moscow";
+const SITE_URL = process.env.SITE_URL || "https://voltarenda.ru";
 
 if (!TOKEN) {
   console.error("Нет TELEGRAM_BOT_TOKEN в окружении (.env). Останов.");
@@ -93,6 +95,33 @@ function linkChatToTenant(chatId, tenantId) {
 
 // --- /start ----------------------------------------------------------
 bot.command("start", async (ctx) => {
+  // Вход на сайт по deep-link: /start vlogin_<token>. Подтверждаем сайту, кто
+  // это (подпись бот-токеном), и сайт пускает без формы с телефоном.
+  const payload = (ctx.match || "").trim();
+  if (payload.startsWith("vlogin_")) {
+    const token = payload.slice("vlogin_".length);
+    const sig = createHmac("sha256", TOKEN).update(token).digest("hex");
+    const user = {
+      id: ctx.from?.id,
+      first_name: ctx.from?.first_name,
+      last_name: ctx.from?.last_name,
+      username: ctx.from?.username,
+    };
+    try {
+      const res = await fetch(`${SITE_URL}/api/auth/tg-confirm`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token, user, sig }),
+      });
+      const j = await res.json().catch(() => ({}));
+      return ctx.reply(
+        j.ok ? "✅ Готово! Вернись на сайт — вход выполнен." : "Ссылка для входа устарела, открой её на сайте заново.",
+      );
+    } catch {
+      return ctx.reply("Не удалось подтвердить вход. Попробуй ещё раз.");
+    }
+  }
+
   const subs = loadSubscribers();
   const sub = upsertSubscriber(subs, {
     chatId: ctx.chat.id,

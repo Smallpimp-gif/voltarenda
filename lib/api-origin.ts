@@ -9,6 +9,8 @@
 //   if (!isAllowedOrigin(req.headers.get("origin"))) return 403;
 
 const PROD_ORIGINS = [
+  "https://voltarenda.ru",
+  "https://www.voltarenda.ru",
   "https://voltarenda.small-pimp.workers.dev",
 ];
 const DEV_LOCALHOST_RE = /^http:\/\/localhost:\d+$/;

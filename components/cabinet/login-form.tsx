@@ -46,32 +46,63 @@ export function LoginForm({ social }: { social: SocialConfig }) {
       .catch(() => setEntering(false));
   }, []);
 
-  // Подгружаем telegram-widget.js один раз — ради window.Telegram.Login.auth
-  // (кастомная кнопка Telegram вместо чужеродного виджета).
-  useEffect(() => {
-    if (!social.telegram) return;
-    if (document.getElementById("tg-login-sdk")) return;
-    const s = document.createElement("script");
-    s.id = "tg-login-sdk";
-    s.src = "https://telegram.org/js/telegram-widget.js?22";
-    s.async = true;
-    document.head.appendChild(s);
-  }, [social.telegram]);
+  const [waitingTg, setWaitingTg] = useState(false);
 
-  const telegramLogin = useCallback(() => {
-    const tg = (window as unknown as { Telegram?: { Login?: { auth: (o: object, cb: (u: unknown) => void) => void } } }).Telegram;
-    if (!tg?.Login) return;
-    tg.Login.auth({ bot_id: social.telegramBotId, request_access: "write" }, (user) => {
-      if (!user || typeof user !== "object") return;
-      const qs = new URLSearchParams(user as Record<string, string>).toString();
-      window.location.href = `/api/auth/telegram/widget?${qs}`;
-    });
-  }, [social.telegramBotId]);
+  // Вход через Telegram по deep-link: открываем бота (в его приложении человек
+  // уже залогинен), он подтверждает вход, сайт опрашивает статус. Никакой формы
+  // с телефоном.
+  const telegramLogin = useCallback(async () => {
+    try {
+      const r = await fetch("/api/auth/tg-start");
+      if (!r.ok) return;
+      const { token, url } = (await r.json()) as { token: string; url: string };
+      window.open(url, "_blank");
+      setWaitingTg(true);
+      const started = Date.now();
+      const poll = async () => {
+        if (Date.now() - started > 5 * 60 * 1000) return setWaitingTg(false);
+        try {
+          const pr = await fetch(`/api/auth/tg-poll?token=${encodeURIComponent(token)}`);
+          const pj = (await pr.json()) as { status: string; redirect?: string };
+          if (pj.status === "ok" && pj.redirect) {
+            window.location.href = pj.redirect;
+            return;
+          }
+          if (pj.status === "expired") return setWaitingTg(false);
+        } catch {
+          /* сеть моргнула — продолжаем опрос */
+        }
+        setTimeout(poll, 1500);
+      };
+      setTimeout(poll, 1500);
+    } catch {
+      setWaitingTg(false);
+    }
+  }, []);
 
   if (entering) {
     return (
       <div className="mx-auto flex min-h-dvh max-w-md items-center justify-center px-gutter">
         <p className="font-mono text-caption uppercase text-mute">Входим…</p>
+      </div>
+    );
+  }
+
+  if (waitingTg) {
+    return (
+      <div className="mx-auto flex min-h-dvh max-w-md flex-col items-center justify-center gap-4 px-gutter text-center">
+        <p className="text-body-lg font-medium text-[var(--text)]">Подтверди вход в Telegram</p>
+        <p className="max-w-[38ch] text-body text-mute">
+          Мы открыли бота в Telegram. Нажми там «Старт» — вход подхватится сам,
+          возвращаться сюда не нужно.
+        </p>
+        <button
+          type="button"
+          onClick={() => setWaitingTg(false)}
+          className="font-mono text-caption uppercase text-mute transition-colors duration-quick hover:text-[var(--text)]"
+        >
+          Отмена
+        </button>
       </div>
     );
   }
