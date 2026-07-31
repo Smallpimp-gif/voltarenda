@@ -31,6 +31,31 @@ export function LoginForm({ social }: { social: SocialConfig }) {
         </>
       }
     >
+      {/* Соцвход — сверху, как принято */}
+      {anySocial && (
+        <div className="flex flex-col gap-3">
+          <div className="grid grid-cols-2 gap-3">
+            {social.vk && (
+              <SocialCard href="/api/auth/vk" label="VK" badge={<Badge bg="#0077FF">VK</Badge>} />
+            )}
+            {social.yandex && (
+              <SocialCard href="/api/auth/yandex" label="Яндекс" badge={<Badge bg="#FC3F1D">Я</Badge>} />
+            )}
+          </div>
+          {social.telegram && (
+            <div className="flex justify-center pt-1">
+              <TelegramWidget bot={social.telegramBot} />
+            </div>
+          )}
+
+          <div className="my-3 flex items-center gap-3">
+            <span className="h-px flex-1 bg-[var(--line)]" />
+            <span className="font-mono text-caption uppercase text-mute">или</span>
+            <span className="h-px flex-1 bg-[var(--line)]" />
+          </div>
+        </div>
+      )}
+
       <form action={formAction} className="flex flex-col gap-4">
         <FormError error={state.error} />
         <Field
@@ -49,43 +74,44 @@ export function LoginForm({ social }: { social: SocialConfig }) {
         />
         <SubmitButton pending={pending}>Войти</SubmitButton>
       </form>
-
-      {anySocial && (
-        <>
-          <div className="my-6 flex items-center gap-3">
-            <span className="h-px flex-1 bg-[var(--line)]" />
-            <span className="font-mono text-caption uppercase text-mute">или</span>
-            <span className="h-px flex-1 bg-[var(--line)]" />
-          </div>
-          <div className="flex flex-col gap-2.5">
-            {social.vk && (
-              <SocialLink href="/api/auth/vk" label="Войти через VK" color="#0077FF" />
-            )}
-            {social.yandex && (
-              <SocialLink href="/api/auth/yandex" label="Войти через Яндекс" color="#FC3F1D" />
-            )}
-            {social.telegram && <TelegramWidget bot={social.telegramBot} />}
-          </div>
-        </>
-      )}
     </AuthShell>
   );
 }
 
-function SocialLink({ href, label, color }: { href: string; label: string; color: string }) {
+// Карточка соцвхода — бордер + бренд-бейдж + подпись (как Google/Github).
+function SocialCard({
+  href,
+  label,
+  badge,
+}: {
+  href: string;
+  label: string;
+  badge: React.ReactNode;
+}) {
   return (
     <a
       href={href}
-      className="flex items-center justify-center gap-2 rounded-pill px-5 py-3 text-caption font-semibold text-white transition-opacity duration-quick hover:opacity-90 active:scale-[0.99]"
-      style={{ backgroundColor: color }}
+      className="flex items-center justify-center gap-2.5 rounded-2xl border border-[var(--line-strong)] bg-[var(--bg-2)] px-4 py-3.5 text-body font-medium text-[var(--text)] transition-colors duration-quick hover:border-[var(--text)] hover:bg-[var(--bg)]"
     >
+      {badge}
       {label}
     </a>
   );
 }
 
-// Официальный виджет входа Telegram (грузит скрипт telegram.org и рисует
-// кнопку). Требует /setdomain у BotFather на домен сайта.
+function Badge({ bg, children }: { bg: string; children: React.ReactNode }) {
+  return (
+    <span
+      className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-[11px] font-bold text-white"
+      style={{ backgroundColor: bg }}
+    >
+      {children}
+    </span>
+  );
+}
+
+// Официальный виджет входа Telegram (грузит скрипт telegram.org). Требует
+// /setdomain у BotFather на домен сайта.
 function TelegramWidget({ bot }: { bot: string }) {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -97,7 +123,7 @@ function TelegramWidget({ bot }: { bot: string }) {
     s.async = true;
     s.setAttribute("data-telegram-login", bot);
     s.setAttribute("data-size", "large");
-    s.setAttribute("data-radius", "20");
+    s.setAttribute("data-radius", "16");
     s.setAttribute("data-auth-url", "/api/auth/telegram/widget");
     s.setAttribute("data-request-access", "write");
     el.appendChild(s);
@@ -105,5 +131,5 @@ function TelegramWidget({ bot }: { bot: string }) {
       el.innerHTML = "";
     };
   }, [bot]);
-  return <div ref={ref} className="flex justify-center" />;
+  return <div ref={ref} className="flex min-h-[48px] justify-center" />;
 }
