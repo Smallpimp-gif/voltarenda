@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useCallback, useEffect, useState } from "react";
+import { useActionState, useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { loginAction, type ActionState } from "@/lib/auth/actions";
 import { AuthShell, Field, SubmitButton, FormError } from "./ui";
@@ -17,6 +17,11 @@ export type SocialConfig = {
 export function LoginForm({ social }: { social: SocialConfig }) {
   const [state, formAction, pending] = useActionState(loginAction, initial);
   const [entering, setEntering] = useState(false);
+  const [tg, setTg] = useState<{ phase: "idle" | "waiting" | "error"; url: string }>({
+    phase: "idle",
+    url: "",
+  });
+  const cancelled = useRef(false);
   const anySocial = social.vk || social.yandex || social.telegram;
 
   // Открыт ВНУТРИ Telegram (Mini App) → моментальный вход по initData, без
@@ -45,24 +50,99 @@ export function LoginForm({ social }: { social: SocialConfig }) {
       .catch(() => setEntering(false));
   }, []);
 
-  // Telegram-вход полным редиректом на страницу Telegram (не попап — попап
-  // виснет на мобильных). На телефоне открывает приложение Telegram, после
-  // подтверждения возвращает на наш колбэк /api/auth/telegram/widget.
-  const telegramLogin = useCallback(() => {
-    const origin = window.location.origin;
-    const p = new URLSearchParams({
-      bot_id: social.telegramBotId,
-      origin,
-      request_access: "write",
-      return_to: `${origin}/api/auth/telegram/widget`,
-    });
-    window.location.href = `https://oauth.telegram.org/auth?${p.toString()}`;
-  }, [social.telegramBotId]);
+  // Telegram-вход БЕЗ номера телефона: deep-link в бота. Открываем
+  // t.me/бот?start=vlogin_<токен>, пользователь жмёт «Старт», бот узнаёт его
+  // (телефон не нужен) и подтверждает вход на сервере. Здесь опрашиваем
+  // статус и, как только готово, уводим в кабинет.
+  const telegramLogin = useCallback(async () => {
+    cancelled.current = false;
+    setTg({ phase: "waiting", url: "" });
+    let token = "";
+    try {
+      const r = await fetch("/api/auth/tg-start");
+      const d: { token?: string; url?: string } = await r.json();
+      if (!d?.token || !d?.url) {
+        setTg({ phase: "error", url: "" });
+        return;
+      }
+      token = d.token;
+      setTg({ phase: "waiting", url: d.url });
+      // Открываем Telegram. На мобильном — приложение, на десктопе — вкладка.
+      window.open(d.url, "_blank", "noopener");
+    } catch {
+      setTg({ phase: "error", url: "" });
+      return;
+    }
+
+    const startedAt = Date.now();
+    const poll = async () => {
+      if (cancelled.current) return;
+      try {
+        const pr = await fetch(`/api/auth/tg-poll?token=${encodeURIComponent(token)}`);
+        const pd: { status?: string; redirect?: string } = await pr.json();
+        if (pd?.status === "ok" && pd.redirect) {
+          window.location.href = pd.redirect;
+          return;
+        }
+        if (pd?.status === "expired" || pd?.status === "bad") {
+          setTg({ phase: "error", url: "" });
+          return;
+        }
+      } catch {
+        /* сеть моргнула — продолжаем опрос */
+      }
+      if (Date.now() - startedAt > 3 * 60 * 1000) {
+        setTg((s) => ({ phase: "error", url: s.url }));
+        return;
+      }
+      window.setTimeout(poll, 1800);
+    };
+    window.setTimeout(poll, 1800);
+  }, []);
+
+  const cancelTelegram = useCallback(() => {
+    cancelled.current = true;
+    setTg({ phase: "idle", url: "" });
+  }, []);
 
   if (entering) {
     return (
       <div className="mx-auto flex min-h-dvh max-w-md items-center justify-center px-gutter">
         <p className="font-mono text-caption uppercase text-mute">Входим…</p>
+      </div>
+    );
+  }
+
+  if (tg.phase === "waiting") {
+    return (
+      <div className="mx-auto flex min-h-dvh max-w-md flex-col items-center justify-center gap-6 px-gutter text-center">
+        <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--bg-2)]">
+          <TelegramIcon />
+        </span>
+        <div className="flex flex-col gap-2">
+          <p className="text-h2 font-semibold text-[var(--text)]">Подтвердите вход в Telegram</p>
+          <p className="text-body text-mute">
+            Откройте бота и нажмите «Старт» — вернётесь сюда автоматически, без номера телефона.
+          </p>
+        </div>
+        <span className="font-mono text-caption uppercase text-mute">Ждём подтверждение…</span>
+        {tg.url && (
+          <a
+            href={tg.url}
+            target="_blank"
+            rel="noopener"
+            className="rounded-pill bg-volt px-6 py-3 text-caption font-semibold uppercase text-ink transition-colors duration-quick hover:bg-volt-hover"
+          >
+            Открыть Telegram
+          </a>
+        )}
+        <button
+          type="button"
+          onClick={cancelTelegram}
+          className="font-mono text-caption uppercase text-mute underline underline-offset-2"
+        >
+          Отмена
+        </button>
       </div>
     );
   }
@@ -106,6 +186,11 @@ export function LoginForm({ social }: { social: SocialConfig }) {
             <span className="font-mono text-caption uppercase text-mute">или</span>
             <span className="h-px flex-1 bg-[var(--line)]" />
           </div>
+          {tg.phase === "error" && (
+            <p className="mb-4 text-center text-caption text-danger">
+              Не получилось войти через Telegram. Попробуйте ещё раз или войдите по почте.
+            </p>
+          )}
           <div className="grid grid-cols-3 gap-2.5">
             {social.telegram && (
               <SocialTile as="button" onClick={telegramLogin} label="Telegram" icon={<TelegramIcon />} />
