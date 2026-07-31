@@ -17,7 +17,8 @@
     "SITE_URL": "https://voltarenda.ru",
     "VK_CLIENT_ID": "54701865",
     "YANDEX_CLIENT_ID": "8bbbf16027d84c48be509fc8e44e33c7",
-    "TELEGRAM_BOT_USERNAME": "voltarenda_bot"
+    "TELEGRAM_BOT_USERNAME": "voltarenda_bot",
+    "TELEGRAM_BOT_ID": "8706941286"
   },
   // Привязка через Worker Route (не custom_domain) — использует уже
   // существующую проксируемую DNS-запись voltarenda.ru в зоне.

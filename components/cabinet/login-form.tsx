@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useRef } from "react";
+import { useActionState, useCallback, useEffect } from "react";
 import Link from "next/link";
 import { loginAction, type ActionState } from "@/lib/auth/actions";
 import { AuthShell, Field, SubmitButton, FormError } from "./ui";
@@ -11,12 +11,34 @@ export type SocialConfig = {
   vk: boolean;
   yandex: boolean;
   telegram: boolean;
-  telegramBot: string;
+  telegramBotId: string;
 };
 
 export function LoginForm({ social }: { social: SocialConfig }) {
   const [state, formAction, pending] = useActionState(loginAction, initial);
   const anySocial = social.vk || social.yandex || social.telegram;
+
+  // Подгружаем telegram-widget.js один раз — ради window.Telegram.Login.auth
+  // (кастомная кнопка Telegram вместо чужеродного виджета).
+  useEffect(() => {
+    if (!social.telegram) return;
+    if (document.getElementById("tg-login-sdk")) return;
+    const s = document.createElement("script");
+    s.id = "tg-login-sdk";
+    s.src = "https://telegram.org/js/telegram-widget.js?22";
+    s.async = true;
+    document.head.appendChild(s);
+  }, [social.telegram]);
+
+  const telegramLogin = useCallback(() => {
+    const tg = (window as unknown as { Telegram?: { Login?: { auth: (o: object, cb: (u: unknown) => void) => void } } }).Telegram;
+    if (!tg?.Login) return;
+    tg.Login.auth({ bot_id: social.telegramBotId, request_access: "write" }, (user) => {
+      if (!user || typeof user !== "object") return;
+      const qs = new URLSearchParams(user as Record<string, string>).toString();
+      window.location.href = `/api/auth/telegram/widget?${qs}`;
+    });
+  }, [social.telegramBotId]);
 
   return (
     <AuthShell
@@ -33,27 +55,21 @@ export function LoginForm({ social }: { social: SocialConfig }) {
     >
       {anySocial && (
         <div className="mb-7">
-          {(social.vk || social.yandex) && (
-            <div className="grid grid-cols-2 gap-2.5">
-              {social.vk && (
-                <SocialButton href="/api/auth/vk" label="ВКонтакте" icon={<VkIcon />} />
-              )}
-              {social.yandex && (
-                <SocialButton href="/api/auth/yandex" label="Яндекс" icon={<YandexIcon />} />
-              )}
-            </div>
-          )}
-          {social.telegram && (
-            <div className="mt-2.5">
-              <TelegramWidget bot={social.telegramBot} />
-            </div>
-          )}
+          <div className="grid grid-cols-3 gap-2.5">
+            {social.vk && (
+              <SocialTile as="a" href="/api/auth/vk" label="ВКонтакте" icon={<VkIcon />} />
+            )}
+            {social.yandex && (
+              <SocialTile as="a" href="/api/auth/yandex" label="Яндекс" icon={<YandexIcon />} />
+            )}
+            {social.telegram && (
+              <SocialTile as="button" onClick={telegramLogin} label="Telegram" icon={<TelegramIcon />} />
+            )}
+          </div>
 
           <div className="mt-7 flex items-center gap-4">
             <span className="h-px flex-1 bg-[var(--line)]" />
-            <span className="font-mono text-caption uppercase tracking-wide text-mute">
-              или по почте
-            </span>
+            <span className="font-mono text-caption uppercase text-mute">или по почте</span>
             <span className="h-px flex-1 bg-[var(--line)]" />
           </div>
         </div>
@@ -81,70 +97,80 @@ export function LoginForm({ social }: { social: SocialConfig }) {
   );
 }
 
-// Обведённая кнопка соцвхода: бренд-иконка слева, подпись. Нейтральный фон,
-// подсветка на hover, лёгкий physical-press на active.
-function SocialButton({
+// Одинаковая плитка соцвхода: иконка сверху, подпись снизу. Нейтральный фон,
+// подсветка на hover, лёгкий press на active.
+function SocialTile({
+  as,
   href,
+  onClick,
   label,
   icon,
 }: {
-  href: string;
+  as: "a" | "button";
+  href?: string;
+  onClick?: () => void;
   label: string;
   icon: React.ReactNode;
 }) {
-  return (
-    <a
-      href={href}
-      className="group flex h-[52px] items-center justify-center gap-2.5 rounded-xl border border-[var(--line)] bg-[var(--bg-2)] text-body font-medium text-[var(--text)] transition-all duration-quick hover:border-[var(--line-strong)] hover:bg-[var(--bg)] active:translate-y-px"
-    >
-      <span className="shrink-0">{icon}</span>
+  const cls =
+    "flex flex-col items-center justify-center gap-2 rounded-2xl border border-[var(--line)] bg-[var(--bg-2)] py-4 text-caption font-medium text-mute transition-all duration-quick hover:border-[var(--line-strong)] hover:bg-[var(--bg)] hover:text-[var(--text)] active:translate-y-px";
+  const inner = (
+    <>
+      <span className="flex h-6 w-6 items-center justify-center">{icon}</span>
       {label}
+    </>
+  );
+  if (as === "button") {
+    return (
+      <button type="button" onClick={onClick} aria-label={`Войти через ${label}`} className={cls}>
+        {inner}
+      </button>
+    );
+  }
+  return (
+    <a href={href} aria-label={`Войти через ${label}`} className={cls}>
+      {inner}
     </a>
   );
 }
 
-// --- Бренд-иконки (моно-размер 20px, фирменные цвета) ------------------
+// --- Бренд-иконки (24px, фирменные цвета) -----------------------------
 
 function VkIcon() {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="#0077FF" aria-hidden>
-      <path d="M13.16 18.94c-6.84 0-10.74-4.69-10.9-12.5h3.43c.11 5.73 2.64 8.16 4.64 8.66V6.44h3.23v4.94c1.98-.21 4.06-2.46 4.76-4.94h3.23c-.54 3.05-2.79 5.3-4.39 6.23 1.6.75 4.16 2.71 5.13 6.27h-3.55c-.76-2.37-2.66-4.2-5.18-4.45v4.45h-.39z" />
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="#0077FF" aria-hidden>
+      <path d="M13.16 18.94c-6.84 0-10.98-4.75-11.16-12.66h3.43c.12 5.8 2.72 8.26 4.72 8.76V6.28h3.24v4.94c1.98-.21 4.06-2.48 4.76-4.94h3.24c-.54 3.03-2.8 5.3-4.42 6.24 1.62.76 4.18 2.74 5.16 6.42h-3.56c-.76-2.38-2.68-4.22-5.18-4.46v4.46h-.47z" />
     </svg>
   );
 }
 
 function YandexIcon() {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden>
+    <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden>
       <circle cx="12" cy="12" r="12" fill="#FC3F1D" />
-      <path
-        d="M13.3 6.7h-1.13c-1.7 0-3.02 1.02-3.02 3.02 0 1.36.6 2.16 1.77 2.95l-2.02 4.63h1.85l1.85-4.4v4.4h1.63V6.7h-.93zm-.7 6.9l-.86.2c-.86-.6-1.16-1.06-1.16-2.06 0-1.1.5-1.62 1.36-1.62h.66v3.48z"
+      <text
+        x="12"
+        y="17.2"
+        textAnchor="middle"
+        fontFamily="Arial, sans-serif"
+        fontSize="15"
+        fontWeight="700"
         fill="#fff"
-      />
+      >
+        Я
+      </text>
     </svg>
   );
 }
 
-// Официальный виджет входа Telegram (грузит скрипт telegram.org, требует
-// /setdomain у BotFather). Рендерит собственную кнопку.
-function TelegramWidget({ bot }: { bot: string }) {
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el || !bot) return;
-    el.innerHTML = "";
-    const s = document.createElement("script");
-    s.src = "https://telegram.org/js/telegram-widget.js?22";
-    s.async = true;
-    s.setAttribute("data-telegram-login", bot);
-    s.setAttribute("data-size", "large");
-    s.setAttribute("data-radius", "12");
-    s.setAttribute("data-auth-url", "/api/auth/telegram/widget");
-    s.setAttribute("data-request-access", "write");
-    el.appendChild(s);
-    return () => {
-      el.innerHTML = "";
-    };
-  }, [bot]);
-  return <div ref={ref} className="flex min-h-[48px] items-center justify-center [&_iframe]:!w-full" />;
+function TelegramIcon() {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="#229ED9" aria-hidden>
+      <path d="M12 24c6.627 0 12-5.373 12-12S18.627 0 12 0 0 5.373 0 12s5.373 12 12 12z" />
+      <path
+        fill="#fff"
+        d="M5.49 11.86c3.5-1.52 5.83-2.53 6.99-3.02 3.33-1.39 4.02-1.63 4.47-1.64.1 0 .32.02.47.14.12.1.16.24.17.34.02.1.04.31.02.48-.18 1.9-.96 6.5-1.36 8.63-.17.9-.5 1.2-.82 1.23-.7.07-1.23-.46-1.9-.9-1.06-.7-1.65-1.13-2.68-1.81-1.19-.78-.42-1.21.26-1.91.18-.18 3.25-2.98 3.31-3.23.01-.03.01-.15-.06-.21s-.17-.04-.24-.02c-.1.02-1.75 1.11-4.94 3.27-.47.32-.89.48-1.27.47-.42-.01-1.22-.24-1.82-.43-.73-.24-1.32-.36-1.26-.77.03-.21.33-.43.87-.66z"
+      />
+    </svg>
+  );
 }
