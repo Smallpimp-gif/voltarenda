@@ -53,28 +53,6 @@ export function LoginForm({ social }: { social: SocialConfig }) {
         </>
       }
     >
-      {anySocial && (
-        <div className="mb-7">
-          <div className="grid grid-cols-3 gap-2.5">
-            {social.telegram && (
-              <SocialTile as="button" onClick={telegramLogin} label="Telegram" icon={<TelegramIcon />} />
-            )}
-            {social.vk && (
-              <SocialTile as="a" href="/api/auth/vk" label="ВКонтакте" icon={<VkIcon />} />
-            )}
-            {social.yandex && (
-              <SocialTile as="a" href="/api/auth/yandex" label="Яндекс" icon={<YandexIcon />} />
-            )}
-          </div>
-
-          <div className="mt-7 flex items-center gap-4">
-            <span className="h-px flex-1 bg-[var(--line)]" />
-            <span className="font-mono text-caption uppercase text-mute">или по почте</span>
-            <span className="h-px flex-1 bg-[var(--line)]" />
-          </div>
-        </div>
-      )}
-
       <form action={formAction} className="flex flex-col gap-4">
         <FormError error={state.error} />
         <Field
@@ -93,6 +71,27 @@ export function LoginForm({ social }: { social: SocialConfig }) {
         />
         <SubmitButton pending={pending}>Войти</SubmitButton>
       </form>
+
+      {anySocial && (
+        <div className="mt-8">
+          <div className="mb-6 flex items-center gap-4">
+            <span className="h-px flex-1 bg-[var(--line)]" />
+            <span className="font-mono text-caption uppercase text-mute">или</span>
+            <span className="h-px flex-1 bg-[var(--line)]" />
+          </div>
+          <div className="grid grid-cols-3 gap-2.5">
+            {social.telegram && (
+              <SocialTile as="button" onClick={telegramLogin} label="Telegram" icon={<TelegramIcon />} />
+            )}
+            {social.vk && (
+              <SocialTile as="a" href="/api/auth/vk" label="ВКонтакте" icon={<VkIcon />} />
+            )}
+            {social.yandex && (
+              <SocialTile as="a" href="/api/auth/yandex" label="Яндекс" icon={<YandexIcon />} />
+            )}
+          </div>
+        </div>
+      )}
     </AuthShell>
   );
 }
