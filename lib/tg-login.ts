@@ -1,11 +1,17 @@
 // Вход через Telegram по deep-link (без формы с телефоном). Поток:
 //   1) сайт создаёт токен (createLoginToken) и даёт ссылку t.me/bot?start=vlogin_<token>;
-//   2) человек жмёт → открывается его Telegram → бот ловит /start vlogin_<token>
-//      и подтверждает сайту, кто это (setLoginReady через /api/auth/tg-confirm);
+//   2) человек жмёт → открывается его Telegram → бот-webhook ловит
+//      /start vlogin_<token> и помечает токен готовым (setLoginReady);
 //   3) сайт опрашивает статус (readLoginToken) и, как готово, ставит сессию.
-// Токены живут 10 минут, одноразовые.
+//
+// ВАЖНО: каждый токен — ОТДЕЛЬНЫЙ ключ KV (`bot/tglogin/<token>`), а не общая
+// карта. Это убирает гонку read-modify-write при параллельных входах и, главное,
+// делает setLoginReady независимым от чтения: webhook пишет `ready` вслепую, не
+// дожидаясь, пока запись pending от createLoginToken распространится по KV
+// (eventual consistency). Раньше из-за этого реальный вход (Старт через пару
+// секунд) не срабатывал. Токены живут 10 минут (TTL на уровне KV), одноразовые.
 
-import { readJSON, writeJSON } from "@/lib/store";
+import { readJSON, writeJSON, deleteKey } from "@/lib/store";
 
 export type TgLoginUser = {
   id: string;
@@ -15,46 +21,41 @@ export type TgLoginUser = {
 };
 
 type Entry = { status: "pending" | "ready"; tg?: TgLoginUser; at: number };
-type File = Record<string, Entry>;
 
-const KEY = "bot/tg-login";
 const TTL_MS = 10 * 60 * 1000;
+const TTL_S = 10 * 60;
 
-function prune(file: File): File {
-  const now = Date.now();
-  for (const [k, v] of Object.entries(file)) {
-    if (now - v.at > TTL_MS) delete file[k];
-  }
-  return file;
+function keyFor(token: string): string {
+  return `bot/tglogin/${token}`;
 }
 
 export async function createLoginToken(): Promise<string> {
   const { randomBytes } = await import("node:crypto");
   const token = randomBytes(18).toString("base64url");
-  const file = prune(await readJSON<File>(KEY, {}));
-  file[token] = { status: "pending", at: Date.now() };
-  await writeJSON(KEY, file);
+  await writeJSON(keyFor(token), { status: "pending", at: Date.now() } satisfies Entry, {
+    ttlSeconds: TTL_S,
+  });
   return token;
 }
 
+// Помечаем токен готовым БЕЗ предварительного чтения — иммунитет к лагу KV.
+// Токен — неугадываемый секрет (сгенерён сервером, прошёл через нашего бота),
+// а webhook защищён секретом Telegram, поэтому «слепая» запись безопасна.
 export async function setLoginReady(token: string, tg: TgLoginUser): Promise<boolean> {
-  const file = prune(await readJSON<File>(KEY, {}));
-  const e = file[token];
-  if (!e || e.status !== "pending") return false;
-  file[token] = { status: "ready", tg, at: Date.now() };
-  await writeJSON(KEY, file);
+  if (!token) return false;
+  await writeJSON(keyFor(token), { status: "ready", tg, at: Date.now() } satisfies Entry, {
+    ttlSeconds: TTL_S,
+  });
   return true;
 }
 
 export async function readLoginToken(token: string): Promise<Entry | null> {
-  const file = await readJSON<File>(KEY, {});
-  return file[token] ?? null;
+  const e = await readJSON<Entry | null>(keyFor(token), null);
+  if (!e) return null;
+  if (Date.now() - e.at > TTL_MS) return null; // просрочен
+  return e;
 }
 
 export async function consumeLoginToken(token: string): Promise<void> {
-  const file = await readJSON<File>(KEY, {});
-  if (file[token]) {
-    delete file[token];
-    await writeJSON(KEY, file);
-  }
+  await deleteKey(keyFor(token));
 }

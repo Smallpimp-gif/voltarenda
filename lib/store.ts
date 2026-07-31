@@ -11,7 +11,8 @@ import path from "node:path";
 // Минимальный структурный тип KV-биндинга (без @cloudflare/workers-types).
 type KV = {
   get<T>(key: string, type: "json"): Promise<T | null>;
-  put(key: string, value: string): Promise<void>;
+  put(key: string, value: string, options?: { expirationTtl?: number }): Promise<void>;
+  delete(key: string): Promise<void>;
 };
 
 async function cfKv(): Promise<KV | null> {
@@ -42,10 +43,16 @@ export async function readJSON<T>(key: string, fallback: T): Promise<T> {
   }
 }
 
-export async function writeJSON(key: string, value: unknown): Promise<void> {
+export async function writeJSON(
+  key: string,
+  value: unknown,
+  options?: { ttlSeconds?: number },
+): Promise<void> {
   const kv = await cfKv();
   if (kv) {
-    await kv.put(key, JSON.stringify(value));
+    // KV требует expirationTtl >= 60. Меньше — просто без TTL.
+    const ttl = options?.ttlSeconds && options.ttlSeconds >= 60 ? options.ttlSeconds : undefined;
+    await kv.put(key, JSON.stringify(value), ttl ? { expirationTtl: ttl } : undefined);
     return;
   }
   const p = filePath(key);
@@ -53,4 +60,17 @@ export async function writeJSON(key: string, value: unknown): Promise<void> {
   const tmp = `${p}.tmp`;
   await fs.writeFile(tmp, JSON.stringify(value, null, 2), "utf-8");
   await fs.rename(tmp, p);
+}
+
+export async function deleteKey(key: string): Promise<void> {
+  const kv = await cfKv();
+  if (kv) {
+    await kv.delete(key);
+    return;
+  }
+  try {
+    await fs.unlink(filePath(key));
+  } catch {
+    /* нет файла — ок */
+  }
 }

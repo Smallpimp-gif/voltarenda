@@ -22,6 +22,9 @@ export function LoginForm({ social }: { social: SocialConfig }) {
     url: "",
   });
   const cancelled = useRef(false);
+  const tokenRef = useRef("");
+  const startedRef = useRef(0);
+  const pollTimer = useRef<number | null>(null);
   const anySocial = social.vk || social.yandex || social.telegram;
 
   // Открыт ВНУТРИ Telegram (Mini App) → моментальный вход по initData, без
@@ -54,56 +57,91 @@ export function LoginForm({ social }: { social: SocialConfig }) {
   // t.me/бот?start=vlogin_<токен>, пользователь жмёт «Старт», бот узнаёт его
   // (телефон не нужен) и подтверждает вход на сервере. Здесь опрашиваем
   // статус и, как только готово, уводим в кабинет.
+  const stopPolling = useCallback(() => {
+    if (pollTimer.current !== null) {
+      window.clearInterval(pollTimer.current);
+      pollTimer.current = null;
+    }
+  }, []);
+
+  // Один опрос статуса. Вызывается по таймеру и при возврате на вкладку.
+  const pollOnce = useCallback(async () => {
+    const token = tokenRef.current;
+    if (!token || cancelled.current) return;
+    if (Date.now() - startedRef.current > 3 * 60 * 1000) {
+      stopPolling();
+      tokenRef.current = "";
+      setTg((s) => ({ phase: "error", url: s.url }));
+      return;
+    }
+    try {
+      const pr = await fetch(`/api/auth/tg-poll?token=${encodeURIComponent(token)}`);
+      const pd: { status?: string; redirect?: string } = await pr.json();
+      if (pd?.status === "ok" && pd.redirect) {
+        stopPolling();
+        window.location.href = pd.redirect;
+        return;
+      }
+      if (pd?.status === "expired" || pd?.status === "bad") {
+        stopPolling();
+        tokenRef.current = "";
+        setTg({ phase: "error", url: "" });
+      }
+    } catch {
+      /* сеть моргнула — продолжаем опрос */
+    }
+  }, [stopPolling]);
+
+  // Telegram-вход БЕЗ номера телефона: deep-link в бота. Открываем
+  // t.me/бот?start=vlogin_<токен>, пользователь жмёт «Старт», бот-webhook узнаёт
+  // его (телефон не нужен) и помечает вход готовым. Опрашиваем статус и, как
+  // только готово, уводим в кабинет.
   const telegramLogin = useCallback(async () => {
     cancelled.current = false;
+    stopPolling();
+    // Вкладку под Telegram открываем СИНХРОННО (внутри жеста клика), иначе
+    // мобильные браузеры блокируют window.open после await.
+    const win = window.open("", "_blank");
     setTg({ phase: "waiting", url: "" });
-    let token = "";
     try {
       const r = await fetch("/api/auth/tg-start");
       const d: { token?: string; url?: string } = await r.json();
       if (!d?.token || !d?.url) {
+        win?.close();
         setTg({ phase: "error", url: "" });
         return;
       }
-      token = d.token;
+      tokenRef.current = d.token;
+      startedRef.current = Date.now();
       setTg({ phase: "waiting", url: d.url });
-      // Открываем Telegram. На мобильном — приложение, на десктопе — вкладка.
-      window.open(d.url, "_blank", "noopener");
+      if (win) win.location.href = d.url;
+      else window.location.href = d.url; // попап заблокирован — уходим сами
     } catch {
+      win?.close();
       setTg({ phase: "error", url: "" });
       return;
     }
-
-    const startedAt = Date.now();
-    const poll = async () => {
-      if (cancelled.current) return;
-      try {
-        const pr = await fetch(`/api/auth/tg-poll?token=${encodeURIComponent(token)}`);
-        const pd: { status?: string; redirect?: string } = await pr.json();
-        if (pd?.status === "ok" && pd.redirect) {
-          window.location.href = pd.redirect;
-          return;
-        }
-        if (pd?.status === "expired" || pd?.status === "bad") {
-          setTg({ phase: "error", url: "" });
-          return;
-        }
-      } catch {
-        /* сеть моргнула — продолжаем опрос */
-      }
-      if (Date.now() - startedAt > 3 * 60 * 1000) {
-        setTg((s) => ({ phase: "error", url: s.url }));
-        return;
-      }
-      window.setTimeout(poll, 1800);
-    };
-    window.setTimeout(poll, 1800);
-  }, []);
+    pollTimer.current = window.setInterval(pollOnce, 1800);
+  }, [pollOnce, stopPolling]);
 
   const cancelTelegram = useCallback(() => {
     cancelled.current = true;
+    tokenRef.current = "";
+    stopPolling();
     setTg({ phase: "idle", url: "" });
-  }, []);
+  }, [stopPolling]);
+
+  // Вернулись на вкладку из Telegram → опрашиваем сразу, не ждём тик таймера.
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === "visible" && tokenRef.current) void pollOnce();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisible);
+      stopPolling();
+    };
+  }, [pollOnce, stopPolling]);
 
   if (entering) {
     return (
