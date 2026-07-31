@@ -56,14 +56,14 @@ export function LoginForm({ social }: { social: SocialConfig }) {
       {anySocial && (
         <div className="mb-7">
           <div className="grid grid-cols-3 gap-2.5">
+            {social.telegram && (
+              <SocialTile as="button" onClick={telegramLogin} label="Telegram" icon={<TelegramIcon />} />
+            )}
             {social.vk && (
               <SocialTile as="a" href="/api/auth/vk" label="ВКонтакте" icon={<VkIcon />} />
             )}
             {social.yandex && (
               <SocialTile as="a" href="/api/auth/yandex" label="Яндекс" icon={<YandexIcon />} />
-            )}
-            {social.telegram && (
-              <SocialTile as="button" onClick={telegramLogin} label="Telegram" icon={<TelegramIcon />} />
             )}
           </div>
 
