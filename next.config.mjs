@@ -45,7 +45,7 @@ const nextConfig = {
               "img-src 'self' data: blob: https://mc.yandex.ru https://*.yandex.ru https://*.yandex.net https://t.me",
               "font-src 'self' https://fonts.gstatic.com",
               "connect-src 'self' https://api.cloudpayments.ru https://mc.yandex.ru https://*.yandex.ru",
-              "frame-src https://widget.cloudpayments.ru https://yandex.ru https://*.yandex.ru",
+              "frame-src https://widget.cloudpayments.ru https://yandex.ru https://*.yandex.ru https://oauth.telegram.org",
               // Встраивание только в Telegram (Mini App) и self. Всем
               // остальным фрейминг запрещён (защита от clickjacking).
               "frame-ancestors 'self' https://web.telegram.org https://*.telegram.org",
