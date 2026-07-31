@@ -10,8 +10,14 @@
   },
   // workers.dev URL включён (иначе привязка routes его отключает).
   "workers_dev": true,
-  // Адрес сайта — для возвратов после оплаты и т.п.
-  "vars": { "SITE_URL": "https://voltarenda.ru" },
+  // Публичные значения (не секреты): адрес сайта и client_id провайдеров входа.
+  // Секреты (YANDEX_CLIENT_SECRET, TELEGRAM_BOT_TOKEN и т.п.) — через
+  // `wrangler secret put`, в репозиторий не попадают.
+  "vars": {
+    "SITE_URL": "https://voltarenda.ru",
+    "VK_CLIENT_ID": "54701865",
+    "YANDEX_CLIENT_ID": "8bbbf16027d84c48be509fc8e44e33c7"
+  },
   // Привязка через Worker Route (не custom_domain) — использует уже
   // существующую проксируемую DNS-запись voltarenda.ru в зоне.
   "routes": [
