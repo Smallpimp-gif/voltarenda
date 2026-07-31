@@ -46,28 +46,21 @@ export function LoginForm({ social }: { social: SocialConfig }) {
       .catch(() => setEntering(false));
   }, []);
 
-  // Telegram-вход через официальный попап (window.Telegram.Login.auth). На
-  // телефоне открывает приложение Telegram, на десктопе — форма Telegram.
-  // Работает без бот-сервера. Вход БЕЗ номера по deep-link готов в
-  // /api/auth/tg-* + bot/index.mjs — включим, когда обновим бота на сервере.
-  useEffect(() => {
-    if (!social.telegram) return;
-    if (document.getElementById("tg-login-sdk")) return;
-    const s = document.createElement("script");
-    s.id = "tg-login-sdk";
-    s.src = "https://telegram.org/js/telegram-widget.js?22";
-    s.async = true;
-    document.head.appendChild(s);
-  }, [social.telegram]);
-
+  // Telegram-вход полным редиректом на oauth.telegram.org (без попапа —
+  // попап виснет на мобильных). На телефоне открывает приложение Telegram,
+  // после подтверждения возвращает на наш колбэк. На десктопе без сессии
+  // Telegram Web — форма Telegram (его флоу). Работает без бот-сервера.
+  // Вход БЕЗ номера по deep-link готов в /api/auth/tg-* + bot/index.mjs —
+  // включим, когда обновим бота на сервере.
   const telegramLogin = useCallback(() => {
-    const tg = (window as unknown as { Telegram?: { Login?: { auth: (o: object, cb: (u: unknown) => void) => void } } }).Telegram;
-    if (!tg?.Login) return;
-    tg.Login.auth({ bot_id: social.telegramBotId, request_access: "write" }, (user) => {
-      if (!user || typeof user !== "object") return;
-      const qs = new URLSearchParams(user as Record<string, string>).toString();
-      window.location.href = `/api/auth/telegram/widget?${qs}`;
+    const origin = window.location.origin;
+    const p = new URLSearchParams({
+      bot_id: social.telegramBotId,
+      origin,
+      request_access: "write",
+      return_to: `${origin}/api/auth/telegram/widget`,
     });
+    window.location.href = `https://oauth.telegram.org/auth?${p.toString()}`;
   }, [social.telegramBotId]);
 
   if (entering) {
