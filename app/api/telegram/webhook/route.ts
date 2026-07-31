@@ -10,6 +10,7 @@
 import { NextResponse } from "next/server";
 import { getAvailableBikes } from "@/lib/settings";
 import { readJSON, writeJSON } from "@/lib/store";
+import { setLoginReady } from "@/lib/tg-login";
 
 export const runtime = "nodejs";
 
@@ -18,7 +19,7 @@ const APP_URL = "https://voltarenda.small-pimp.workers.dev/app";
 type TgUpdate = {
   message?: {
     chat?: { id?: number };
-    from?: { id?: number; username?: string; first_name?: string };
+    from?: { id?: number; username?: string; first_name?: string; last_name?: string };
     text?: string;
   };
 };
@@ -36,6 +37,15 @@ async function send(token: string, chatId: number, text: string) {
         inline_keyboard: [[{ text: "🚲 Открыть кабинет", web_app: { url: APP_URL } }]],
       },
     }),
+  });
+}
+
+// Простое сообщение без кнопки Mini App (для подтверждения веб-входа).
+async function sendPlain(token: string, chatId: number, text: string) {
+  await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json; charset=utf-8" },
+    body: JSON.stringify({ chat_id: chatId, text, parse_mode: "HTML", disable_web_page_preview: true }),
   });
 }
 
@@ -75,6 +85,27 @@ export async function POST(req: Request) {
   const msg = update.message;
   const chatId = msg?.chat?.id;
   const text = (msg?.text ?? "").trim();
+
+  // Вход на сайт без номера: deep-link /start vlogin_<token>. Помечаем токен
+  // готовым (кто вошёл), сайт опрашивает tg-poll и открывает кабинет.
+  const vlogin = text.match(/^\/start\s+vlogin_(\S+)/);
+  if (token && chatId && vlogin) {
+    const from = msg?.from;
+    const ok = await setLoginReady(vlogin[1], {
+      id: String(from?.id ?? chatId),
+      first_name: from?.first_name,
+      last_name: from?.last_name,
+      username: from?.username,
+    });
+    await sendPlain(
+      token,
+      chatId,
+      ok
+        ? "✅ Готово! Вернись на сайт — вход выполнен."
+        : "Ссылка для входа устарела. Открой вход на сайте заново.",
+    );
+    return NextResponse.json({ ok: true });
+  }
 
   if (token && chatId && text.startsWith("/start")) {
     await rememberChat(msg?.from?.username, chatId);
